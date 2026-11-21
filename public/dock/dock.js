@@ -252,6 +252,24 @@ async function playerForText() {
   $('lt-team').value = side;
 }
 
+async function resetGameFlow() {
+  const choice = await new Promise(resolve => {
+    let answered = false;
+    openSheet('Reset game', `<p>What do you want to reset? All graphics will be hidden.</p>
+      <div class="plist">
+        <button class="btn danger" data-reset="match">Reset score, events &amp; clock<br>(keep teams, lineups &amp; competition)</button>
+        <button class="btn danger" data-reset="all">Reset EVERYTHING<br>(also clears teams, lineups &amp; competition)</button>
+        <button class="btn" data-sheet-close>Cancel</button>
+      </div>`, () => { if (!answered) resolve(null); });
+    $('sheet-body').querySelectorAll('[data-reset]').forEach(b => {
+      b.onclick = () => { answered = true; closeSheet(); resolve(b.dataset.reset); };
+    });
+  });
+  if (!choice) return;
+  const r = await act(choice === 'all' ? 'match.resetAll' : 'match.reset');
+  if (r.ok) toast(choice === 'all' ? 'Everything reset (Undo to bring it back)' : 'Score, events & clock reset (Undo to bring it back)');
+}
+
 // ------------------------------------------------------------------ click handling
 document.addEventListener('click', async e => {
   const el = e.target.closest('[data-act], [data-period], [data-preset], [data-scene], [data-ev]');
@@ -333,6 +351,7 @@ document.addEventListener('click', async e => {
       break;
     case 'demo-stop': { const r = await sock.demo('stop'); if (r.ok) toast('Demo stopped, match restored'); break; }
     case 'lock': clearPin(); location.reload(); break;
+    case 'reset-game': return resetGameFlow();
   }
 });
 

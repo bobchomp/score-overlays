@@ -135,6 +135,22 @@ export const actions = {
     },
   },
 
+  /** Wipe everything entered for this game: score, events, clock, teams, lineups and competition. */
+  'match.resetAll': {
+    undo: 'Reset everything',
+    run(state) {
+      actions['match.reset'].run(state);
+      state.match.competition = '';
+      state.match.competitionLogo = '';
+      for (const s of SIDES) {
+        state.teams[s] = {
+          id: null, name: '', short: '', colors: { primary: '#333333', secondary: '#ffffff', text: '#ffffff' }, logo: '',
+          squad: [], lineup: { starting: [], subs: [], captain: null },
+        };
+      }
+    },
+  },
+
   // ---------------- goals ----------------
   'goal.add': {
     undo: (state, p) => `Goal ${teamShort(state, p.team)}`,

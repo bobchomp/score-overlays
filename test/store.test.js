@@ -77,3 +77,18 @@ test('stale auto-hide does not hide a newer lower third', () => {
   assert.equal(s.state.graphics.lowerThird.visible, true);
   clearTimeout(s.timer);
 });
+
+test('reset everything clears match, teams and lineups, and can be undone', () => {
+  const { s, ok } = fresh();
+  ok(s.dispatch('goal.add', { team: 'home', playerId: 'p9' }));
+  ok(s.dispatch('clock.start'));
+  ok(s.dispatch('match.resetAll'));
+  assert.equal(s.state.events.length, 0);
+  assert.equal(s.state.clock.period, 'PRE');
+  assert.equal(s.state.teams.home.id, null);
+  assert.equal(s.state.graphics.lowerThird.visible, false);
+  ok(s.dispatch('undo'));
+  assert.equal(s.state.teams.home.id, 'riverside');
+  assert.equal(s.state.events.length, 1);
+  clearTimeout(s.timer);
+});

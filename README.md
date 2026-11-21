@@ -104,6 +104,7 @@ Firewall → *Allow an app* → Node.js → Private.
 | Re-show a graphic | **Show** next to any event in *Match events*. |
 | Undo | **⟲ Undo** at the top (it shows what will be undone). It goes back up to 30 steps of goals, cards, subs and clock changes. |
 | OBS scenes | Buttons under *OBS scenes*; the live scene is red. |
+| Reset game | **Reset game…** at the bottom of the dock. Choose *Reset score, events & clock* (keeps teams, lineups and competition) or *Reset EVERYTHING* (clears those too). All graphics are hidden. **Undo** brings it all back if pressed by mistake. |
 
 Lower thirds for goals, cards and subs hide themselves after 8 seconds (change this in *Theme → Timings*). Text lower thirds stay
 until you hide them. Each type can be set not to show automatically in *Options*.
