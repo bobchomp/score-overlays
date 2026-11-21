@@ -58,6 +58,7 @@ const gfx = {
 
 // ---------------------------------------------------------------- scorebug
 let lastScore = null;
+let clockMode = null; // 'time' or the HT/FT/PENS label currently in the clock box
 function periodLabel(period, theme) {
   if (period === 'ET1' || period === 'ET2') return theme.labels.extraTime || 'ET';
   if (period === 'PEN') return theme.labels.penalties || 'PENS';
@@ -74,8 +75,8 @@ function renderScorebug() {
   return `<div class="sb-row">
     ${badge ? `<div class="sb-logo">${logo(badge)}</div>` : ''}
     <div class="sb-team home" style="${teamVars(h)}"><span class="sb-chip"></span><span class="sb-name">${esc(h.short || 'HOM')}</span></div>
-    <div class="sb-score" id="sb-home">0</div>
-    <div class="sb-score" id="sb-away">0</div>
+    <div class="sb-score" id="sb-home">${snap.score.home}</div>
+    <div class="sb-score" id="sb-away">${snap.score.away}</div>
     <div class="sb-team away" style="${teamVars(a)}"><span class="sb-name">${esc(a.short || 'AWY')}</span><span class="sb-chip"></span></div>
     <div class="sb-clockbox"><span class="sb-time" id="sb-time">00:00</span></div>
     <div class="sb-period" id="sb-period"></div>
@@ -92,37 +93,68 @@ function updateScorebugLive() {
   else if (c.period === 'FT') time = 'FT';
   else if (c.period === 'PEN') time = theme.labels.penalties || 'PENS';
   else time = formatClock(displayMs(c, state.match, sock.now()));
-  setText('sb-time', time);
-  // No tag for normal halves; only extra time (ET) gets one.
+  // Ticking time just updates; switching between a time and HT/FT/PENS flips.
+  const mode = /^\d/.test(time) ? 'time' : time;
+  const timeEl = $('sb-time');
+  if (timeEl._flipping) timeEl._flipTarget = time;
+  else if (clockMode !== null && mode !== clockMode) flipTo(timeEl, time);
+  else setText('sb-time', time);
+  clockMode = mode;
+  // No tag for normal halves; only extra time (ET) gets one. It slides like the added-time badge.
   const pl = ['ET1', 'ET2'].includes(c.period) ? periodLabel(c.period, theme) : '';
-  setText('sb-period', pl);
-  $('sb-period').style.display = pl ? '' : 'none';
+  slideBadge($('sb-period'), pl);
   const added = c.addedTime > 0 && PLAYING_PERIODS.includes(c.period) ? `+${c.addedTime}` : '';
-  updateAddedBadge(added);
+  slideBadge($('sb-added'), added);
   for (const side of ['home', 'away']) {
     const el = $(`sb-${side}`);
-    if (el.textContent !== String(score[side])) {
+    const target = String(score[side]);
+    if (el._flipping) { el._flipTarget = target; continue; }
+    if (el.textContent !== target) {
       const grew = lastScore && score[side] > lastScore[side];
-      el.textContent = score[side];
-      if (grew) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+      if (grew) {
+        el.textContent = target;
+        el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+      } else if (lastScore) {
+        flipTo(el, target); // goal removed / undone
+      } else {
+        el.textContent = target;
+      }
     }
   }
   lastScore = { ...score };
 }
 
-// The added-time badge slides out from behind the clock. When it's cleared, keep the old
-// number on it while it slides back in, then empty it (an empty badge collapses).
-let addedClearTimer = null;
-function updateAddedBadge(added) {
-  const el = $('sb-added');
-  if (added) {
-    clearTimeout(addedClearTimer); addedClearTimer = null;
-    setText('sb-added', added);
+/**
+ * Flip an element's text like a scoreboard card: rotate away, swap, rotate back in.
+ * If the text changes again mid-flip, the newest value is the one that lands.
+ */
+function flipTo(el, text) {
+  el._flipTarget = text;
+  if (el._flipping) return;
+  el._flipping = true;
+  el.classList.remove('flip-in', 'pop');
+  void el.offsetWidth;
+  el.classList.add('flip-out');
+  setTimeout(() => {
+    el.textContent = el._flipTarget;
+    el.classList.remove('flip-out');
+    void el.offsetWidth;
+    el.classList.add('flip-in');
+    setTimeout(() => { el.classList.remove('flip-in'); el._flipping = false; }, 220);
+  }, 180);
+}
+
+// Badges after the clock (ET tag, "+3" added time) slide out from behind it. When one is
+// cleared, keep its old text while it slides back in, then empty it (an empty badge collapses).
+function slideBadge(el, text) {
+  if (text) {
+    clearTimeout(el._clearTimer); el._clearTimer = null;
+    if (el.textContent !== text) el.textContent = text;
     el.classList.add('on');
   } else if (el.classList.contains('on')) {
     el.classList.remove('on');
-    addedClearTimer = setTimeout(() => { addedClearTimer = null; if (!el.classList.contains('on')) el.textContent = ''; }, 500);
-  } else if (!addedClearTimer && el.textContent) {
+    el._clearTimer = setTimeout(() => { el._clearTimer = null; if (!el.classList.contains('on')) el.textContent = ''; }, 500);
+  } else if (!el._clearTimer && el.textContent) {
     el.textContent = '';
   }
 }
@@ -250,14 +282,8 @@ function renderBoard() {
   const label = { KO: theme.labels.kickOff, HT: theme.labels.halfTime, FT: theme.labels.fullTime }[b.kind] || '';
   const middle = b.kind === 'KO'
     ? `<span class="vs">${esc(theme.labels.versus)}</span>`
-    : `<span>${score.home}</span><span class="dash">–</span><span>${score.away}</span>`;
-  let scorerHtml = '';
-  if (b.kind !== 'KO') {
-    const col = side => scorers(state, side).map(s => `<div class="row">${esc(s.name)}<span class="min">${s.minutes.map(esc).join(', ')}</span></div>`).join('');
-    const hs = col('home');
-    const as = col('away');
-    if (hs || as) scorerHtml = `<div class="col home">${hs}</div><div class="col away">${as}</div>`;
-  }
+    : `<span id="bd-home">${score.home}</span><span class="dash">–</span><span id="bd-away">${score.away}</span>`;
+  const scorerHtml = b.kind === 'KO' ? '' : boardScorersHtml(state);
   const comp = state.match.competition || state.match.competitionLogo
     ? `<div class="board-comp">${logo(state.match.competitionLogo)}${esc(state.match.competition)}</div>` : '<span></span>';
   return `<div class="board">
@@ -267,8 +293,38 @@ function renderBoard() {
       <div class="board-score">${middle}</div>
       <div class="board-team away" style="${teamVars(a)}">${logo(a.logo)}<div class="name">${esc(a.name)}</div></div>
     </div>
-    <div class="board-scorers">${scorerHtml}</div>
+    <div class="board-scorers" id="bd-scorers">${scorerHtml}</div>
   </div>`;
+}
+
+function boardScorersHtml(state) {
+  const col = side => scorers(state, side).map(s => `<div class="row">${esc(s.name)}<span class="min">${s.minutes.map(esc).join(', ')}</span></div>`).join('');
+  const hs = col('home');
+  const as = col('away');
+  return hs || as ? `<div class="col home">${hs}</div><div class="col away">${as}</div>` : '';
+}
+
+/** While a HT/FT board is on screen, score and scorers change in place instead of re-animating the board. */
+function updateBoardLive() {
+  const { state, score } = snap;
+  if (!gfx.board.shown || state.graphics.board.kind === 'KO') return;
+  for (const side of ['home', 'away']) {
+    const el = $(`bd-${side}`);
+    if (!el) continue;
+    const target = String(score[side]);
+    if (el._flipping) el._flipTarget = target;
+    else if (el.textContent !== target) flipTo(el, target);
+  }
+  const sc = $('bd-scorers');
+  if (sc) {
+    const html = boardScorersHtml(state);
+    if (sc._html === undefined) sc._html = sc.innerHTML;
+    if (html !== sc._html) {
+      sc._html = html;
+      sc.innerHTML = html;
+      sc.classList.remove('flash'); void sc.offsetWidth; sc.classList.add('flash');
+    }
+  }
 }
 
 // ---------------------------------------------------------------- lineup
@@ -315,9 +371,10 @@ function render() {
   // During the goal sting the lower third waits, then follows it in.
   gfx.lowerThird.set(lt.visible && !lt.stingOnly && !stingActive && !full, `${lt.id}|${themeRev}`, renderLowerThird);
 
-  const boardKey = [g.board.kind, themeRev, teamsKey(state), state.match.competition, state.match.competitionLogo,
-    JSON.stringify(snap.score), JSON.stringify(scorers(state, 'home')), JSON.stringify(scorers(state, 'away'))].join('|');
+  // Score and scorers aren't in the key: they update in place (updateBoardLive) while the board is up.
+  const boardKey = [g.board.kind, themeRev, teamsKey(state), state.match.competition, state.match.competitionLogo].join('|');
   gfx.board.set(g.board.visible, boardKey, renderBoard);
+  updateBoardLive();
   gfx.lineup.set(g.lineup.visible, `${g.lineup.team}|${themeRev}|${teamsKey(state)}|${JSON.stringify(state.teams[g.lineup.team].lineup)}`, renderLineup);
 }
 

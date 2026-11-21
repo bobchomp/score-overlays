@@ -41,9 +41,14 @@ img { display: block; }
 .sb-clockbox { display: flex; align-items: center; background: var(--c-clock-bg); color: var(--c-clock); max-width: 260px; overflow: hidden; transition: max-width .45s cubic-bezier(.7,0,.3,1), opacity .3s ease; }
 /* clock hidden from the dock: the clock box slides shut; period tag and added time go with it */
 #scorebug.no-clock .sb-clockbox { max-width: 0; opacity: 0; }
-#scorebug.no-clock .sb-period, #scorebug.no-clock .sb-added { display: none !important; }
+#scorebug.no-clock .sb-period, #scorebug.no-clock .sb-added { clip-path: inset(0 100% 0 0); }
 .sb-time { font-size: 36px; font-weight: 700; padding: 0 16px; min-width: 116px; text-align: center; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
-.sb-period { font-size: 24px; font-weight: 700; padding: 0 12px; height: 100%; display: grid; place-items: center; background: var(--c-accent); color: var(--c-accent-text); min-width: 52px; }
+.sb-period {
+  font-size: 24px; font-weight: 700; padding: 0 12px; height: 100%; display: grid; place-items: center; background: var(--c-accent); color: var(--c-accent-text); min-width: 52px;
+  clip-path: inset(0 100% 0 0); transition: clip-path .45s ease;
+}
+.sb-period.on { clip-path: inset(0 0 0 0); }
+.sb-period:empty { padding: 0; min-width: 0; }
 .sb-added {
   font-size: 30px; font-weight: 800; height: 100%; display: grid; place-items: center; padding: 0 12px;
   background: var(--c-red); color: #fff;
@@ -51,6 +56,13 @@ img { display: block; }
 }
 .sb-added.on { clip-path: inset(0 0 0 0); }
 .sb-added:empty { padding: 0; }
+
+/* scoreboard-style flip (clock text HT/FT, score going down, board score) */
+.flip-out { animation: flip-out .18s ease-in forwards; }
+.flip-in { animation: flip-in .22s ease-out; }
+@keyframes flip-out { from { transform: perspective(300px) rotateX(0); opacity: 1; } to { transform: perspective(300px) rotateX(90deg); opacity: .3; } }
+@keyframes flip-in { from { transform: perspective(300px) rotateX(-90deg); opacity: .3; } to { transform: perspective(300px) rotateX(0); opacity: 1; } }
+.board-score span { display: inline-block; }
 
 /* =========================== GOAL STING =========================== */
 #sting { position: absolute; inset: 0; overflow: hidden; display: none; }
@@ -168,6 +180,8 @@ body.has-full #scorebug { opacity: 0; transform: translateY(-24px); }
 .board-score .vs { font-size: 80px; color: var(--c-accent); }
 .board-scorers { display: grid; grid-template-columns: 1fr 1fr; background: var(--c-panel-alt); font-size: 28px; }
 .board-scorers:empty { display: none; }
+.board-scorers.flash { animation: scorers-flash .9s ease; }
+@keyframes scorers-flash { 0% { background: var(--c-accent); color: var(--c-accent-text); } 100% { background: var(--c-panel-alt); } }
 .board-scorers .col { padding: 14px 36px 18px; }
 .board-scorers .col.away { text-align: right; }
 .board-scorers .row { line-height: 1.45; }
