@@ -1,0 +1,59 @@
+.topbar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 10px 16px; background: rgba(13,17,23,.96); border-bottom: 1px solid var(--ui-line); }
+.topbar h1 { font-size: 18px; }
+.tabs { display: flex; gap: 4px; flex: 1; }
+.tab { appearance: none; background: transparent; border: 1px solid transparent; color: var(--ui-muted); font: 600 15px system-ui, sans-serif; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+.tab.active { background: var(--ui-card2); color: var(--ui-text); border-color: var(--ui-line); }
+main { max-width: 1200px; margin: 0 auto; padding: 14px; }
+.tab-panel { display: flex; flex-direction: column; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--ui-muted); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.grid4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+@media (max-width: 760px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+.sides { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 900px) { .sides { grid-template-columns: 1fr; } }
+.side h2 { display: flex; align-items: center; gap: 8px; }
+.lu-count { margin-left: auto; font-weight: 700; color: var(--ui-text); }
+.lu-count.bad { color: var(--ui-warn); }
+.lu-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 14px; }
+.lu-table th { text-align: left; font-size: 11px; color: var(--ui-muted); text-transform: uppercase; letter-spacing: .06em; padding: 4px; }
+.lu-table td { padding: 3px 4px; border-top: 1px solid var(--ui-line); }
+.lu-table td.n { font-weight: 800; color: #f2cc60; width: 36px; text-align: right; }
+.lu-table td.pos { color: var(--ui-muted); font-size: 12px; width: 40px; }
+.role { display: inline-flex; border: 1px solid var(--ui-line); border-radius: 6px; overflow: hidden; }
+.role button { appearance: none; border: 0; background: var(--ui-bg); color: var(--ui-muted); font: 700 12px system-ui, sans-serif; padding: 6px 9px; cursor: pointer; }
+.role button.on[data-r="xi"] { background: var(--ui-ok); color: #fff; }
+.role button.on[data-r="sub"] { background: var(--ui-primary); color: #fff; }
+.cap { width: 18px; height: 18px; accent-color: #f2cc60; }
+
+.colors { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.color { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--ui-muted); }
+.color .pair { display: flex; gap: 4px; align-items: center; }
+.color input[type=color] { width: 40px; height: 36px; border: 1px solid var(--ui-line); border-radius: 6px; background: var(--ui-bg); padding: 2px; cursor: pointer; }
+.color input.hex { width: 90px; min-height: 36px; padding: 6px 8px; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+
+.logo-pick { display: flex; gap: 8px; align-items: center; }
+.logo-pick img, .logo-pick .none { width: 44px; height: 44px; object-fit: contain; background: #222b36; border-radius: 6px; border: 1px solid var(--ui-line); }
+.logo-pick select { flex: 1; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.actions .hint { width: 100%; margin: 0; }
+
+.teams-layout { display: grid; grid-template-columns: 260px 1fr; gap: 12px; align-items: start; }
+@media (max-width: 760px) { .teams-layout { grid-template-columns: 1fr; } }
+#team-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+#team-list button { justify-content: flex-start; }
+#team-list button.active { border-color: var(--ui-primary); background: #12304f; }
+#team-list img { width: 24px; height: 24px; object-fit: contain; }
+.squad-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.squad-table th { text-align: left; font-size: 11px; color: var(--ui-muted); text-transform: uppercase; padding: 4px; }
+.squad-table td { padding: 3px 4px; }
+.squad-table .input { min-height: 36px; padding: 6px 8px; }
+.squad-table td.num { width: 76px; }
+.squad-table td.posc { width: 110px; }
+.squad-table td.del { width: 44px; }
+textarea.input { min-height: 120px; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+details { margin-top: 12px; }
+summary { cursor: pointer; color: var(--ui-muted); font-weight: 600; }
+.sec-title { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ui-muted); margin: 18px 0 8px; font-weight: 700; }
+.font-sample { font-size: 28px; margin-top: 4px; color: var(--ui-text); }

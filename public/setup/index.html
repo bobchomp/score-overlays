@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Match Setup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link id="theme-css" rel="stylesheet" href="/theme.css">
+  <link rel="stylesheet" href="/shared/ui.css">
+  <link rel="stylesheet" href="/setup/setup.css">
+</head>
+<body>
+  <div id="banner-offline" class="banner danger" hidden><strong>DISCONNECTED</strong> from graphics server. Reconnecting…</div>
+  <header class="topbar">
+    <h1>Match setup</h1>
+    <nav class="tabs">
+      <button class="tab active" data-tab="match">Match</button>
+      <button class="tab" data-tab="teams">Teams</button>
+      <button class="tab" data-tab="theme">Theme</button>
+    </nav>
+    <a class="btn small" href="/dock">Control dock →</a>
+  </header>
+
+  <main>
+    <!-- ================= MATCH ================= -->
+    <section id="tab-match" class="tab-panel">
+      <div class="card">
+        <h2>Competition</h2>
+        <div class="grid2">
+          <label class="field">Competition name<input class="input" id="m-comp" maxlength="80" placeholder="e.g. County League Cup"></label>
+          <label class="field">Competition badge (optional)<div class="logo-pick" data-target="m-comp-logo"></div></label>
+        </div>
+      </div>
+      <div class="sides">
+        <div class="card side" data-side="home"></div>
+        <div class="card side" data-side="away"></div>
+      </div>
+      <div class="card actions">
+        <button class="btn primary" id="m-apply">Apply to current match</button>
+        <button class="btn danger" id="m-new">Start NEW match (clears score, events &amp; clock)</button>
+        <p class="hint">"Apply" keeps the score and events (use it to fix a lineup or change kit colours mid-match).</p>
+      </div>
+    </section>
+
+    <!-- ================= TEAMS ================= -->
+    <section id="tab-teams" class="tab-panel" hidden>
+      <div class="teams-layout">
+        <div class="card team-list">
+          <h2>Teams</h2>
+          <div id="team-list"></div>
+          <button class="btn small" id="t-new">+ New team</button>
+        </div>
+        <div class="card team-editor" id="team-editor"><p class="muted">Pick a team to edit, or create a new one.</p></div>
+      </div>
+    </section>
+
+    <!-- ================= THEME ================= -->
+    <section id="tab-theme" class="tab-panel" hidden>
+      <div class="card" id="theme-editor"></div>
+    </section>
+  </main>
+
+  <div id="pin-screen" class="pin-screen" hidden>
+    <form id="pin-form" class="pin-box">
+      <h1>Match Setup</h1>
+      <p>Enter the control PIN</p>
+      <input id="pin-input" class="input pin" type="password" inputmode="numeric" maxlength="12" required>
+      <p class="pin-error" id="pin-error"></p>
+      <button class="btn primary big" type="submit">Unlock</button>
+    </form>
+  </div>
+  <div id="toast" class="toast" hidden></div>
+  <input type="file" id="file-input" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif" hidden>
+  <script type="module" src="/setup/setup.js"></script>
+</body>
+</html>

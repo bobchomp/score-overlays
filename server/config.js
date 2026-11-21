@@ -78,7 +78,6 @@ export const DEFAULT_THEME = {
     extraTime: 'ET', penalties: 'PENS',
   },
   timings: { lowerThirdSec: 8, stingMs: 2600 },
-  autoShow: { goal: true, card: true, sub: true },
 };
 
 function mergeDeep(base, over) {

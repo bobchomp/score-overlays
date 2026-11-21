@@ -39,7 +39,10 @@ export class Demo extends EventEmitter {
     const lineup = t => ({ starting: t.squad.slice(0, 11).map(p => p.id), subs: t.squad.slice(11).map(p => p.id), captain: t.squad[Math.min(5, t.squad.length - 1)]?.id });
     const pick = (t, pos, n = 0) => (t.squad.slice(0, 11).filter(p => p.position === pos)[n] || t.squad[n])?.id;
     const bench = (t, n = 0) => t.squad[11 + n]?.id;
-    const d = (a, p = {}) => () => this.store.dispatch(a, p, { source: 'demo' });
+    const d = (a, p = {}) => () => {
+      const r = this.store.dispatch(a, p, { source: 'demo' });
+      if (!r.ok) console.warn(`[demo] ${a} failed: ${r.error}`);
+    };
 
     const script = [
       [0, 'Setting up teams', d('match.setup', { newMatch: true, competition: 'Demo Cup · Round 3', home: { teamId: home.id, lineup: lineup(home) }, away: { teamId: away.id, lineup: lineup(away) } })],

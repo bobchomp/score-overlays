@@ -37,10 +37,5 @@
   "timings": {
     "lowerThirdSec": 8,
     "stingMs": 2600
-  },
-  "autoShow": {
-    "goal": true,
-    "card": true,
-    "sub": true
   }
 }

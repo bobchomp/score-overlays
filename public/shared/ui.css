@@ -1,0 +1,88 @@
+/* Shared control-UI styles (dock + setup). Dark, high contrast, big touch targets. */
+:root {
+  --ui-bg: #0d1117; --ui-card: #161b22; --ui-card2: #1f2630; --ui-line: #2d3640;
+  --ui-text: #e8edf2; --ui-muted: #8b98a7; --ui-primary: #2f81f7; --ui-ok: #2ea043; --ui-warn: #d29922; --ui-bad: #f85149;
+  --ui-radius: 10px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--ui-bg); color: var(--ui-text); font: 15px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+h1, h2, h3 { margin: 0; }
+a { color: inherit; }
+[hidden] { display: none !important; }
+.muted { color: var(--ui-muted); font-weight: 400; }
+.hint { color: var(--ui-muted); font-size: 12.5px; margin: 10px 0 0; }
+kbd { font: 600 11px ui-monospace, Consolas, monospace; background: var(--ui-card2); border: 1px solid var(--ui-line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }
+
+.card { background: var(--ui-card); border: 1px solid var(--ui-line); border-radius: var(--ui-radius); padding: 12px; }
+.card h2 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ui-muted); margin-bottom: 10px; font-weight: 700; }
+
+.btn {
+  appearance: none; border: 1px solid var(--ui-line); background: var(--ui-card2); color: var(--ui-text);
+  font: 600 15px/1 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 12px 14px; border-radius: 8px;
+  cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  touch-action: manipulation; user-select: none; -webkit-user-select: none; min-height: 44px;
+  transition: background .12s, transform .06s, border-color .12s;
+}
+.btn:hover { border-color: #47525e; }
+.btn:active { transform: scale(.97); }
+.btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+.btn.small { font-size: 13px; padding: 8px 10px; min-height: 36px; }
+.btn.big { font-size: 20px; min-height: 58px; width: 100%; }
+.btn.primary { background: var(--ui-primary); border-color: var(--ui-primary); color: #fff; }
+.btn.ok { background: var(--ui-ok); border-color: var(--ui-ok); color: #fff; }
+.btn.danger { background: var(--ui-bad); border-color: var(--ui-bad); color: #fff; }
+.btn.danger-ghost { color: var(--ui-bad); }
+.btn.ghost { background: transparent; }
+.btn.grow { flex: 1; }
+
+.input {
+  width: 100%; background: var(--ui-bg); color: var(--ui-text); border: 1px solid var(--ui-line); border-radius: 8px;
+  font: 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 10px 12px; min-height: 42px;
+}
+.input:focus { outline: 2px solid var(--ui-primary); outline-offset: -1px; }
+.input.slim { width: auto; flex: 1; }
+select.input { padding-right: 6px; }
+.row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.row.wrap { flex-wrap: wrap; }
+.check { display: flex; align-items: center; gap: 10px; padding: 6px 0; cursor: pointer; }
+.check input { width: 20px; height: 20px; accent-color: var(--ui-primary); }
+
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--ui-bad); flex: 0 0 12px; box-shadow: 0 0 0 2px rgba(0,0,0,.3); }
+.dot.on { background: var(--ui-ok); }
+.dot.warn { background: var(--ui-warn); }
+
+.banner { padding: 10px 12px; font-weight: 600; font-size: 14px; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+.banner.danger { background: var(--ui-bad); color: #fff; font-size: 16px; animation: pulse 1.4s infinite; }
+.banner.warn { background: #3d2e05; color: #f2cc60; border-bottom: 1px solid #6b5212; }
+.banner.demo { background: #3b2a66; color: #e6dcff; }
+@keyframes pulse { 50% { opacity: .75; } }
+
+/* modal sheet */
+.sheet { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+.sheet-panel { background: var(--ui-card); width: 100%; max-width: 560px; max-height: 92vh; border-radius: 14px 14px 0 0; display: flex; flex-direction: column; border: 1px solid var(--ui-line); }
+@media (min-height: 700px) and (min-width: 600px) { .sheet { align-items: center; } .sheet-panel { border-radius: 14px; } }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--ui-line); gap: 8px; }
+.sheet-head h3 { font-size: 17px; }
+.sheet-body { overflow: auto; padding: 10px 12px 16px; -webkit-overflow-scrolling: touch; }
+
+/* player picker */
+.plist { display: flex; flex-direction: column; gap: 6px; }
+.plist h4 { margin: 10px 0 2px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ui-muted); }
+.pbtn { display: flex; align-items: center; gap: 12px; text-align: left; justify-content: flex-start; width: 100%; min-height: 50px; font-size: 17px; }
+.pbtn .n { font: 800 20px/1 system-ui, sans-serif; min-width: 34px; text-align: right; color: #f2cc60; }
+.pbtn .pos { margin-left: auto; font-size: 11px; color: var(--ui-muted); font-weight: 600; }
+.pbtn .tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #3d2e05; color: #f2cc60; }
+.pbtn .tag.red { background: #4a1416; color: #ffb3ae; }
+.pbtn.selected { border-color: var(--ui-primary); background: #12304f; }
+
+/* PIN */
+.pin-screen { position: fixed; inset: 0; background: var(--ui-bg); z-index: 100; display: grid; place-items: center; padding: 20px; }
+.pin-box { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 12px; text-align: center; }
+.pin-box h1 { font-size: 24px; }
+.pin-box p { margin: 0; color: var(--ui-muted); }
+.input.pin { font-size: 28px; text-align: center; letter-spacing: .4em; }
+.pin-error { color: var(--ui-bad) !important; min-height: 1.3em; }
+
+.toast { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: #24303d; color: #fff; padding: 10px 16px; border-radius: 8px; z-index: 200; box-shadow: 0 6px 20px rgba(0,0,0,.4); font-weight: 600; max-width: calc(100% - 24px); text-align: center; }
+.toast.error { background: var(--ui-bad); }
