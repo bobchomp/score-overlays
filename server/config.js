@@ -89,13 +89,19 @@ function mergeDeep(base, over) {
   return out;
 }
 
+// Theme edits made in the app are saved to data/theme.json (ignored by git), so pulling
+// updates never clashes with them. config/theme.json is only the starting default.
+const USER_THEME = path.join(DATA_DIR, 'theme.json');
+const DEFAULT_THEME_FILE = path.join(CONFIG_DIR, 'theme.json');
+
 export function loadTheme() {
-  return mergeDeep(DEFAULT_THEME, readJson(path.join(CONFIG_DIR, 'theme.json'), {}));
+  const saved = fs.existsSync(USER_THEME) ? readJson(USER_THEME, null) : null;
+  return mergeDeep(DEFAULT_THEME, saved || readJson(DEFAULT_THEME_FILE, {}));
 }
 
 export function saveTheme(theme) {
   const clean = mergeDeep(DEFAULT_THEME, theme);
-  writeJsonAtomic(path.join(CONFIG_DIR, 'theme.json'), clean);
+  writeJsonAtomic(USER_THEME, clean);
   return clean;
 }
 

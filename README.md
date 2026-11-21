@@ -136,7 +136,7 @@ Everything can be edited in the **setup screen**; it writes these files for you:
   }
   ```
   `position` is `GK`, `DEF`, `MID` or `FWD`. The **Teams** tab can also import a pasted list, one player per line, e.g. `9 Dan Kerr FWD`.
-- `config/theme.json`: club name and badge, all graphic colours, fonts, every on-screen title ("GOAL!", "HALF TIME",
+- `config/theme.json`: the *default* theme. Changes you save on the Theme tab go to `data/theme.json` (not tracked by git, so `git pull` never clashes with them; delete it to go back to the default). It holds the club name and badge, all graphic colours, fonts, every on-screen title ("GOAL!", "HALF TIME",
   "STARTING XI"…) and timings. Saving the theme updates the live overlay immediately.
 - `config/obs.json`: OBS scene settings (only used by the `/api/scene/...` Stream Deck endpoint).
 - `public/assets/logos/`: badges. Uploads from the setup screen land here; PNG, JPG, SVG, WebP and GIF all work.
