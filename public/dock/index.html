@@ -100,8 +100,12 @@
           <button class="tog" id="tog-KO" data-act="board" data-kind="KO">Kick-off board</button>
           <button class="tog" id="tog-HT" data-act="board" data-kind="HT">Half-time board</button>
           <button class="tog" id="tog-FT" data-act="board" data-kind="FT">Full-time board</button>
-          <button class="tog" id="tog-lu-home" data-act="lineup" data-side="home">Lineup HOME</button>
-          <button class="tog" id="tog-lu-away" data-act="lineup" data-side="away">Lineup AWAY</button>
+          <div class="tog-split" role="group" aria-label="Lineups">
+            <button class="tog" id="tog-lu-home" data-act="lineup" data-side="home"><small>Lineup</small><span class="lu-name">HOME</span></button>
+            <button class="tog" id="tog-lu-away" data-act="lineup" data-side="away"><small>Lineup</small><span class="lu-name">AWAY</span></button>
+          </div>
+          <!-- Spare slot: reserved for a future button -->
+          <div class="tog spare" id="tog-spare" aria-hidden="true"></div>
           <button class="tog hide-all" data-act="hide-all">Hide all <kbd>Esc</kbd></button>
         </div>
       </section>

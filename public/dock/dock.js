@@ -522,7 +522,7 @@ function render() {
     $(`chip-${side}`).style.background = t.colors.primary;
     $(`score-${side}`).textContent = score[side];
     document.querySelectorAll(`.lbl-${side}`).forEach(el => { el.textContent = t.short || side.toUpperCase(); });
-    $(`tog-lu-${side}`).textContent = `Lineup ${t.short || side.toUpperCase()}`;
+    $(`tog-lu-${side}`).querySelector('.lu-name').textContent = t.short || side.toUpperCase();
   }
 
   // clock

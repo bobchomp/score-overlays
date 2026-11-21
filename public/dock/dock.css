@@ -48,6 +48,18 @@ body { padding-bottom: 40px; }
 .tog.hide-all { padding-left: 10px; text-align: center; color: #ffb3ae; }
 .tog.hide-all::before { display: none; }
 .tog:active { transform: scale(.97); }
+/* one tile, two halves: home lineup | away lineup */
+.tog-split { display: grid; grid-template-columns: 1fr 1fr; gap: 0; min-width: 0; }
+.tog-split .tog { min-width: 0; padding-left: 26px; padding-right: 6px; display: flex; flex-direction: column; justify-content: center; line-height: 1.15; overflow: hidden; }
+.tog-split .tog::before { left: 8px; width: 11px; height: 11px; margin-top: -5.5px; }
+.tog-split .tog:first-child { border-radius: 8px 0 0 8px; }
+.tog-split .tog:last-child { border-radius: 0 8px 8px 0; border-left-color: transparent; }
+.tog-split .tog.on:last-child { border-left-color: var(--ui-ok); }
+.tog-split small { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ui-muted); }
+.tog-split .lu-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tog.spare { cursor: default; border-style: dashed; border-color: #262e38; background: transparent; }
+.tog.spare::before { display: none; }
+.tog.spare:active { transform: none; }
 
 /* log grid */
 .log-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
