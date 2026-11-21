@@ -53,8 +53,9 @@ function toast(text, error = false) {
 
 // ------------------------------------------------------------------ sheet (modal)
 let sheetOnClose = null;
-function openSheet(title, html, onClose) {
+function openSheet(title, html, onClose, actionsHtml = '') {
   $('sheet-title').textContent = title;
+  $('sheet-actions').innerHTML = actionsHtml;
   $('sheet-body').innerHTML = html;
   $('sheet').hidden = false;
   sheetOnClose = onClose || null;
@@ -63,6 +64,7 @@ function openSheet(title, html, onClose) {
 function closeSheet() {
   $('sheet').hidden = true;
   $('sheet-body').innerHTML = '';
+  $('sheet-actions').innerHTML = '';
   const cb = sheetOnClose; sheetOnClose = null;
   if (cb) cb();
 }
@@ -101,7 +103,7 @@ function promptSheet(title, label, value = '', placeholder = '') {
  * Show a player list for one side and resolve with the chosen player id (or null).
  * opts: { title, side, filter(p) → bool, mark(p) → html, top: html, extra: [{label, value}] }
  */
-function pickPlayer({ title, side, sections, top = '', bottom = '', onReady }) {
+function pickPlayer({ title, side, sections, top = '', bottom = '', actions = '', onReady }) {
   return new Promise(resolve => {
     let answered = false;
     const t = snap.state.teams[side];
@@ -110,7 +112,7 @@ function pickPlayer({ title, side, sections, top = '', bottom = '', onReady }) {
     const body = sections.map(s => s.players.length
       ? `<h4>${esc(s.label)}</h4>${s.players.map(p => btn(p, s.opts?.(p) || {})).join('')}` : '').join('');
     openSheet(title, `${top}<div class="plist">${body || `<p class="muted">No players in the ${esc(t.short || side)} squad. Add them on the setup screen.</p>`}</div>${bottom}`,
-      () => { if (!answered) resolve(undefined); });
+      () => { if (!answered) resolve(undefined); }, actions);
     $('sheet-body').querySelectorAll('[data-pid]').forEach(b => {
       b.onclick = () => { answered = true; closeSheet(); resolve(b.dataset.pid); };
     });
@@ -151,29 +153,50 @@ function cardMarks(side) {
 async function goalFlow(side, existing = null) {
   let penalty = existing?.penalty || false;
   let ownGoal = existing?.ownGoal || false;
+  let pending = null; // goal already on the scorebug, waiting for its scorer
   const short = s => snap.state.teams[s].short || s.toUpperCase();
   for (;;) {
     const squadSide = ownGoal ? otherSide(side) : side;
-    const top = `<div class="opts">
+    const top = `${pending ? `<p class="pending-note">✓ Goal ${esc(short(side))} ${esc(pending.minute)}' is on the scorebug. Pick the scorer when you know it to show their name.</p>` : ''}
+      <div class="opts">
       <button class="tog ${penalty ? 'on' : ''}" id="opt-pen">Penalty</button>
       <button class="tog ${ownGoal ? 'on' : ''}" id="opt-og">Own goal</button></div>
       ${ownGoal ? `<p class="hint">Own goal: pick the ${esc(short(squadSide))} player who scored it.</p>` : ''}`;
-    const bottom = `<div class="row"><button class="btn grow" data-pick-none>${existing ? 'No scorer' : 'Scorer unknown / add later'}</button></div>`;
+    const bottom = `<div class="row"><button class="btn grow" data-pick-none>${
+      pending ? 'Close: scorer unknown (add later with Edit)' : existing ? 'No scorer' : 'Scorer unknown / add later'}</button></div>`;
+    const actions = !existing && !pending
+      ? '<button class="btn small ok" id="goal-now" title="Update the score and play GOAL! now; pick the scorer when you know">⚽ Goal now, scorer later</button>' : '';
     let toggled = null;
     const pid = await pickPlayer({
-      title: `${existing ? 'Edit goal' : 'Goal'}: ${short(side)}`,
+      title: pending ? `Who scored? ${short(side)} ${pending.minute}'` : `${existing ? 'Edit goal' : 'Goal'}: ${short(side)}`,
       side: squadSide,
       sections: sideSections(squadSide),
-      top, bottom,
+      top, bottom, actions,
       onReady() {
         $('opt-pen').onclick = () => { toggled = 'pen'; closeSheet(); };
         $('opt-og').onclick = () => { toggled = 'og'; closeSheet(); };
+        if ($('goal-now')) $('goal-now').onclick = () => { toggled = 'now'; closeSheet(); };
       },
     });
-    if (toggled === 'pen') { penalty = !penalty; if (penalty) ownGoal = false; continue; }
-    if (toggled === 'og') { ownGoal = !ownGoal; if (ownGoal) penalty = false; continue; }
-    if (pid === undefined) return; // cancelled
-    if (existing) {
+    if (toggled === 'pen' || toggled === 'og') {
+      if (toggled === 'pen') { penalty = !penalty; if (penalty) ownGoal = false; }
+      else { ownGoal = !ownGoal; if (ownGoal) penalty = false; }
+      if (pending) await act('event.update', { id: pending.id, penalty, ownGoal });
+      continue;
+    }
+    if (toggled === 'now') {
+      const r = await act('goal.add', { team: side, playerId: null, penalty, ownGoal, pending: true });
+      if (!r.ok) return;
+      pending = r.result.event;
+      toast(`Goal ${short(side)} ${pending.minute}': pick the scorer when you know`);
+      continue;
+    }
+    if (pid === undefined) return; // closed with ✕ / Esc (a pending goal stays, scorer unknown)
+    if (pending) {
+      if (pid === null) return;
+      const r = await act('event.update', { id: pending.id, playerId: pid, penalty, ownGoal });
+      if (r.ok && snap.state.settings.autoShow.goal) await act('lowerThird.event', { id: pending.id });
+    } else if (existing) {
       await act('event.update', { id: existing.id, playerId: pid, penalty, ownGoal });
     } else {
       const r = await act('goal.add', { team: side, playerId: pid, penalty, ownGoal });

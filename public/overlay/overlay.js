@@ -296,7 +296,7 @@ function render() {
   const stingActive = updateSting();
   const lt = g.lowerThird;
   // During the goal sting the lower third waits, then follows it in.
-  gfx.lowerThird.set(lt.visible && !stingActive && !full, `${lt.id}|${themeRev}`, renderLowerThird);
+  gfx.lowerThird.set(lt.visible && !lt.stingOnly && !stingActive && !full, `${lt.id}|${themeRev}`, renderLowerThird);
 
   const boardKey = [g.board.kind, themeRev, teamsKey(state), state.match.competition, state.match.competitionLogo,
     JSON.stringify(snap.score), JSON.stringify(scorers(state, 'home')), JSON.stringify(scorers(state, 'away'))].join('|');

@@ -105,3 +105,22 @@ test('away goals skip the GOAL sting unless enabled', () => {
   assert.equal(s.state.graphics.lowerThird.sting, true);
   clearTimeout(s.timer);
 });
+
+test('pending goal: score now with sting only, scorer lower third later', () => {
+  const { s, ok } = fresh();
+  const r = ok(s.dispatch('goal.add', { team: 'home', pending: true }));
+  assert.deepEqual(score(s.state.events), { home: 1, away: 0 });
+  const lt = s.state.graphics.lowerThird;
+  assert.equal(lt.sting, true);
+  assert.equal(lt.stingOnly, true);
+  assert.ok(lt.hideAt <= lt.shownAt + 2600 + 250, 'hides right after the sting');
+  ok(s.dispatch('event.update', { id: r.result.event.id, playerId: 'p9' }));
+  ok(s.dispatch('lowerThird.event', { id: r.result.event.id }));
+  assert.equal(s.state.graphics.lowerThird.stingOnly, false);
+  assert.equal(s.state.graphics.lowerThird.sting, false);
+  // away pending goal: no sting, so nothing on screen yet
+  ok(s.dispatch('lowerThird.hide'));
+  ok(s.dispatch('goal.add', { team: 'away', pending: true }));
+  assert.equal(s.state.graphics.lowerThird.visible, false);
+  clearTimeout(s.timer);
+});

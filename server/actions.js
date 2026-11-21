@@ -33,12 +33,13 @@ function lowerThirdFor(state, ctx, fields) {
   const stingMs = sting ? Number(timings.stingMs) || 0 : 0;
   const autoHide = fields.autoHide ?? (fields.kind !== 'text');
   state.graphics.lowerThird = {
-    visible: true, kind: null, eventId: null, title: '', subtitle: '', team: null,
+    visible: true, kind: null, eventId: null, title: '', subtitle: '', team: null, stingOnly: false,
     ...fields,
     sting,
     id: ctx.uid(),
     shownAt: ctx.now,
-    hideAt: autoHide && secs > 0 ? ctx.now + stingMs + secs * 1000 : 0,
+    hideAt: fields.stingOnly ? ctx.now + stingMs + 250
+      : autoHide && secs > 0 ? ctx.now + stingMs + secs * 1000 : 0,
   };
   delete state.graphics.lowerThird.autoHide;
   // A lower third replaces any full-screen graphic.
@@ -169,7 +170,14 @@ export const actions = {
       const show = p.show ?? state.settings.autoShow.goal;
       // The big GOAL! sting plays for home goals; away goals only if the operator turned that on.
       const sting = state.settings.sting && (s === 'home' || state.settings.stingAway);
-      if (show) showEvent(state, ctx, ev, { sting });
+      if (show) {
+        if (p.pending) {
+          // Scorer not known yet: play just the GOAL! sting now; the name lower third follows once a scorer is picked.
+          if (sting) lowerThirdFor(state, ctx, { kind: 'goal', eventId: ev.id, team: s, sting: true, stingOnly: true });
+        } else {
+          showEvent(state, ctx, ev, { sting });
+        }
+      }
       return { event: ev };
     },
   },
