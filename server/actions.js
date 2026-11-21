@@ -60,6 +60,12 @@ function pauseClock(clock, now) {
   }
 }
 
+/** Two-legged tie: goals each side (as named in THIS match) scored in the first leg. */
+function cleanFirstLeg(v) {
+  const n = x => Math.max(0, Math.min(99, Math.round(Number(x) || 0)));
+  return { enabled: !!v?.enabled, home: n(v?.home), away: n(v?.away) };
+}
+
 function buildSide(teamId, opts = {}) {
   const team = loadTeam(teamId);
   if (!team) throw new Error(`Team "${teamId}" not found`);
@@ -84,13 +90,9 @@ export const actions = {
       }
       if (p.competition !== undefined) state.match.competition = String(p.competition).slice(0, 80);
       if (p.competitionLogo !== undefined) state.match.competitionLogo = String(p.competitionLogo);
-      if (p.newMatch) {
-        state.events = [];
-        state.clock = { period: 'PRE', running: false, startedAt: null, accumulatedMs: 0, addedTime: 0 };
-        state.graphics.lowerThird.visible = false;
-        state.graphics.board.visible = false;
-        state.graphics.lineup.visible = false;
-      }
+      if (p.firstLeg !== undefined) state.match.firstLeg = cleanFirstLeg(p.firstLeg);
+      // A new match wipes everything from the previous one (same as "Reset score, events & clock").
+      if (p.newMatch) actions['match.reset'].run(state);
     },
   },
 
@@ -99,6 +101,7 @@ export const actions = {
     run(state, p) {
       if (p.competition !== undefined) state.match.competition = String(p.competition).slice(0, 80);
       if (p.competitionLogo !== undefined) state.match.competitionLogo = String(p.competitionLogo);
+      if (p.firstLeg !== undefined) state.match.firstLeg = cleanFirstLeg(p.firstLeg);
       for (const s of SIDES) {
         if (p[s]?.colors) state.teams[s].colors = { ...state.teams[s].colors, ...p[s].colors };
       }
@@ -146,6 +149,7 @@ export const actions = {
       actions['match.reset'].run(state);
       state.match.competition = '';
       state.match.competitionLogo = '';
+      state.match.firstLeg = { enabled: false, home: 0, away: 0 };
       for (const s of SIDES) {
         state.teams[s] = {
           id: null, name: '', short: '', colors: { primary: '#333333', secondary: '#ffffff', text: '#ffffff' }, logo: '',

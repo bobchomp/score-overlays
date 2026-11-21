@@ -122,7 +122,8 @@ function formFromState(st) {
     colors: { ...st.teams[s].colors },
     lineup: structuredClone(st.teams[s].lineup || { starting: [], subs: [], captain: null }),
   });
-  return { competition: st.match.competition, competitionLogo: st.match.competitionLogo, home: side('home'), away: side('away') };
+  const fl = st.match.firstLeg || { enabled: false, home: 0, away: 0 };
+  return { competition: st.match.competition, competitionLogo: st.match.competitionLogo, firstLeg: { ...fl }, home: side('home'), away: side('away') };
 }
 
 function renderMatch() {
@@ -130,8 +131,25 @@ function renderMatch() {
   $('m-comp').value = form.competition || '';
   logoPicker(document.querySelector('[data-target="m-comp-logo"]'), form.competitionLogo, v => { form.competitionLogo = v; formDirty = true; }, () => `${form.competition || 'competition'}-badge`);
   for (const s of ['home', 'away']) renderSide(s);
+  renderLeg();
 }
 $('m-comp').addEventListener('input', e => { form.competition = e.target.value; formDirty = true; });
+
+function renderLeg() {
+  const fl = form.firstLeg;
+  $('m-2leg').checked = fl.enabled;
+  $('m-leg').hidden = !fl.enabled;
+  if (document.activeElement !== $('m-leg-home')) $('m-leg-home').value = fl.home;
+  if (document.activeElement !== $('m-leg-away')) $('m-leg-away').value = fl.away;
+  for (const s of ['home', 'away']) {
+    const t = data.teams.find(x => x.id === form[s].teamId);
+    $(`m-leg-${s}-name`).textContent = t ? t.name : (s === 'home' ? 'Home team' : 'Away team');
+  }
+}
+$('m-2leg').addEventListener('change', e => { form.firstLeg.enabled = e.target.checked; formDirty = true; renderLeg(); });
+for (const s of ['home', 'away']) {
+  $(`m-leg-${s}`).addEventListener('input', e => { form.firstLeg[s] = Math.max(0, Number(e.target.value) || 0); formDirty = true; });
+}
 
 function renderSide(s) {
   const el = document.querySelector(`.side[data-side="${s}"]`);
@@ -158,7 +176,7 @@ function renderSide(s) {
   el.querySelector('.team-sel').onchange = e => {
     const t = data.teams.find(x => x.id === e.target.value);
     form[s] = { teamId: e.target.value, colors: t ? { ...t.colors } : f.colors, lineup: { starting: [], subs: [], captain: null } };
-    formDirty = true; renderSide(s);
+    formDirty = true; renderSide(s); renderLeg();
   };
   const colors = el.querySelector('.colors');
   for (const [k, label] of [['primary', 'Primary'], ['secondary', 'Secondary'], ['text', 'Text on primary']]) {
@@ -343,6 +361,7 @@ const LABEL_NAMES = {
   startingXI: 'Lineup title', substitutes: 'Lineup subs title', substitution: 'Substitution tag', yellowCard: 'Yellow card tag',
   redCard: 'Red card tag', secondYellow: 'Second yellow tag', versus: 'Kick-off "VS"', extraTime: 'Extra time period', penalties: 'Penalties period (scorebug)',
   shootout: 'Shootout title', suddenDeath: 'Shootout sudden death', win: 'Shootout winner (e.g. HIL WIN)',
+  aggregate: 'Aggregate tab (e.g. AGG)',
 };
 
 function renderTheme() {

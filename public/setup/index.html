@@ -29,6 +29,16 @@
           <label class="field">Competition name<input class="input" id="m-comp" maxlength="80" placeholder="e.g. County League Cup"></label>
           <label class="field">Competition badge (optional)<div class="logo-pick" data-target="m-comp-logo"></div></label>
         </div>
+        <label class="check" style="margin-top:10px"><input type="checkbox" id="m-2leg"> Two-legged tie (show the aggregate score)</label>
+        <div class="leg-row" id="m-leg" hidden>
+          <span class="muted">First-leg goals:</span>
+          <span class="leg-team" id="m-leg-home-name">Home</span>
+          <input class="input leg-num" id="m-leg-home" type="number" min="0" max="99" inputmode="numeric">
+          <span>–</span>
+          <input class="input leg-num" id="m-leg-away" type="number" min="0" max="99" inputmode="numeric">
+          <span class="leg-team" id="m-leg-away-name">Away</span>
+          <p class="hint">Enter how many goals each of today's teams scored in the first leg (whichever team was at home then). The aggregate updates as goals go in today.</p>
+        </div>
       </div>
       <div class="sides">
         <div class="card side" data-side="home"></div>

@@ -1,6 +1,6 @@
 import { MatchSocket, esc } from '/shared/socket.js';
 import {
-  displayMs, formatClock, findPlayer, otherSide, onPitch, yellowCount, isSentOff, PLAYING_PERIODS, shootoutSummary,
+  displayMs, formatClock, findPlayer, otherSide, onPitch, yellowCount, isSentOff, PLAYING_PERIODS, shootoutSummary, aggregate,
 } from '/shared/match.js';
 import { getPin, setPin, clearPin } from '/shared/pin.js';
 
@@ -545,6 +545,13 @@ function render() {
   // Don't overwrite what the operator is typing.
   if (document.activeElement !== addedInput) addedInput.value = c.addedTime ? String(c.addedTime) : '';
   updateClock();
+
+  // two-legged tie
+  const agg = aggregate(st);
+  $('agg-line').hidden = !agg;
+  if (agg) {
+    $('agg-line').innerHTML = `Aggregate <strong>${agg.home}–${agg.away}</strong> <span class="muted">(first leg ${agg.firstLeg.home}–${agg.firstLeg.away})</span>`;
+  }
 
   // penalty shootout tile: only while in PEN (or while its graphic is still on screen)
   const so = shootoutSummary(st.shootout.kicks);

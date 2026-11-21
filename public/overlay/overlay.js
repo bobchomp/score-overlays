@@ -1,6 +1,6 @@
 import { MatchSocket, syncThemeCss, esc } from '/shared/socket.js';
 import {
-  displayMs, formatClock, findPlayer, otherSide, scorers, shootoutSummary, POSITION_ORDER, POSITION_NAMES, PLAYING_PERIODS,
+  displayMs, formatClock, findPlayer, otherSide, scorers, shootoutSummary, aggregate, POSITION_ORDER, POSITION_NAMES, PLAYING_PERIODS,
 } from '/shared/match.js';
 
 const params = new URLSearchParams(location.search);
@@ -76,8 +76,11 @@ function renderScorebug() {
   return `<div class="sb-row">
     ${badge ? `<div class="sb-logo">${logo(badge)}</div>` : ''}
     <div class="sb-team home" style="${teamVars(h)}"><span class="sb-chip"></span><span class="sb-name">${esc(h.short || 'HOM')}</span></div>
-    <div class="sb-score" id="sb-home">${snap.score.home}</div>
-    <div class="sb-score" id="sb-away">${snap.score.away}</div>
+    <div class="sb-scores">
+      <div class="sb-score" id="sb-home">${snap.score.home}</div>
+      <div class="sb-score" id="sb-away">${snap.score.away}</div>
+      <div class="sb-agg" id="sb-agg"><span class="lbl" id="sb-agg-lbl"></span><span class="val" id="sb-agg-val"></span></div>
+    </div>
     <div class="sb-team away" style="${teamVars(a)}"><span class="sb-name">${esc(a.short || 'AWY')}</span><span class="sb-chip"></span></div>
     <div class="sb-clockgroup">
       <div class="sb-clockbox"><span class="sb-time" id="sb-time">00:00</span></div>
@@ -125,6 +128,19 @@ function updateScorebugLive() {
     }
   }
   lastScore = { ...score };
+
+  // Two-legged tie: "AGG 3-2" tab drops down under the scores.
+  const agg = aggregate(state);
+  const aggEl = $('sb-agg');
+  aggEl.classList.toggle('on', !!agg);
+  if (agg) {
+    setText('sb-agg-lbl', theme.labels.aggregate || 'AGG');
+    const v = `${agg.home}-${agg.away}`;
+    const valEl = $('sb-agg-val');
+    if (valEl._flipping) valEl._flipTarget = v;
+    else if (!valEl.textContent) valEl.textContent = v;
+    else if (valEl.textContent !== v) flipTo(valEl, v);
+  }
 }
 
 /**
@@ -296,9 +312,22 @@ function renderBoard() {
       <div class="board-score">${middle}</div>
       <div class="board-team away" style="${teamVars(a)}">${logo(a.logo)}<div class="name">${esc(a.name)}</div></div>
     </div>
+    ${aggregate(state) ? `<div class="board-agg" id="bd-agg">${esc(boardAggText(state))}</div>` : ''}
     ${b.kind === 'FT' && state.shootout.kicks.length ? `<div class="board-pens" id="bd-pens">${esc(boardPensText(state))}</div>` : ''}
     <div class="board-scorers" id="bd-scorers">${scorerHtml}</div>
   </div>`;
+}
+
+/** KO: first-leg score; HT: running aggregate; FT: who goes through (or level). */
+function boardAggText(state) {
+  const agg = aggregate(state);
+  const kind = state.graphics.board.kind;
+  if (kind === 'KO') return `First leg ${agg.firstLeg.home}–${agg.firstLeg.away}`;
+  if (kind === 'FT' && agg.leader) {
+    const w = agg.leader;
+    return `${state.teams[w].name} win ${agg[w]}–${agg[otherSide(w)]} on aggregate`;
+  }
+  return `Aggregate ${agg.home}–${agg.away}`;
 }
 
 function boardPensText(state) {
@@ -327,7 +356,7 @@ function boardScorersHtml(state) {
 /** While a HT/FT board is on screen, score and scorers change in place instead of re-animating the board. */
 function updateBoardLive() {
   const { state, score } = snap;
-  if (!gfx.board.shown || state.graphics.board.kind === 'KO') return;
+  if (!gfx.board.shown || state.graphics.board.kind === 'KO') return; // KO board has no live parts
   for (const side of ['home', 'away']) {
     const el = $(`bd-${side}`);
     if (!el) continue;
@@ -335,6 +364,8 @@ function updateBoardLive() {
     if (el._flipping) el._flipTarget = target;
     else if (el.textContent !== target) flipTo(el, target);
   }
+  const ba = $('bd-agg');
+  if (ba && aggregate(state)) { const t = boardAggText(state); if (ba.textContent !== t) flipTo(ba, t); }
   const bp = $('bd-pens');
   if (bp) { const t = boardPensText(state); if (bp.textContent !== t) flipTo(bp, t); }
   const sc = $('bd-scorers');
@@ -441,7 +472,7 @@ function render() {
   gfx.lowerThird.set(lt.visible && !lt.stingOnly && !stingActive && !full, `${lt.id}|${themeRev}`, renderLowerThird);
 
   // Score and scorers aren't in the key: they update in place (updateBoardLive) while the board is up.
-  const boardKey = [g.board.kind, themeRev, teamsKey(state), state.match.competition, state.match.competitionLogo, state.shootout.kicks.length > 0].join('|');
+  const boardKey = [g.board.kind, themeRev, teamsKey(state), state.match.competition, state.match.competitionLogo, state.shootout.kicks.length > 0, JSON.stringify(state.match.firstLeg)].join('|');
   gfx.board.set(g.board.visible, boardKey, renderBoard);
   updateBoardLive();
   gfx.shootout.set(g.shootout.visible && !full, `${themeRev}|${teamsKey(state)}`, renderShootout);

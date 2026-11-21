@@ -168,3 +168,14 @@ export function shootoutSummary(kicks = []) {
     rows: { home: row('home'), away: row('away') }, winner, decided: !!winner, next, total: kicks.length,
   };
 }
+
+// ---------------------------------------------------------------- two-legged ties
+/** Aggregate score for a two-legged tie, or null when the match isn't one. */
+export function aggregate(state) {
+  const fl = state.match?.firstLeg;
+  if (!fl?.enabled) return null;
+  const now = score(state.events);
+  const home = (fl.home || 0) + now.home;
+  const away = (fl.away || 0) + now.away;
+  return { home, away, firstLeg: { home: fl.home || 0, away: fl.away || 0 }, leader: home === away ? null : home > away ? 'home' : 'away' };
+}

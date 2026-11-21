@@ -33,6 +33,18 @@ img { display: block; }
   background: var(--c-panel-alt); font-variant-numeric: tabular-nums;
 }
 .sb-score.pop { animation: score-pop .9s ease; }
+.sb-scores { position: relative; display: flex; }
+/* two-legged tie: aggregate tab under the two scores */
+.sb-agg {
+  position: absolute; top: 100%; left: 50%; transform: translateX(-50%); white-space: nowrap;
+  display: flex; align-items: baseline; gap: 8px; padding: 3px 12px 4px;
+  background: var(--c-panel-alt); border-top: 2px solid var(--c-accent);
+  font-family: var(--font-heading); text-transform: uppercase;
+  clip-path: inset(0 0 100% 0); transition: clip-path .45s ease;
+}
+.sb-agg.on { clip-path: inset(0 -10px -20px -10px); }
+.sb-agg .lbl { font-size: 16px; font-weight: 700; letter-spacing: .1em; color: var(--c-muted); }
+.sb-agg .val { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; display: inline-block; }
 @keyframes score-pop {
   0% { background: var(--c-accent); color: var(--c-accent-text); transform: scale(1); }
   30% { transform: scale(1.18); }
@@ -247,4 +259,5 @@ body.has-full #scorebug { opacity: 0; transform: translateY(-24px); }
 .so-row.win .so-total { background: var(--c-green); color: #fff; }
 
 /* FT board: shootout result line */
+.board-agg { background: var(--c-panel-alt); color: var(--c-panel-text); font-family: var(--font-heading); font-weight: 700; font-size: 30px; letter-spacing: .05em; text-transform: uppercase; text-align: center; padding: 6px 20px 4px; border-top: 2px solid var(--c-accent); }
 .board-pens { background: var(--c-accent); color: var(--c-accent-text); font-family: var(--font-heading); font-weight: 700; font-size: 34px; letter-spacing: .04em; text-transform: uppercase; text-align: center; padding: 6px 20px 4px; }

@@ -85,6 +85,9 @@ Firewall → *Allow an app* → Node.js → Private.
 1. Open **Match setup** (from the dock: *Options → Match setup*, or `http://localhost:3000/setup`).
 2. **Match tab**: enter the competition name (and optionally upload its badge), pick the home and away teams, and adjust kit
    colours if there's a clash. Mark each player **XI** or **SUB** and choose the captain (**C**).
+   For a **two-legged tie**, tick *Two-legged tie* and enter how many goals each of today's teams scored in the
+   first leg. The scorebug then shows an **AGG 3–2** tab under the score, the kick-off board shows the first-leg
+   score, half-time shows the aggregate, and full-time says who wins on aggregate.
 3. Click **Start NEW match**. This clears the score, events and clock. (**Apply to current match** keeps them, which is
    useful for fixing a lineup or kit colour mid-match.)
 

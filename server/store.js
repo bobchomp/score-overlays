@@ -20,7 +20,7 @@ function emptySide() {
 export function defaultState() {
   return {
     rev: 0,
-    match: { competition: '', competitionLogo: '', periodLength: 45, etPeriodLength: 15 },
+    match: { competition: '', competitionLogo: '', periodLength: 45, etPeriodLength: 15, firstLeg: { enabled: false, home: 0, away: 0 } },
     teams: { home: emptySide(), away: emptySide() },
     clock: { period: 'PRE', running: false, startedAt: null, accumulatedMs: 0, addedTime: 0 },
     events: [],

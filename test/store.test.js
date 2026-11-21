@@ -149,3 +149,23 @@ test('shootout kicks are undoable, refused once decided, and cleared by reset', 
   assert.equal(s.state.shootout.kicks.length, 0);
   assert.equal(s.state.graphics.shootout.visible, false);
 });
+
+test('two-legged tie: first leg stored, aggregate adds this match', async () => {
+  const { aggregate } = await import('../public/shared/match.js');
+  const { s, ok } = fresh();
+  assert.equal(aggregate(s.state), null);
+  ok(s.dispatch('match.update', { firstLeg: { enabled: true, home: 1, away: '2' } }));
+  ok(s.dispatch('goal.add', { team: 'home', playerId: 'p9' }));
+  ok(s.dispatch('goal.add', { team: 'home', playerId: 'p9' }));
+  assert.deepEqual(aggregate(s.state), { home: 3, away: 2, firstLeg: { home: 1, away: 2 }, leader: 'home' });
+  ok(s.dispatch('match.update', { firstLeg: { enabled: false, home: 1, away: 2 } }));
+  assert.equal(aggregate(s.state), null);
+  clearTimeout(s.timer);
+});
+
+test('starting a new match also clears the penalty shootout', () => {
+  const { s, ok } = fresh();
+  ok(s.dispatch('shootout.kick', { team: 'home', scored: true }));
+  ok(s.dispatch('match.setup', { newMatch: true, home: { teamId: 'riverside' }, away: { teamId: 'hillcrest' } }));
+  assert.equal(s.state.shootout.kicks.length, 0);
+});

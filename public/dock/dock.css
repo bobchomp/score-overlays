@@ -153,3 +153,7 @@ body { padding-bottom: 40px; }
 .pens-total { font: 800 24px system-ui, sans-serif; min-width: 26px; text-align: right; font-variant-numeric: tabular-nums; }
 .pens-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .pens-btns .btn { min-height: 48px; font-size: 16px; }
+
+/* two-legged tie */
+.agg-line { margin-top: 10px; text-align: center; font-size: 15px; padding: 6px; border-radius: 6px; background: var(--ui-bg); border: 1px solid var(--ui-line); }
+.agg-line strong { font-size: 18px; margin: 0 4px; }

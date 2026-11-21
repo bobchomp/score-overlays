@@ -57,3 +57,9 @@ details { margin-top: 12px; }
 summary { cursor: pointer; color: var(--ui-muted); font-weight: 600; }
 .sec-title { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ui-muted); margin: 18px 0 8px; font-weight: 700; }
 .font-sample { font-size: 28px; margin-top: 4px; color: var(--ui-text); }
+
+/* two-legged tie */
+.leg-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; }
+.leg-row .hint { width: 100%; margin: 2px 0 0; }
+.leg-team { font-weight: 700; }
+.input.leg-num { width: 70px; text-align: center; font-size: 18px; font-weight: 700; }
