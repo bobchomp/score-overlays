@@ -33,7 +33,11 @@ body { padding-bottom: 40px; }
 .nudges .btn { padding: 6px 0; }
 .added { justify-content: space-between; }
 .added .label { font-size: 13px; color: var(--ui-muted); flex: 1; }
-.added-val { min-width: 42px; text-align: center; font: 800 20px system-ui, sans-serif; }
+.added-val { width: 64px; min-height: 36px; text-align: center; font: 800 20px system-ui, sans-serif; color: var(--ui-text);
+  background: var(--ui-bg); border: 1px solid var(--ui-line); border-radius: 6px; padding: 2px 4px; -moz-appearance: textfield; }
+.added-val::-webkit-outer-spin-button, .added-val::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.added-val:focus { outline: 2px solid var(--ui-primary); outline-offset: -1px; }
+.added-val.pending { border-color: var(--ui-warn); }
 
 /* toggles */
 .toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }

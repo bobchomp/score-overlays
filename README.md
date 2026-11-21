@@ -96,7 +96,7 @@ Firewall → *Allow an app* → Node.js → Private.
 | Remove a goal | **− remove** (asks first), or **Undo**. |
 | Clock | **▶ KICK OFF** starts 1H. Pick **HT** at half time; the button becomes **▶ START 2ND HALF** (the clock jumps to 45:00). Use the period buttons for FT, ET1, ET2 and PEN. |
 | Fix the clock | Nudge ±1s / ±10s / ±1m, or **Set time…** (type what the scorebug should show, e.g. `23:15`). |
-| Added time | **+ / −** next to *Added time* shows the "+3" badge; **Clear** removes it. It clears automatically when the period changes. |
+| Added time | Type the minutes in the *Added time* box and press Enter, or use **+ / −**. This shows the "+3" badge; **Clear** removes it. It clears automatically when the period changes. |
 | Cards | Yellow/red per team, then pick the player. A second yellow automatically becomes a red (shown as yellow + red). |
 | Subs | Pick the player **off**, then the player **on**. |
 | Boards & lineups | Toggle buttons. A green light means the graphic is on air. Showing a board hides the scorebug and lower thirds. |

@@ -355,6 +355,28 @@ document.addEventListener('click', async e => {
   }
 });
 
+// typed added time: Enter (or leaving the box) applies it, Esc cancels
+const addedInput = $('added-val');
+function applyAddedTime() {
+  addedInput.classList.remove('pending');
+  if (!snap) return;
+  const raw = addedInput.value.trim().replace(/^\+/, '');
+  const minutes = raw === '' ? 0 : Math.round(Number(raw));
+  if (!Number.isFinite(minutes) || minutes < 0 || minutes > 30) {
+    toast('Added time must be 0–30 minutes', true);
+    addedInput.value = snap.state.clock.addedTime || '';
+    return;
+  }
+  if (minutes !== (snap.state.clock.addedTime || 0)) act('clock.addedTime', { minutes });
+}
+addedInput.addEventListener('input', () => addedInput.classList.add('pending'));
+addedInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); addedInput.blur(); }
+  if (e.key === 'Escape') { e.stopPropagation(); addedInput.value = snap?.state.clock.addedTime || ''; addedInput.classList.remove('pending'); addedInput.blur(); }
+});
+addedInput.addEventListener('blur', applyAddedTime);
+addedInput.addEventListener('focus', () => addedInput.select());
+
 // settings checkboxes
 for (const [id, key] of [['opt-show-goal', 'goal'], ['opt-show-card', 'card'], ['opt-show-sub', 'sub']]) {
   $(id).addEventListener('change', e => act('settings.set', { autoShow: { [key]: e.target.checked } }));
@@ -489,7 +511,9 @@ function render() {
   btn.disabled = !canRun;
   $('period-badge').textContent = c.period;
   document.querySelectorAll('#periods .seg').forEach(s => s.classList.toggle('active', s.dataset.period === c.period));
-  $('added-val').textContent = c.addedTime ? `+${c.addedTime}` : '—';
+  const addedInput = $('added-val');
+  // Don't overwrite what the operator is typing.
+  if (document.activeElement !== addedInput) addedInput.value = c.addedTime ? String(c.addedTime) : '';
   updateClock();
 
   // toggles
