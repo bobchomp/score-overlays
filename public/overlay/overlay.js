@@ -98,8 +98,7 @@ function updateScorebugLive() {
   setText('sb-period', pl);
   $('sb-period').style.display = pl ? '' : 'none';
   const added = c.addedTime > 0 && PLAYING_PERIODS.includes(c.period) ? `+${c.addedTime}` : '';
-  setText('sb-added', added);
-  $('sb-added').classList.toggle('on', !!added);
+  updateAddedBadge(added);
   for (const side of ['home', 'away']) {
     const el = $(`sb-${side}`);
     if (el.textContent !== String(score[side])) {
@@ -109,6 +108,23 @@ function updateScorebugLive() {
     }
   }
   lastScore = { ...score };
+}
+
+// The added-time badge slides out from behind the clock. When it's cleared, keep the old
+// number on it while it slides back in, then empty it (an empty badge collapses).
+let addedClearTimer = null;
+function updateAddedBadge(added) {
+  const el = $('sb-added');
+  if (added) {
+    clearTimeout(addedClearTimer); addedClearTimer = null;
+    setText('sb-added', added);
+    el.classList.add('on');
+  } else if (el.classList.contains('on')) {
+    el.classList.remove('on');
+    addedClearTimer = setTimeout(() => { addedClearTimer = null; if (!el.classList.contains('on')) el.textContent = ''; }, 500);
+  } else if (!addedClearTimer && el.textContent) {
+    el.textContent = '';
+  }
 }
 
 function setText(id, text) {
