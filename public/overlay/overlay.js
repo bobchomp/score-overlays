@@ -78,9 +78,11 @@ function renderScorebug() {
     <div class="sb-score" id="sb-home">${snap.score.home}</div>
     <div class="sb-score" id="sb-away">${snap.score.away}</div>
     <div class="sb-team away" style="${teamVars(a)}"><span class="sb-name">${esc(a.short || 'AWY')}</span><span class="sb-chip"></span></div>
-    <div class="sb-clockbox"><span class="sb-time" id="sb-time">00:00</span></div>
-    <div class="sb-period" id="sb-period"></div>
-    <div class="sb-added" id="sb-added"></div>
+    <div class="sb-clockgroup">
+      <div class="sb-clockbox"><span class="sb-time" id="sb-time">00:00</span></div>
+      <div class="sb-period" id="sb-period"></div>
+      <div class="sb-added" id="sb-added"></div>
+    </div>
   </div>`;
 }
 
