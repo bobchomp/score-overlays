@@ -91,7 +91,8 @@ function updateScorebugLive() {
   else if (c.period === 'PEN') time = theme.labels.penalties || 'PENS';
   else time = formatClock(displayMs(c, state.match, sock.now()));
   setText('sb-time', time);
-  const pl = PLAYING_PERIODS.includes(c.period) ? periodLabel(c.period, theme) : '';
+  // No tag for normal halves; only extra time (ET) gets one.
+  const pl = ['ET1', 'ET2'].includes(c.period) ? periodLabel(c.period, theme) : '';
   setText('sb-period', pl);
   $('sb-period').style.display = pl ? '' : 'none';
   const added = c.addedTime > 0 && PLAYING_PERIODS.includes(c.period) ? `+${c.addedTime}` : '';
