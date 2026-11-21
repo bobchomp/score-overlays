@@ -90,3 +90,42 @@ body { padding-bottom: 40px; }
 .sheet-actions { margin-left: auto; display: flex; }
 .sheet-actions .btn { white-space: nowrap; }
 .pending-note { margin: 0 0 8px; padding: 8px 10px; border-radius: 8px; background: #102a19; border: 1px solid var(--ui-ok); color: #b6f0c6; font-weight: 600; font-size: 14px; }
+
+/* ===================== Layout =====================
+   Narrow (OBS dock / phone): one column. Columns are "display: contents" so every card is
+   a direct item of #app; "order" keeps the familiar top-to-bottom order.
+   Medium: two columns, with preview/events/options below.
+   Wide: three columns that each fit the screen height. */
+.col { display: contents; }
+#preview-card { order: -1; }
+.scenes-card { order: 1; }
+.options-card { order: 2; }
+.reset-card { order: 3; }
+.reset-btn { width: 100%; min-height: 48px; font-size: 17px; }
+
+@media (min-width: 760px) {
+  #app { max-width: none; display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 10px; }
+  .col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .col-c { grid-column: 1 / -1; display: block; column-count: 2; column-gap: 10px; }
+  .col-c > .card { break-inside: avoid; margin-bottom: 10px; }
+  #preview-card { order: 0; }
+}
+
+@media (min-width: 1100px) {
+  body { height: 100vh; display: flex; flex-direction: column; padding-bottom: 0; overflow: hidden; }
+  #app { flex: 1; min-height: 0; width: 100%; max-width: 1800px; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); align-items: stretch; }
+  .col { overflow-y: auto; overscroll-behavior: contain; }
+  .col-c { grid-column: auto; display: flex; column-count: auto; }
+  .col-c > .card { margin-bottom: 0; }
+  /* events take all spare height in the right column and scroll inside their card */
+  .events-card { flex: 1 1 auto; min-height: 220px; display: flex; flex-direction: column; }
+  .events-card .events { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  .options-card { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; }
+  .options-card h2, .options-card .row, .options-card .hint { grid-column: 1 / -1; }
+  .options-card .check { font-size: 13.5px; padding: 4px 0; }
+  .clock { font-size: 54px; }
+  .score { font-size: 60px; }
+  .btn.goal { min-height: 66px; font-size: 22px; }
+  .reset-card .hint { display: none; }
+  .options-card .hint { margin-top: 6px; }
+}

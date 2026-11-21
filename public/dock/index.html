@@ -28,154 +28,151 @@
   </header>
 
   <main id="app">
-    <!-- PREVIEW -->
-    <section class="card" id="preview-card" hidden>
-      <div class="preview-wrap" id="preview-wrap"><iframe id="preview" title="Overlay preview" tabindex="-1"></iframe></div>
-    </section>
-
-    <!-- SCORE -->
-    <section class="card score-card">
-      <div class="score-grid">
-        <div class="team-col" data-side="home">
-          <div class="team-head"><span class="chip" id="chip-home"></span><span class="short" id="short-home">HOME</span></div>
-          <div class="score" id="score-home">0</div>
-          <button class="btn goal" data-act="goal" data-side="home">+ GOAL</button>
-          <button class="btn small ghost" data-act="goal-remove" data-side="home">− remove</button>
+    <div class="col col-a">
+      <!-- SCORE -->
+      <section class="card score-card">
+        <div class="score-grid">
+          <div class="team-col" data-side="home">
+            <div class="team-head"><span class="chip" id="chip-home"></span><span class="short" id="short-home">HOME</span></div>
+            <div class="score" id="score-home">0</div>
+            <button class="btn goal" data-act="goal" data-side="home">+ GOAL</button>
+            <button class="btn small ghost" data-act="goal-remove" data-side="home">− remove</button>
+          </div>
+          <div class="team-col" data-side="away">
+            <div class="team-head"><span class="chip" id="chip-away"></span><span class="short" id="short-away">AWAY</span></div>
+            <div class="score" id="score-away">0</div>
+            <button class="btn goal" data-act="goal" data-side="away">+ GOAL</button>
+            <button class="btn small ghost" data-act="goal-remove" data-side="away">− remove</button>
+          </div>
         </div>
-        <div class="team-col" data-side="away">
-          <div class="team-head"><span class="chip" id="chip-away"></span><span class="short" id="short-away">AWAY</span></div>
-          <div class="score" id="score-away">0</div>
-          <button class="btn goal" data-act="goal" data-side="away">+ GOAL</button>
-          <button class="btn small ghost" data-act="goal-remove" data-side="away">− remove</button>
+      </section>
+      <!-- CLOCK -->
+      <section class="card clock-card">
+        <div class="clock-row">
+          <div class="clock" id="clock">00:00</div>
+          <div class="period-badge" id="period-badge">PRE</div>
         </div>
-      </div>
-    </section>
-
-    <!-- CLOCK -->
-    <section class="card clock-card">
-      <div class="clock-row">
-        <div class="clock" id="clock">00:00</div>
-        <div class="period-badge" id="period-badge">PRE</div>
-      </div>
-      <button class="btn big" id="btn-clock" data-act="clock-toggle">▶ START</button>
-      <div class="periods" id="periods">
-        <button class="seg" data-period="PRE">PRE</button>
-        <button class="seg" data-period="1H">1H</button>
-        <button class="seg" data-period="HT">HT</button>
-        <button class="seg" data-period="2H">2H</button>
-        <button class="seg" data-period="FT">FT</button>
-        <button class="seg" data-period="ET1">ET1</button>
-        <button class="seg" data-period="ET2">ET2</button>
-        <button class="seg" data-period="PEN">PEN</button>
-      </div>
-      <div class="row nudges">
-        <button class="btn small" data-act="nudge" data-ms="-60000">−1m</button>
-        <button class="btn small" data-act="nudge" data-ms="-10000">−10s</button>
-        <button class="btn small" data-act="nudge" data-ms="-1000">−1s</button>
-        <button class="btn small" data-act="nudge" data-ms="1000">+1s</button>
-        <button class="btn small" data-act="nudge" data-ms="10000">+10s</button>
-        <button class="btn small" data-act="nudge" data-ms="60000">+1m</button>
-      </div>
-      <div class="row">
-        <button class="btn small" data-act="clock-set">Set time…</button>
-        <button class="btn small danger-ghost" data-act="clock-reset">Reset clock</button>
-      </div>
-      <div class="row added">
-        <span class="label">Added time</span>
-        <button class="btn small" data-act="added" data-delta="-1">−</button>
-        <input class="added-val" id="added-val" type="number" inputmode="numeric" min="0" max="30" placeholder="0" title="Type minutes and press Enter" aria-label="Added time minutes">
-        <button class="btn small" data-act="added" data-delta="1">+</button>
-        <button class="btn small ghost" data-act="added-clear">Clear</button>
-      </div>
-    </section>
-
-    <!-- GRAPHICS -->
-    <section class="card">
-      <h2>Graphics</h2>
-      <div class="toggles">
-        <button class="tog" id="tog-scorebug" data-act="tog-scorebug">Scorebug</button>
-        <button class="tog" id="tog-lt" data-act="tog-lt">Lower third</button>
-        <button class="tog" id="tog-KO" data-act="board" data-kind="KO">Kick-off board</button>
-        <button class="tog" id="tog-HT" data-act="board" data-kind="HT">Half-time board</button>
-        <button class="tog" id="tog-FT" data-act="board" data-kind="FT">Full-time board</button>
-        <button class="tog" id="tog-lu-home" data-act="lineup" data-side="home">Lineup HOME</button>
-        <button class="tog" id="tog-lu-away" data-act="lineup" data-side="away">Lineup AWAY</button>
-        <button class="tog hide-all" data-act="hide-all">Hide all <kbd>Esc</kbd></button>
-      </div>
-    </section>
-
-    <!-- LOG CARDS / SUBS -->
-    <section class="card">
-      <h2>Cards &amp; subs</h2>
-      <div class="log-grid">
-        <button class="btn log" data-act="card" data-side="home" data-card="yellow"><i class="ci yellow"></i><span class="lbl-home">HOME</span></button>
-        <button class="btn log" data-act="card" data-side="away" data-card="yellow"><i class="ci yellow"></i><span class="lbl-away">AWAY</span></button>
-        <button class="btn log" data-act="card" data-side="home" data-card="red"><i class="ci red"></i><span class="lbl-home">HOME</span></button>
-        <button class="btn log" data-act="card" data-side="away" data-card="red"><i class="ci red"></i><span class="lbl-away">AWAY</span></button>
-        <button class="btn log" data-act="sub" data-side="home"><span class="sub-ico">⇅</span><span class="lbl-home">HOME</span> sub</button>
-        <button class="btn log" data-act="sub" data-side="away"><span class="sub-ico">⇅</span><span class="lbl-away">AWAY</span> sub</button>
-      </div>
-    </section>
-
-    <!-- FREE TEXT -->
-    <section class="card">
-      <h2>Lower third (text)</h2>
-      <div class="presets" id="presets"></div>
-      <input id="lt-title" class="input" placeholder="Title (e.g. Man of the Match)" maxlength="80">
-      <input id="lt-sub" class="input" placeholder="Subtitle" maxlength="120">
-      <div class="row">
-        <select id="lt-team" class="input slim">
-          <option value="">Club badge</option>
-          <option value="home">Home team</option>
-          <option value="away">Away team</option>
-        </select>
-        <button class="btn small" data-act="lt-player">From player…</button>
-      </div>
-      <div class="row">
-        <button class="btn primary grow" data-act="lt-show">Show</button>
-        <button class="btn grow" data-act="lt-hide">Hide</button>
-      </div>
-    </section>
-
-    <!-- EVENTS -->
-    <section class="card">
-      <h2>Match events <span class="muted" id="ev-count"></span></h2>
-      <ul class="events" id="events"></ul>
-    </section>
-
-    <!-- SCENES -->
-    <section class="card">
-      <h2>OBS scenes</h2>
-      <div class="scenes" id="scenes"></div>
-    </section>
-
-    <!-- MORE -->
-    <section class="card">
-      <h2>Options</h2>
-      <label class="check"><input type="checkbox" id="opt-show-goal"> Auto-show goal graphic</label>
-      <label class="check"><input type="checkbox" id="opt-sting"> Play big GOAL! sting for home goals</label>
-      <label class="check"><input type="checkbox" id="opt-sting-away"> Play big GOAL! sting for away goals</label>
-      <label class="check"><input type="checkbox" id="opt-show-card"> Auto-show card graphic</label>
-      <label class="check"><input type="checkbox" id="opt-show-sub"> Auto-show sub graphic</label>
-      <label class="check"><input type="checkbox" id="opt-preview"> Show overlay preview</label>
-      <div class="row wrap">
-        <a class="btn small" href="/setup" target="_blank" rel="noopener">Match setup ↗</a>
-        <a class="btn small" id="export-json" href="#" download>Export JSON</a>
-        <a class="btn small" id="export-csv" href="#" download>Export CSV</a>
-      </div>
-      <div class="row wrap">
-        <button class="btn small" data-act="demo-start">Run demo match</button>
-        <button class="btn small ghost" data-act="lock">Lock (forget PIN)</button>
-      </div>
-      <p class="hint">Shortcuts: <kbd>G</kbd> home goal · <kbd>H</kbd> away goal · <kbd>Space</kbd> start/pause · <kbd>Esc</kbd> hide all · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo</p>
-    </section>
-
-    <!-- RESET -->
-    <section class="card reset-card">
-      <h2>Reset game</h2>
-      <button class="btn danger big" data-act="reset-game">Reset game…</button>
-      <p class="hint">Clears the score, events, clock and added time, and hides all graphics. You'll be asked whether to keep the teams and lineups. Undo still works afterwards.</p>
-    </section>
+        <button class="btn big" id="btn-clock" data-act="clock-toggle">▶ START</button>
+        <div class="periods" id="periods">
+          <button class="seg" data-period="PRE">PRE</button>
+          <button class="seg" data-period="1H">1H</button>
+          <button class="seg" data-period="HT">HT</button>
+          <button class="seg" data-period="2H">2H</button>
+          <button class="seg" data-period="FT">FT</button>
+          <button class="seg" data-period="ET1">ET1</button>
+          <button class="seg" data-period="ET2">ET2</button>
+          <button class="seg" data-period="PEN">PEN</button>
+        </div>
+        <div class="row nudges">
+          <button class="btn small" data-act="nudge" data-ms="-60000">−1m</button>
+          <button class="btn small" data-act="nudge" data-ms="-10000">−10s</button>
+          <button class="btn small" data-act="nudge" data-ms="-1000">−1s</button>
+          <button class="btn small" data-act="nudge" data-ms="1000">+1s</button>
+          <button class="btn small" data-act="nudge" data-ms="10000">+10s</button>
+          <button class="btn small" data-act="nudge" data-ms="60000">+1m</button>
+        </div>
+        <div class="row">
+          <button class="btn small" data-act="clock-set">Set time…</button>
+          <button class="btn small danger-ghost" data-act="clock-reset">Reset clock</button>
+        </div>
+        <div class="row added">
+          <span class="label">Added time</span>
+          <button class="btn small" data-act="added" data-delta="-1">−</button>
+          <input class="added-val" id="added-val" type="number" inputmode="numeric" min="0" max="30" placeholder="0" title="Type minutes and press Enter" aria-label="Added time minutes">
+          <button class="btn small" data-act="added" data-delta="1">+</button>
+          <button class="btn small ghost" data-act="added-clear">Clear</button>
+        </div>
+      </section>
+      <!-- SCENES -->
+      <section class="card scenes-card">
+        <h2>OBS scenes</h2>
+        <div class="scenes" id="scenes"></div>
+      </section>
+      <!-- RESET -->
+      <section class="card reset-card">
+        <h2>Reset game</h2>
+        <button class="btn danger reset-btn" data-act="reset-game">Reset game…</button>
+        <p class="hint">Clears score, events &amp; clock and hides graphics. You choose whether to keep teams &amp; lineups. Undo works afterwards.</p>
+      </section>
+    </div>
+    <div class="col col-b">
+      <!-- GRAPHICS -->
+      <section class="card">
+        <h2>Graphics</h2>
+        <div class="toggles">
+          <button class="tog" id="tog-scorebug" data-act="tog-scorebug">Scorebug</button>
+          <button class="tog" id="tog-lt" data-act="tog-lt">Lower third</button>
+          <button class="tog" id="tog-KO" data-act="board" data-kind="KO">Kick-off board</button>
+          <button class="tog" id="tog-HT" data-act="board" data-kind="HT">Half-time board</button>
+          <button class="tog" id="tog-FT" data-act="board" data-kind="FT">Full-time board</button>
+          <button class="tog" id="tog-lu-home" data-act="lineup" data-side="home">Lineup HOME</button>
+          <button class="tog" id="tog-lu-away" data-act="lineup" data-side="away">Lineup AWAY</button>
+          <button class="tog hide-all" data-act="hide-all">Hide all <kbd>Esc</kbd></button>
+        </div>
+      </section>
+      <!-- LOG CARDS / SUBS -->
+      <section class="card">
+        <h2>Cards &amp; subs</h2>
+        <div class="log-grid">
+          <button class="btn log" data-act="card" data-side="home" data-card="yellow"><i class="ci yellow"></i><span class="lbl-home">HOME</span></button>
+          <button class="btn log" data-act="card" data-side="away" data-card="yellow"><i class="ci yellow"></i><span class="lbl-away">AWAY</span></button>
+          <button class="btn log" data-act="card" data-side="home" data-card="red"><i class="ci red"></i><span class="lbl-home">HOME</span></button>
+          <button class="btn log" data-act="card" data-side="away" data-card="red"><i class="ci red"></i><span class="lbl-away">AWAY</span></button>
+          <button class="btn log" data-act="sub" data-side="home"><span class="sub-ico">⇅</span><span class="lbl-home">HOME</span> sub</button>
+          <button class="btn log" data-act="sub" data-side="away"><span class="sub-ico">⇅</span><span class="lbl-away">AWAY</span> sub</button>
+        </div>
+      </section>
+      <!-- FREE TEXT -->
+      <section class="card">
+        <h2>Lower third (text)</h2>
+        <div class="presets" id="presets"></div>
+        <input id="lt-title" class="input" placeholder="Title (e.g. Man of the Match)" maxlength="80">
+        <input id="lt-sub" class="input" placeholder="Subtitle" maxlength="120">
+        <div class="row">
+          <select id="lt-team" class="input slim">
+            <option value="">Club badge</option>
+            <option value="home">Home team</option>
+            <option value="away">Away team</option>
+          </select>
+          <button class="btn small" data-act="lt-player">From player…</button>
+        </div>
+        <div class="row">
+          <button class="btn primary grow" data-act="lt-show">Show</button>
+          <button class="btn grow" data-act="lt-hide">Hide</button>
+        </div>
+      </section>
+    </div>
+    <div class="col col-c">
+      <!-- PREVIEW -->
+      <section class="card" id="preview-card" hidden>
+        <div class="preview-wrap" id="preview-wrap"><iframe id="preview" title="Overlay preview" tabindex="-1"></iframe></div>
+      </section>
+      <!-- EVENTS -->
+      <section class="card events-card">
+        <h2>Match events <span class="muted" id="ev-count"></span></h2>
+        <ul class="events" id="events"></ul>
+      </section>
+      <!-- MORE -->
+      <section class="card options-card">
+        <h2>Options</h2>
+        <label class="check"><input type="checkbox" id="opt-show-goal"> Auto-show goal graphic</label>
+        <label class="check"><input type="checkbox" id="opt-sting"> Play big GOAL! sting for home goals</label>
+        <label class="check"><input type="checkbox" id="opt-sting-away"> Play big GOAL! sting for away goals</label>
+        <label class="check"><input type="checkbox" id="opt-show-card"> Auto-show card graphic</label>
+        <label class="check"><input type="checkbox" id="opt-show-sub"> Auto-show sub graphic</label>
+        <label class="check"><input type="checkbox" id="opt-preview"> Show overlay preview</label>
+        <div class="row wrap">
+          <a class="btn small" href="/setup" target="_blank" rel="noopener">Match setup ↗</a>
+          <a class="btn small" id="export-json" href="#" download>Export JSON</a>
+          <a class="btn small" id="export-csv" href="#" download>Export CSV</a>
+        </div>
+        <div class="row wrap">
+          <button class="btn small" data-act="demo-start">Run demo match</button>
+          <button class="btn small ghost" data-act="lock">Lock (forget PIN)</button>
+        </div>
+        <p class="hint">Shortcuts: <kbd>G</kbd> home goal · <kbd>H</kbd> away goal · <kbd>Space</kbd> start/pause · <kbd>Esc</kbd> hide all · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo</p>
+      </section>
+    </div>
   </main>
 
   <!-- Modal sheet (pickers, confirmations) -->
