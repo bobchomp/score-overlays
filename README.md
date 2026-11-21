@@ -92,7 +92,7 @@ Firewall → *Allow an app* → Node.js → Private.
 
 | Action | How |
 | --- | --- |
-| Goal | **+ GOAL** opens the squad picker (players on the pitch first). Optional *Penalty* / *Own goal* toggles. Or choose *Scorer unknown* and set it later with **Edit** in the events list. The score updates, and the GOAL sting plus a scorer lower third play automatically. |
+| Goal | **+ GOAL** opens the squad picker (players on the pitch first). Optional *Penalty* / *Own goal* toggles. Or choose *Scorer unknown* and set it later with **Edit** in the events list. The score updates and a scorer lower third shows automatically. Home goals get the big GOAL! sting first; away goals don't (switch that on in *Options* if you want it). |
 | Remove a goal | **− remove** (asks first), or **Undo**. |
 | Clock | **▶ KICK OFF** starts 1H. Pick **HT** at half time; the button becomes **▶ START 2ND HALF** (the clock jumps to 45:00). Use the period buttons for FT, ET1, ET2 and PEN. |
 | Fix the clock | Nudge ±1s / ±10s / ±1m, or **Set time…** (type what the scorebug should show, e.g. `23:15`). |

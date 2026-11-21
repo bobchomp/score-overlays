@@ -382,6 +382,7 @@ for (const [id, key] of [['opt-show-goal', 'goal'], ['opt-show-card', 'card'], [
   $(id).addEventListener('change', e => act('settings.set', { autoShow: { [key]: e.target.checked } }));
 }
 $('opt-sting').addEventListener('change', e => act('settings.set', { sting: e.target.checked }));
+$('opt-sting-away').addEventListener('change', e => act('settings.set', { stingAway: e.target.checked }));
 
 // ------------------------------------------------------------------ text presets (per device)
 const DEFAULT_PRESETS = ['Man of the Match', 'Attendance', 'Next home match', 'Weather', 'Injury update'];
@@ -528,6 +529,7 @@ function render() {
   $('opt-show-card').checked = st.settings.autoShow.card;
   $('opt-show-sub').checked = st.settings.autoShow.sub;
   $('opt-sting').checked = st.settings.sting;
+  $('opt-sting-away').checked = st.settings.stingAway;
 
   // events
   const evKey = `${st.rev}`;

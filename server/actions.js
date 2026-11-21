@@ -167,7 +167,9 @@ export const actions = {
       };
       state.events.push(ev);
       const show = p.show ?? state.settings.autoShow.goal;
-      if (show) showEvent(state, ctx, ev, { sting: state.settings.sting });
+      // The big GOAL! sting plays for home goals; away goals only if the operator turned that on.
+      const sting = state.settings.sting && (s === 'home' || state.settings.stingAway);
+      if (show) showEvent(state, ctx, ev, { sting });
       return { event: ev };
     },
   },
@@ -385,6 +387,7 @@ export const actions = {
     run(state, p) {
       if (p.autoShow) for (const k of ['goal', 'card', 'sub']) if (k in p.autoShow) state.settings.autoShow[k] = !!p.autoShow[k];
       if ('sting' in p) state.settings.sting = !!p.sting;
+      if ('stingAway' in p) state.settings.stingAway = !!p.stingAway;
     },
   },
 };

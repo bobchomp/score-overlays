@@ -92,3 +92,16 @@ test('reset everything clears match, teams and lineups, and can be undone', () =
   assert.equal(s.state.events.length, 1);
   clearTimeout(s.timer);
 });
+
+test('away goals skip the GOAL sting unless enabled', () => {
+  const { s, ok } = fresh();
+  ok(s.dispatch('goal.add', { team: 'away', playerId: 'p9' }));
+  assert.equal(s.state.graphics.lowerThird.visible, true, 'scorer lower third still shows');
+  assert.equal(s.state.graphics.lowerThird.sting, false);
+  ok(s.dispatch('goal.add', { team: 'home', playerId: 'p9' }));
+  assert.equal(s.state.graphics.lowerThird.sting, true);
+  ok(s.dispatch('settings.set', { stingAway: true }));
+  ok(s.dispatch('goal.add', { team: 'away', playerId: 'p9' }));
+  assert.equal(s.state.graphics.lowerThird.sting, true);
+  clearTimeout(s.timer);
+});

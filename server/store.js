@@ -30,7 +30,7 @@ export function defaultState() {
       board: { visible: false, kind: 'KO' },
       lineup: { visible: false, team: 'home' },
     },
-    settings: { autoShow: { goal: true, card: true, sub: true }, sting: true },
+    settings: { autoShow: { goal: true, card: true, sub: true }, sting: true, stingAway: false },
   };
 }
 
