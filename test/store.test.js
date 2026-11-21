@@ -134,3 +134,18 @@ test('scorebug clock can be hidden and shown without affecting the clock', () =>
   ok(s.dispatch('scorebug.clock', {}));
   assert.equal(s.state.graphics.scorebug.clock, true);
 });
+
+test('shootout kicks are undoable, refused once decided, and cleared by reset', () => {
+  const { s, ok } = fresh();
+  for (const [team, scored] of [['home', true], ['away', false], ['home', true], ['away', false], ['home', true], ['away', false]]) {
+    ok(s.dispatch('shootout.kick', { team, scored }));
+  }
+  assert.equal(s.dispatch('shootout.kick', { team: 'away', scored: true }).ok, false, 'decided 3-0');
+  ok(s.dispatch('undo'));
+  assert.equal(s.state.shootout.kicks.length, 5);
+  ok(s.dispatch('shootout.show', { visible: true }));
+  assert.equal(s.state.graphics.shootout.visible, true);
+  ok(s.dispatch('match.reset'));
+  assert.equal(s.state.shootout.kicks.length, 0);
+  assert.equal(s.state.graphics.shootout.visible, false);
+});

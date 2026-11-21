@@ -54,6 +54,11 @@ export function createApi({ store, obs, auth, demo, onThemeChange, snapshot }) {
   api.post('/lineup/:team', (req, res) => run(res, 'lineup.show', { team: req.params.team, toggle: true }));
   api.post('/scorebug/toggle', (req, res) => run(res, 'scorebug.set', {}));
   api.post('/scorebug/clock/toggle', (req, res) => run(res, 'scorebug.clock', {}));
+  api.post('/pens/:team/:result', (req, res) => {
+    if (!['scored', 'missed'].includes(req.params.result)) return res.status(404).json({ ok: false, error: 'Use scored or missed' });
+    run(res, 'shootout.kick', { team: req.params.team, scored: req.params.result === 'scored' });
+  });
+  api.post('/pens/toggle', (req, res) => run(res, 'shootout.show', {}));
   api.post('/hide-all', (req, res) => run(res, 'graphics.hideAll'));
   api.post('/scene/:name', async (req, res) => {
     try { await obs.setScene(req.params.name); res.json({ ok: true }); } catch (err) { res.status(400).json({ ok: false, error: err.message }); }

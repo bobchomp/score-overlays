@@ -1,6 +1,6 @@
 import { MatchSocket, syncThemeCss, esc } from '/shared/socket.js';
 import {
-  displayMs, formatClock, findPlayer, otherSide, scorers, POSITION_ORDER, POSITION_NAMES, PLAYING_PERIODS,
+  displayMs, formatClock, findPlayer, otherSide, scorers, shootoutSummary, POSITION_ORDER, POSITION_NAMES, PLAYING_PERIODS,
 } from '/shared/match.js';
 
 const params = new URLSearchParams(location.search);
@@ -54,6 +54,7 @@ const gfx = {
   lowerThird: graphic($('lower-third')),
   board: graphic($('board'), 500),
   lineup: graphic($('lineup'), 700),
+  shootout: graphic($('shootout')),
 };
 
 // ---------------------------------------------------------------- scorebug
@@ -92,8 +93,8 @@ function updateScorebugLive() {
   const c = state.clock;
   let time;
   if (c.period === 'HT') time = 'HT';
-  else if (c.period === 'FT') time = 'FT';
-  else if (c.period === 'PEN') time = theme.labels.penalties || 'PENS';
+  else if (c.period === 'FT') time = `FT${pensSuffix(state)}`;
+  else if (c.period === 'PEN') time = `${theme.labels.penalties || 'PENS'}${pensSuffix(state)}`;
   else time = formatClock(displayMs(c, state.match, sock.now()));
   // Ticking time just updates; switching between a time and HT/FT/PENS flips.
   const mode = /^\d/.test(time) ? 'time' : time;
@@ -295,8 +296,25 @@ function renderBoard() {
       <div class="board-score">${middle}</div>
       <div class="board-team away" style="${teamVars(a)}">${logo(a.logo)}<div class="name">${esc(a.name)}</div></div>
     </div>
+    ${b.kind === 'FT' && state.shootout.kicks.length ? `<div class="board-pens" id="bd-pens">${esc(boardPensText(state))}</div>` : ''}
     <div class="board-scorers" id="bd-scorers">${scorerHtml}</div>
   </div>`;
+}
+
+function boardPensText(state) {
+  const s = shootoutSummary(state.shootout.kicks);
+  if (s.decided) {
+    const w = s.winner;
+    return `${state.teams[w].name} win ${s[w]}–${s[otherSide(w)]} on penalties`;
+  }
+  return `Penalties ${s.home}–${s.away}`;
+}
+
+/** " (4-3)" after PENS/FT on the scorebug once a shootout has kicks. */
+function pensSuffix(state) {
+  if (!state.shootout.kicks.length) return '';
+  const s = shootoutSummary(state.shootout.kicks);
+  return ` (${s.home}-${s.away})`;
 }
 
 function boardScorersHtml(state) {
@@ -317,6 +335,8 @@ function updateBoardLive() {
     if (el._flipping) el._flipTarget = target;
     else if (el.textContent !== target) flipTo(el, target);
   }
+  const bp = $('bd-pens');
+  if (bp) { const t = boardPensText(state); if (bp.textContent !== t) flipTo(bp, t); }
   const sc = $('bd-scorers');
   if (sc) {
     const html = boardScorersHtml(state);
@@ -327,6 +347,53 @@ function updateBoardLive() {
       sc.classList.remove('flash'); void sc.offsetWidth; sc.classList.add('flash');
     }
   }
+}
+
+// ---------------------------------------------------------------- penalty shootout
+const ICON_TICK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ICON_CROSS = '<svg viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/></svg>';
+
+function renderShootout() {
+  return `<div class="so"><div class="so-tag" id="so-tag"></div><div class="so-rows" id="so-rows"></div></div>`;
+}
+
+let soSeen = -1;     // number of kicks already drawn, so only the newest dot animates
+let soNewDot = null; // "home:2" = the dot that just filled in
+function updateShootoutLive() {
+  const rowsEl = $('so-rows');
+  if (!rowsEl || !snap) return;
+  const { state, theme } = snap;
+  const kicks = state.shootout.kicks;
+  const s = shootoutSummary(kicks);
+  const L = theme.labels;
+  const tag = s.decided ? `${state.teams[s.winner].short} ${L.win || 'WIN'}` : s.suddenDeath ? (L.suddenDeath || 'SUDDEN DEATH') : (L.shootout || 'PENALTIES');
+  const tagEl = $('so-tag');
+  if (tagEl.textContent !== tag) { if (tagEl.textContent) flipTo(tagEl, tag); else tagEl.textContent = tag; }
+  tagEl.classList.toggle('won', s.decided);
+  // Which dot is the newest kick? Only animate when a kick was just added (not on first draw or undo).
+  if (kicks.length !== soSeen) {
+    const last = kicks[kicks.length - 1];
+    soNewDot = null;
+    if (last && soSeen >= 0 && kicks.length > soSeen) {
+      const idx = kicks.filter(k => k.team === last.team).length - 1 - s.set * 5;
+      if (idx >= 0) soNewDot = `${last.team}:${idx}`;
+    }
+    soSeen = kicks.length;
+  }
+  const newDot = soNewDot;
+  const row = side => {
+    const t = state.teams[side];
+    const dots = s.rows[side].map((d, i) => `<span class="so-dot ${d || 'empty'} ${newDot === `${side}:${i}` ? 'new' : ''}">${d === 'scored' ? ICON_TICK : d === 'missed' ? ICON_CROSS : ''}</span>`).join('');
+    const cls = [s.winner === side ? 'win' : '', s.winner && s.winner !== side ? 'lose' : '', s.next === side ? 'next' : ''].join(' ');
+    return `<div class="so-row ${cls}" style="${teamVars(t)}">
+      <div class="so-badge">${logo(t.logo) || `<span>${esc(t.short)}</span>`}</div>
+      <div class="so-name">${esc(t.short || side.toUpperCase())}</div>
+      <div class="so-dots">${dots}</div>
+      <div class="so-total">${s[side]}</div></div>`;
+  };
+  const html = row('home') + row('away');
+  const key = JSON.stringify([s, newDot, teamsKey(state), snap.themeRev]);
+  if (rowsEl._key !== key) { rowsEl._key = key; rowsEl.innerHTML = html; }
 }
 
 // ---------------------------------------------------------------- lineup
@@ -374,9 +441,11 @@ function render() {
   gfx.lowerThird.set(lt.visible && !lt.stingOnly && !stingActive && !full, `${lt.id}|${themeRev}`, renderLowerThird);
 
   // Score and scorers aren't in the key: they update in place (updateBoardLive) while the board is up.
-  const boardKey = [g.board.kind, themeRev, teamsKey(state), state.match.competition, state.match.competitionLogo].join('|');
+  const boardKey = [g.board.kind, themeRev, teamsKey(state), state.match.competition, state.match.competitionLogo, state.shootout.kicks.length > 0].join('|');
   gfx.board.set(g.board.visible, boardKey, renderBoard);
   updateBoardLive();
+  gfx.shootout.set(g.shootout.visible && !full, `${themeRev}|${teamsKey(state)}`, renderShootout);
+  updateShootoutLive();
   gfx.lineup.set(g.lineup.visible, `${g.lineup.team}|${themeRev}|${teamsKey(state)}|${JSON.stringify(state.teams[g.lineup.team].lineup)}`, renderLineup);
 }
 

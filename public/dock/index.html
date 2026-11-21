@@ -83,6 +83,29 @@
           <button class="btn small ghost" data-act="added-clear">Clear</button>
         </div>
       </section>
+      <!-- PENALTIES (only shown while the period is PEN) -->
+      <section class="card pens-card" id="pens-card" hidden>
+        <h2>Penalty shootout <span class="pens-status" id="pens-status"></span></h2>
+        <button class="tog" id="tog-pens" data-act="pens-toggle">Penalties lower third</button>
+        <div class="pens-team" id="pens-team-home">
+          <div class="pens-head"><span class="chip" id="pens-chip-home"></span><span class="pens-short" id="pens-short-home">HOME</span><span class="pens-next">NEXT</span><span class="pens-dots" id="pens-dots-home"></span><span class="pens-total" id="pens-total-home">0</span></div>
+          <div class="pens-btns">
+            <button class="btn ok" data-act="pen" data-side="home" data-scored="1">✓ Scored</button>
+            <button class="btn danger" data-act="pen" data-side="home" data-scored="0">✗ Missed</button>
+          </div>
+        </div>
+        <div class="pens-team" id="pens-team-away">
+          <div class="pens-head"><span class="chip" id="pens-chip-away"></span><span class="pens-short" id="pens-short-away">AWAY</span><span class="pens-next">NEXT</span><span class="pens-dots" id="pens-dots-away"></span><span class="pens-total" id="pens-total-away">0</span></div>
+          <div class="pens-btns">
+            <button class="btn ok" data-act="pen" data-side="away" data-scored="1">✓ Scored</button>
+            <button class="btn danger" data-act="pen" data-side="away" data-scored="0">✗ Missed</button>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn small" data-act="pen-remove">Remove last kick</button>
+          <button class="btn small danger-ghost" data-act="pen-clear">Clear shootout</button>
+        </div>
+      </section>
       <!-- RESET -->
       <section class="card reset-card">
         <h2>Reset game</h2>

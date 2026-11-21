@@ -133,3 +133,23 @@ body { padding-bottom: 40px; }
   .reset-card .hint { display: none; }
   .options-card .hint { margin-top: 6px; }
 }
+
+/* penalty shootout tile */
+.pens-card { display: flex; flex-direction: column; gap: 8px; }
+.pens-card h2 { margin-bottom: 0; }
+.pens-status { color: var(--ui-text); text-transform: none; letter-spacing: 0; }
+.pens-card .tog { width: 100%; }
+.pens-team { border: 1px solid var(--ui-line); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+.pens-team.next { border-color: #f2cc60; box-shadow: 0 0 0 1px #f2cc60 inset; }
+.pens-team.win { border-color: var(--ui-ok); background: #102a19; }
+.pens-head { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 16px; }
+.pens-next { display: none; font-size: 10px; font-weight: 800; letter-spacing: .08em; background: #f2cc60; color: #111; border-radius: 4px; padding: 2px 5px; }
+.pens-team.next .pens-next { display: inline-block; }
+.pens-dots { display: flex; gap: 4px; margin-left: auto; }
+.pd { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 13px; font-weight: 900; color: #fff; }
+.pd.empty { border: 2px solid #3a4450; }
+.pd.scored { background: var(--ui-ok); }
+.pd.missed { background: var(--ui-bad); }
+.pens-total { font: 800 24px system-ui, sans-serif; min-width: 26px; text-align: right; font-variant-numeric: tabular-nums; }
+.pens-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.pens-btns .btn { min-height: 48px; font-size: 16px; }

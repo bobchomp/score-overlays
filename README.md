@@ -101,6 +101,7 @@ Firewall → *Allow an app* → Node.js → Private.
 | Cards | Yellow/red per team, then pick the player. A second yellow automatically becomes a red (shown as yellow + red). |
 | Subs | Pick the player **off**, then the player **on**. |
 | Hide the clock | **Scorebug clock** in *Graphics* hides the time (plus added time and ET tag) on the scorebug; the clock keeps running, so it's right when you bring it back. |
+| Penalty shootout | Set the period to **PEN** and a *Penalty shootout* tile appears. Tap **✓ Scored** / **✗ Missed** for each kick (the team due next is highlighted). **Penalties lower third** shows/hides the on-screen dots; it updates live. Level after 5 each → a fresh row of 5 marked *Sudden death*. When it's decided the graphic shows the winner, the scorebug reads e.g. `PENS (5-4)`, and the full-time board adds "… win 5–4 on penalties". **Remove last kick** / **Clear shootout** / **Undo** fix mistakes. |
 | Boards & lineups | Toggle buttons. A green light means the graphic is on air. Showing a board hides the scorebug and lower thirds. |
 | Text lower third | Type a title and subtitle (or click a preset, or *From player…*), then **Show**. |
 | Re-show a graphic | **Show** next to any event in *Match events*. |
@@ -155,6 +156,8 @@ Every call needs the PIN, either as header `X-Pin: <pin>` or as `?pin=<pin>`. Us
 | `/api/added-time/3` | Added time badge |
 | `/api/board/HT` | Toggle board (`KO`, `HT`, `FT`) |
 | `/api/lineup/home` | Toggle lineup |
+| `/api/pens/home/scored`, `/api/pens/away/missed` | Log a penalty in the shootout |
+| `/api/pens/toggle` | Show/hide the penalty lower third |
 | `/api/scorebug/toggle` · `/api/scorebug/clock/toggle` · `/api/hide-all` · `/api/undo` | |
 | `/api/scene/Wide%20Shot` | Switch OBS scene |
 | `/api/action` | Any action: JSON body `{ "action": "card.add", "payload": { "team": "away", "playerId": "p4", "card": "yellow" } }` |

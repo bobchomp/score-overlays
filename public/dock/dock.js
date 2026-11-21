@@ -1,6 +1,6 @@
 import { MatchSocket, esc } from '/shared/socket.js';
 import {
-  displayMs, formatClock, findPlayer, otherSide, onPitch, yellowCount, isSentOff, PLAYING_PERIODS,
+  displayMs, formatClock, findPlayer, otherSide, onPitch, yellowCount, isSentOff, PLAYING_PERIODS, shootoutSummary,
 } from '/shared/match.js';
 import { getPin, setPin, clearPin } from '/shared/pin.js';
 
@@ -376,6 +376,12 @@ document.addEventListener('click', async e => {
     case 'demo-stop': { const r = await sock.demo('stop'); if (r.ok) toast('Demo stopped, match restored'); break; }
     case 'lock': clearPin(); location.reload(); break;
     case 'reset-game': return resetGameFlow();
+    case 'pens-toggle': return act('shootout.show', { visible: !st.graphics.shootout.visible });
+    case 'pen': return act('shootout.kick', { team: d.side, scored: d.scored === '1' });
+    case 'pen-remove': return act('shootout.removeLast');
+    case 'pen-clear':
+      if (await ask('Clear every penalty logged in this shootout? (You can undo.)', 'Clear', true)) act('shootout.clear');
+      break;
   }
 });
 
@@ -539,6 +545,25 @@ function render() {
   // Don't overwrite what the operator is typing.
   if (document.activeElement !== addedInput) addedInput.value = c.addedTime ? String(c.addedTime) : '';
   updateClock();
+
+  // penalty shootout tile: only while in PEN (or while its graphic is still on screen)
+  const so = shootoutSummary(st.shootout.kicks);
+  $('pens-card').hidden = !(c.period === 'PEN' || g.shootout.visible);
+  setOn('tog-pens', g.shootout.visible);
+  $('pens-status').textContent = so.decided
+    ? `· ${st.teams[so.winner].short} win ${so[so.winner]}–${so[otherSide(so.winner)]}`
+    : so.total ? `· ${so.home}–${so.away}${so.suddenDeath ? ' · sudden death' : ''}` : '';
+  for (const side of ['home', 'away']) {
+    const t = st.teams[side];
+    $(`pens-short-${side}`).textContent = t.short || side.toUpperCase();
+    $(`pens-chip-${side}`).style.background = t.colors.primary;
+    $(`pens-total-${side}`).textContent = so[side];
+    $(`pens-dots-${side}`).innerHTML = so.rows[side].map(r => `<i class="pd ${r || 'empty'}">${r === 'scored' ? '✓' : r === 'missed' ? '✗' : ''}</i>`).join('');
+    const teamEl = $(`pens-team-${side}`);
+    teamEl.classList.toggle('next', so.next === side);
+    teamEl.classList.toggle('win', so.winner === side);
+    teamEl.querySelectorAll('[data-act=pen]').forEach(b => { b.disabled = so.decided; });
+  }
 
   // toggles
   setOn('tog-scorebug', g.scorebug.visible);

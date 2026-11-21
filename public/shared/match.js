@@ -131,3 +131,40 @@ export function surname(name) {
 
 export const POSITION_ORDER = ['GK', 'DEF', 'MID', 'FWD'];
 export const POSITION_NAMES = { GK: 'Goalkeeper', DEF: 'Defenders', MID: 'Midfielders', FWD: 'Forwards' };
+
+// ---------------------------------------------------------------- penalty shootout
+export const SHOOTOUT_ROW = 5;
+
+/**
+ * Summary of a shootout. kicks: [{ team: 'home'|'away', scored: bool }]
+ * - set: which row of 5 is on screen (0 = first five, 1+ = sudden-death rows)
+ * - rows: per team, the SHOOTOUT_ROW dots of the current set: 'scored' | 'missed' | null
+ * - decided/winner: settled once a side can no longer be caught (in the first five) or a
+ *   sudden-death round ends with the sides level on kicks but not on goals.
+ */
+export function shootoutSummary(kicks = []) {
+  const per = { home: [], away: [] };
+  for (const k of kicks) if (per[k.team]) per[k.team].push(k);
+  const goals = s => per[s].filter(k => k.scored).length;
+  const taken = s => per[s].length;
+  const h = goals('home'), a = goals('away'), ht = taken('home'), at = taken('away');
+  let winner = null;
+  if (ht <= SHOOTOUT_ROW && at <= SHOOTOUT_ROW) {
+    if (h + (SHOOTOUT_ROW - ht) < a) winner = 'away';
+    else if (a + (SHOOTOUT_ROW - at) < h) winner = 'home';
+  }
+  if (!winner && ht >= SHOOTOUT_ROW && at >= SHOOTOUT_ROW && ht === at && h !== a) winner = h > a ? 'home' : 'away';
+  const maxTaken = Math.max(ht, at);
+  const set = maxTaken === 0 ? 0 : Math.floor((maxTaken - 1) / SHOOTOUT_ROW);
+  const row = s => Array.from({ length: SHOOTOUT_ROW }, (_, i) => {
+    const k = per[s][set * SHOOTOUT_ROW + i];
+    return k ? (k.scored ? 'scored' : 'missed') : null;
+  });
+  // Next to kick: whoever has taken fewer; if level, whoever kicked first.
+  const first = kicks[0]?.team || 'home';
+  const next = winner ? null : ht === at ? first : ht < at ? 'home' : 'away';
+  return {
+    home: h, away: a, homeTaken: ht, awayTaken: at, set, suddenDeath: set > 0,
+    rows: { home: row('home'), away: row('away') }, winner, decided: !!winner, next, total: kicks.length,
+  };
+}

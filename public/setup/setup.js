@@ -341,7 +341,8 @@ const COLOR_LABELS = {
 const LABEL_NAMES = {
   goal: 'Goal sting text', ownGoal: 'Own goal', kickOff: 'Kick-off board', halfTime: 'Half-time board', fullTime: 'Full-time board',
   startingXI: 'Lineup title', substitutes: 'Lineup subs title', substitution: 'Substitution tag', yellowCard: 'Yellow card tag',
-  redCard: 'Red card tag', secondYellow: 'Second yellow tag', versus: 'Kick-off "VS"', extraTime: 'Extra time period', penalties: 'Penalties period',
+  redCard: 'Red card tag', secondYellow: 'Second yellow tag', versus: 'Kick-off "VS"', extraTime: 'Extra time period', penalties: 'Penalties period (scorebug)',
+  shootout: 'Shootout title', suddenDeath: 'Shootout sudden death', win: 'Shootout winner (e.g. HIL WIN)',
 };
 
 function renderTheme() {

@@ -2,7 +2,7 @@
 // `undo` is either a label string or a function returning one; actions without it are not undoable.
 import { loadTeam } from './config.js';
 import {
-  PERIODS, PLAYING_PERIODS, eventMinute, elapsedMs, findPlayer, otherSide, yellowCount, isSentOff,
+  PERIODS, PLAYING_PERIODS, eventMinute, shootoutSummary, elapsedMs, findPlayer, otherSide, yellowCount, isSentOff,
 } from '../public/shared/match.js';
 
 const SIDES = ['home', 'away'];
@@ -42,9 +42,10 @@ function lowerThirdFor(state, ctx, fields) {
       : autoHide && secs > 0 ? ctx.now + stingMs + secs * 1000 : 0,
   };
   delete state.graphics.lowerThird.autoHide;
-  // A lower third replaces any full-screen graphic.
+  // A lower third replaces any full-screen graphic (and the shootout lower third).
   state.graphics.board.visible = false;
   state.graphics.lineup.visible = false;
+  state.graphics.shootout.visible = false;
 }
 
 function showEvent(state, ctx, ev, { sting = false } = {}) {
@@ -129,10 +130,12 @@ export const actions = {
     undo: 'New match (reset)',
     run(state) {
       state.events = [];
+      state.shootout = { kicks: [] };
       state.clock = { period: 'PRE', running: false, startedAt: null, accumulatedMs: 0, addedTime: 0 };
       state.graphics.lowerThird.visible = false;
       state.graphics.board.visible = false;
       state.graphics.lineup.visible = false;
+      state.graphics.shootout.visible = false;
     },
   },
 
@@ -372,6 +375,7 @@ export const actions = {
       state.graphics.board = { visible: true, kind: p.kind };
       state.graphics.lineup.visible = false;
       state.graphics.lowerThird.visible = false;
+      state.graphics.shootout.visible = false;
     },
   },
   'board.hide': { run(state) { state.graphics.board.visible = false; } },
@@ -383,6 +387,7 @@ export const actions = {
       state.graphics.lineup = { visible: true, team: s };
       state.graphics.board.visible = false;
       state.graphics.lowerThird.visible = false;
+      state.graphics.shootout.visible = false;
     },
   },
   'lineup.hide': { run(state) { state.graphics.lineup.visible = false; } },
@@ -391,6 +396,39 @@ export const actions = {
       state.graphics.lowerThird.visible = false;
       state.graphics.board.visible = false;
       state.graphics.lineup.visible = false;
+      state.graphics.shootout.visible = false;
+    },
+  },
+
+  // ---------------- penalty shootout ----------------
+  'shootout.kick': {
+    undo: (state, p) => `Penalty ${teamShort(state, p.team)} ${p.scored ? 'scored' : 'missed'}`,
+    run(state, p, ctx) {
+      const s = side(p.team);
+      if (shootoutSummary(state.shootout.kicks).decided) throw new Error('The shootout is already decided. Undo or clear it to log more kicks.');
+      state.shootout.kicks.push({ id: ctx.uid(), team: s, scored: !!p.scored, ts: ctx.now });
+    },
+  },
+  'shootout.removeLast': {
+    undo: 'Remove last penalty',
+    run(state) {
+      if (!state.shootout.kicks.length) throw new Error('No penalties logged yet');
+      state.shootout.kicks.pop();
+    },
+  },
+  'shootout.clear': {
+    undo: 'Clear shootout',
+    run(state) { state.shootout.kicks = []; },
+  },
+  'shootout.show': {
+    run(state, p) {
+      const g = state.graphics.shootout;
+      g.visible = p.visible ?? !g.visible;
+      if (g.visible) {
+        state.graphics.lowerThird.visible = false;
+        state.graphics.board.visible = false;
+        state.graphics.lineup.visible = false;
+      }
     },
   },
 

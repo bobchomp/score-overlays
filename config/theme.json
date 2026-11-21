@@ -32,7 +32,10 @@
     "secondYellow": "SECOND YELLOW",
     "versus": "VS",
     "extraTime": "ET",
-    "penalties": "PENS"
+    "penalties": "PENS",
+    "shootout": "PENALTIES",
+    "suddenDeath": "SUDDEN DEATH",
+    "win": "WIN"
   },
   "timings": {
     "lowerThirdSec": 8,

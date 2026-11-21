@@ -75,7 +75,7 @@ export const DEFAULT_THEME = {
     goal: 'GOAL!', ownGoal: 'OWN GOAL', kickOff: 'KICK OFF', halfTime: 'HALF TIME', fullTime: 'FULL TIME',
     startingXI: 'STARTING XI', substitutes: 'SUBSTITUTES', substitution: 'SUBSTITUTION',
     yellowCard: 'YELLOW CARD', redCard: 'RED CARD', secondYellow: 'SECOND YELLOW', versus: 'VS',
-    extraTime: 'ET', penalties: 'PENS',
+    extraTime: 'ET', penalties: 'PENS', shootout: 'PENALTIES', suddenDeath: 'SUDDEN DEATH', win: 'WIN',
   },
   timings: { lowerThirdSec: 8, stingMs: 2600 },
 };

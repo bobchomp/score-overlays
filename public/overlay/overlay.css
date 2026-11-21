@@ -213,3 +213,38 @@ body.has-full #scorebug { opacity: 0; transform: translateY(-24px); }
 .lu-empty { color: var(--c-muted); font-size: 28px; }
 
 #offline { position: absolute; top: 12px; right: 12px; background: #e3121b; color: #fff; font: 700 24px var(--font-body); padding: 8px 16px; border-radius: 6px; }
+
+/* =========================== PENALTY SHOOTOUT =========================== */
+#shootout { left: 120px; bottom: 96px; }
+.so { filter: drop-shadow(0 10px 22px rgba(0,0,0,.4)); clip-path: inset(0 100% 0 0); transition: clip-path .5s cubic-bezier(.7,0,.3,1); }
+#shootout.show .so { clip-path: inset(-60px -20px -20px 0); transition-delay: .05s; }
+.so-tag {
+  display: inline-block; font-family: var(--font-heading); font-weight: 700; font-size: 26px; letter-spacing: .08em; text-transform: uppercase;
+  background: var(--c-accent); color: var(--c-accent-text); padding: 4px 18px 2px;
+}
+.so-tag.won { background: var(--c-green); color: #fff; }
+.so-rows { display: flex; flex-direction: column; background: var(--c-panel); min-width: 760px; }
+.so-row { display: flex; align-items: center; height: 84px; }
+.so-row + .so-row { border-top: 1px solid rgba(255,255,255,.08); }
+.so-badge { width: 96px; height: 100%; background: var(--tp); display: grid; place-items: center; box-shadow: inset -5px 0 0 var(--ts); flex: 0 0 96px; }
+.so-badge img { max-width: 62px; max-height: 62px; }
+.so-badge span { font-family: var(--font-heading); font-weight: 800; font-size: 30px; color: var(--tt); }
+.so-name { font-family: var(--font-heading); font-weight: 700; font-size: 44px; letter-spacing: .04em; padding: 0 24px; min-width: 150px; text-transform: uppercase; }
+.so-row.next .so-name { color: var(--c-accent); }
+.so-row.lose { opacity: .55; }
+.so-dots { display: flex; gap: 14px; padding: 0 22px; }
+.so-dot { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; }
+.so-dot svg { width: 30px; height: 30px; }
+.so-dot.empty { border: 3px solid rgba(255,255,255,.28); }
+.so-dot.scored { background: var(--c-green); }
+.so-dot.missed { background: var(--c-red); }
+.so-dot.new { animation: dot-in .55s cubic-bezier(.2,.9,.25,1.3); }
+@keyframes dot-in { 0% { transform: scale(.2); opacity: 0; } 60% { transform: scale(1.18); opacity: 1; } 100% { transform: scale(1); } }
+.so-total {
+  margin-left: auto; align-self: stretch; width: 96px; display: grid; place-items: center; background: var(--c-panel-alt);
+  font-family: var(--font-heading); font-weight: 800; font-size: 54px; font-variant-numeric: tabular-nums;
+}
+.so-row.win .so-total { background: var(--c-green); color: #fff; }
+
+/* FT board: shootout result line */
+.board-pens { background: var(--c-accent); color: var(--c-accent-text); font-family: var(--font-heading); font-weight: 700; font-size: 34px; letter-spacing: .04em; text-transform: uppercase; text-align: center; padding: 6px 20px 4px; }

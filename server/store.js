@@ -24,10 +24,12 @@ export function defaultState() {
     teams: { home: emptySide(), away: emptySide() },
     clock: { period: 'PRE', running: false, startedAt: null, accumulatedMs: 0, addedTime: 0 },
     events: [],
+    shootout: { kicks: [] },
     graphics: {
       scorebug: { visible: true, clock: true },
       lowerThird: { visible: false, kind: null, eventId: null, title: '', subtitle: '', team: null, sting: false, shownAt: 0, hideAt: 0, id: null },
       board: { visible: false, kind: 'KO' },
+      shootout: { visible: false },
       lineup: { visible: false, team: 'home' },
     },
     settings: { autoShow: { goal: true, card: true, sub: true }, sting: true, stingAway: false },
@@ -45,7 +47,7 @@ function merge(base, over) {
 }
 
 // The parts of state that undo restores. Graphics visibility is deliberately excluded.
-const UNDO_KEYS = ['match', 'teams', 'clock', 'events'];
+const UNDO_KEYS = ['match', 'teams', 'clock', 'events', 'shootout'];
 
 export class Store extends EventEmitter {
   constructor({ file = STATE_FILE, getTheme = () => ({}), persist = true } = {}) {
