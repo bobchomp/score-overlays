@@ -70,11 +70,13 @@ function renderScorebug() {
   const h = state.teams.home;
   const a = state.teams.away;
   return `<div class="sb-row">
-    ${theme.clubLogo ? `<div class="sb-logo">${logo(theme.clubLogo)}</div>` : ''}
+    ${!h.logo && !a.logo && theme.clubLogo ? `<div class="sb-logo">${logo(theme.clubLogo)}</div>` : ''}
+    ${h.logo ? `<div class="sb-logo">${logo(h.logo)}</div>` : ''}
     <div class="sb-team home" style="${teamVars(h)}"><span class="sb-chip"></span><span class="sb-name">${esc(h.short || 'HOM')}</span></div>
     <div class="sb-score" id="sb-home">0</div>
     <div class="sb-score" id="sb-away">0</div>
     <div class="sb-team away" style="${teamVars(a)}"><span class="sb-name">${esc(a.short || 'AWY')}</span><span class="sb-chip"></span></div>
+    ${a.logo ? `<div class="sb-logo away">${logo(a.logo)}</div>` : ''}
     <div class="sb-clockbox"><span class="sb-time" id="sb-time">00:00</span></div>
     <div class="sb-period" id="sb-period"></div>
     <div class="sb-added" id="sb-added"></div>
