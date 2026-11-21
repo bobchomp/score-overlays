@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Match Overlay</title>
+  <meta name="viewport" content="width=1920, height=1080">
+  <link id="theme-css" rel="stylesheet" href="/theme.css">
+  <link rel="stylesheet" href="/overlay/overlay.css">
+</head>
+<body>
+  <div id="stage">
+    <div id="scorebug" class="gfx"></div>
+    <div id="sting" aria-hidden="true"></div>
+    <div id="lower-third" class="gfx"></div>
+    <div id="board" class="gfx full"></div>
+    <div id="lineup" class="gfx full"></div>
+  </div>
+  <div id="offline" hidden>Graphics server disconnected — reconnecting…</div>
+  <script type="module" src="/overlay/overlay.js"></script>
+</body>
+</html>

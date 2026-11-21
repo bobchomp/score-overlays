@@ -1,0 +1,120 @@
+{
+  "name": "Riverside FC",
+  "short": "RIV",
+  "colors": {
+    "primary": "#0b3d91",
+    "secondary": "#ffffff",
+    "text": "#ffffff"
+  },
+  "logo": "/assets/logos/riverside.svg",
+  "squad": [
+    {
+      "id": "p1",
+      "number": 1,
+      "name": "Sam Carter",
+      "position": "GK"
+    },
+    {
+      "id": "p2",
+      "number": 2,
+      "name": "Leo Hughes",
+      "position": "DEF"
+    },
+    {
+      "id": "p3",
+      "number": 3,
+      "name": "Owen Price",
+      "position": "DEF"
+    },
+    {
+      "id": "p4",
+      "number": 4,
+      "name": "Jack Turner",
+      "position": "DEF"
+    },
+    {
+      "id": "p5",
+      "number": 5,
+      "name": "Ryan Ellis",
+      "position": "DEF"
+    },
+    {
+      "id": "p6",
+      "number": 6,
+      "name": "Callum Reid",
+      "position": "MID"
+    },
+    {
+      "id": "p8",
+      "number": 8,
+      "name": "Ben Walsh",
+      "position": "MID"
+    },
+    {
+      "id": "p10",
+      "number": 10,
+      "name": "Harry Doyle",
+      "position": "MID"
+    },
+    {
+      "id": "p11",
+      "number": 11,
+      "name": "Luke Fisher",
+      "position": "MID"
+    },
+    {
+      "id": "p7",
+      "number": 7,
+      "name": "Tom Marsh",
+      "position": "FWD"
+    },
+    {
+      "id": "p9",
+      "number": 9,
+      "name": "Dan Kerr",
+      "position": "FWD"
+    },
+    {
+      "id": "p13",
+      "number": 13,
+      "name": "Alfie Stone",
+      "position": "GK"
+    },
+    {
+      "id": "p12",
+      "number": 12,
+      "name": "Ollie Grant",
+      "position": "DEF"
+    },
+    {
+      "id": "p14",
+      "number": 14,
+      "name": "Kyle Moss",
+      "position": "DEF"
+    },
+    {
+      "id": "p15",
+      "number": 15,
+      "name": "Jamie Lowe",
+      "position": "MID"
+    },
+    {
+      "id": "p16",
+      "number": 16,
+      "name": "Noah Pike",
+      "position": "MID"
+    },
+    {
+      "id": "p17",
+      "number": 17,
+      "name": "Ethan Shaw",
+      "position": "FWD"
+    },
+    {
+      "id": "p18",
+      "number": 18,
+      "name": "Max Byrne",
+      "position": "FWD"
+    }
+  ]
+}

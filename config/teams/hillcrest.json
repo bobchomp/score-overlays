@@ -1,0 +1,120 @@
+{
+  "name": "Hillcrest Athletic",
+  "short": "HIL",
+  "colors": {
+    "primary": "#c8102e",
+    "secondary": "#111111",
+    "text": "#ffffff"
+  },
+  "logo": "/assets/logos/hillcrest.svg",
+  "squad": [
+    {
+      "id": "p1",
+      "number": 1,
+      "name": "Matt Cole",
+      "position": "GK"
+    },
+    {
+      "id": "p2",
+      "number": 2,
+      "name": "Joe Bannon",
+      "position": "DEF"
+    },
+    {
+      "id": "p3",
+      "number": 3,
+      "name": "Will Ashby",
+      "position": "DEF"
+    },
+    {
+      "id": "p4",
+      "number": 4,
+      "name": "Chris Nolan",
+      "position": "DEF"
+    },
+    {
+      "id": "p5",
+      "number": 5,
+      "name": "Adam Frost",
+      "position": "DEF"
+    },
+    {
+      "id": "p6",
+      "number": 6,
+      "name": "Sean Doherty",
+      "position": "MID"
+    },
+    {
+      "id": "p8",
+      "number": 8,
+      "name": "Liam Barker",
+      "position": "MID"
+    },
+    {
+      "id": "p10",
+      "number": 10,
+      "name": "Josh Kent",
+      "position": "MID"
+    },
+    {
+      "id": "p11",
+      "number": 11,
+      "name": "Rory Hale",
+      "position": "MID"
+    },
+    {
+      "id": "p7",
+      "number": 7,
+      "name": "Zak Morgan",
+      "position": "FWD"
+    },
+    {
+      "id": "p9",
+      "number": 9,
+      "name": "Kai Bennett",
+      "position": "FWD"
+    },
+    {
+      "id": "p13",
+      "number": 13,
+      "name": "Finn Webb",
+      "position": "GK"
+    },
+    {
+      "id": "p12",
+      "number": 12,
+      "name": "Theo Lane",
+      "position": "DEF"
+    },
+    {
+      "id": "p14",
+      "number": 14,
+      "name": "Reece Dunn",
+      "position": "DEF"
+    },
+    {
+      "id": "p15",
+      "number": 15,
+      "name": "Aaron Platt",
+      "position": "MID"
+    },
+    {
+      "id": "p16",
+      "number": 16,
+      "name": "Cole Sutton",
+      "position": "MID"
+    },
+    {
+      "id": "p17",
+      "number": 17,
+      "name": "Jay Ferris",
+      "position": "FWD"
+    },
+    {
+      "id": "p18",
+      "number": 18,
+      "name": "Ryan Haig",
+      "position": "FWD"
+    }
+  ]
+}

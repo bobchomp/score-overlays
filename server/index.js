@@ -1,0 +1,169 @@
+// Entry point: HTTP server (pages + API) and WebSocket hub.
+import http from 'node:http';
+import os from 'node:os';
+import path from 'node:path';
+import express from 'express';
+import { WebSocketServer } from 'ws';
+import { loadEnv, loadTheme, loadObsConfig, themeCss, PUBLIC_DIR } from './config.js';
+import { Store } from './store.js';
+import { ObsLink } from './obs.js';
+import { Demo } from './demo.js';
+import { createAuth } from './auth.js';
+import { createApi } from './api.js';
+import { score } from '../public/shared/match.js';
+
+const env = loadEnv();
+let theme = loadTheme();
+let themeRev = Date.now();
+
+const store = new Store({ getTheme: () => theme });
+const auth = createAuth(env.pin);
+const obs = new ObsLink(env.obs, loadObsConfig());
+const demo = new Demo(store);
+
+function snapshot() {
+  return {
+    state: store.state,
+    score: score(store.state.events),
+    undo: store.undoInfo(),
+    obs: obs.publicStatus(),
+    demo: demo.status(),
+    theme,
+    themeRev,
+    serverTime: Date.now(),
+  };
+}
+
+// ---------------- HTTP ----------------
+const app = express();
+app.disable('x-powered-by');
+app.set('trust proxy', false);
+
+app.get('/theme.css', (req, res) => {
+  res.type('text/css').set('Cache-Control', 'no-cache').send(themeCss(theme));
+});
+
+app.use('/api', createApi({
+  store, obs, auth, demo, snapshot,
+  onThemeChange() { theme = loadTheme(); themeRev = Date.now(); broadcastState(); },
+}));
+
+// Uploaded images can be SVG: never let them run scripts.
+app.use('/assets/logos', (req, res, next) => { res.set('Content-Security-Policy', "script-src 'none'"); next(); });
+app.use(express.static(PUBLIC_DIR, {
+  extensions: ['html'],
+  setHeaders(res, file) {
+    // Pages and scripts must always be fresh after an update; assets can be cached briefly.
+    if (/\.(html|js|css)$/.test(file)) res.set('Cache-Control', 'no-cache');
+  },
+}));
+app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
+
+const server = http.createServer(app);
+
+// ---------------- WebSocket ----------------
+const wss = new WebSocketServer({ server, path: '/ws' });
+
+function send(ws, msg) {
+  if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg));
+}
+
+function broadcastState() {
+  const msg = JSON.stringify({ type: 'state', ...snapshot() });
+  for (const ws of wss.clients) if (ws.readyState === ws.OPEN && ws.hello) ws.send(msg);
+}
+
+wss.on('connection', (ws, req) => {
+  ws.isAlive = true;
+  ws.authed = false;
+  ws.ip = req.socket.remoteAddress;
+  ws.on('pong', () => { ws.isAlive = true; });
+
+  ws.on('message', async raw => {
+    let msg;
+    try { msg = JSON.parse(raw); } catch { return; }
+
+    switch (msg.type) {
+      case 'hello': {
+        ws.hello = true;
+        ws.role = msg.role === 'control' ? 'control' : 'overlay';
+        if (ws.role === 'control') {
+          const r = auth.check(msg.pin, ws.ip);
+          ws.authed = r.ok;
+          send(ws, { type: 'auth', ok: r.ok, error: r.error });
+        }
+        send(ws, { type: 'state', ...snapshot() });
+        break;
+      }
+      case 'ping':
+        send(ws, { type: 'pong', t: msg.t, server: Date.now() });
+        break;
+      case 'action': {
+        if (!ws.authed) { send(ws, { type: 'ack', id: msg.id, ok: false, error: 'PIN required', auth: false }); break; }
+        const r = store.dispatch(msg.action, msg.payload, { source: 'ws' });
+        send(ws, { type: 'ack', id: msg.id, ...r });
+        break;
+      }
+      case 'scene': {
+        if (!ws.authed) { send(ws, { type: 'ack', id: msg.id, ok: false, error: 'PIN required', auth: false }); break; }
+        try { await obs.setScene(msg.scene); send(ws, { type: 'ack', id: msg.id, ok: true }); } catch (err) { send(ws, { type: 'ack', id: msg.id, ok: false, error: err.message }); }
+        break;
+      }
+      case 'demo': {
+        if (!ws.authed) { send(ws, { type: 'ack', id: msg.id, ok: false, error: 'PIN required', auth: false }); break; }
+        try { msg.op === 'start' ? demo.start() : demo.stop(); send(ws, { type: 'ack', id: msg.id, ok: true }); } catch (err) { send(ws, { type: 'ack', id: msg.id, ok: false, error: err.message }); }
+        break;
+      }
+    }
+  });
+});
+
+// Drop dead connections so clients notice and reconnect.
+const heartbeat = setInterval(() => {
+  for (const ws of wss.clients) {
+    if (!ws.isAlive) { ws.terminate(); continue; }
+    ws.isAlive = false;
+    ws.ping();
+  }
+}, 10_000);
+wss.on('close', () => clearInterval(heartbeat));
+
+store.on('change', broadcastState);
+obs.on('status', broadcastState);
+demo.on('change', broadcastState);
+
+// ---------------- start ----------------
+server.listen(env.port, '0.0.0.0', () => {
+  const lan = Object.values(os.networkInterfaces()).flat().filter(i => i && i.family === 'IPv4' && !i.internal).map(i => i.address);
+  const line = '-'.repeat(60);
+  console.log(line);
+  console.log(' Score Overlays running');
+  console.log(`  Overlay (OBS Browser Source):  http://localhost:${env.port}/overlay`);
+  console.log(`  Control dock (OBS Custom Dock): http://localhost:${env.port}/dock`);
+  console.log(`  Match setup:                   http://localhost:${env.port}/setup`);
+  for (const ip of lan) console.log(`  From your phone:               http://${ip}:${env.port}/dock`);
+  if (env.generatedPin) {
+    console.log('');
+    console.log(`  !! CONTROL_PIN is not set in .env. Temporary PIN for this run: ${env.pin}`);
+  }
+  console.log(line);
+  obs.start();
+  if (process.argv.includes('--demo')) {
+    try { demo.start(); } catch (err) { console.warn('[demo]', err.message); }
+  }
+});
+
+server.on('error', err => {
+  if (err.code === 'EADDRINUSE') console.error(`Port ${env.port} is already in use. Is the server already running? Change PORT in .env to use another.`);
+  else console.error(err);
+  process.exit(1);
+});
+
+function shutdown() {
+  console.log('\nSaving and shutting down…');
+  store.save();
+  obs.stop();
+  process.exit(0);
+}
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);

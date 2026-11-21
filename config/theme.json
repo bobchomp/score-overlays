@@ -1,0 +1,46 @@
+{
+  "clubName": "Riverside FC",
+  "clubLogo": "/assets/logos/riverside.svg",
+  "colors": {
+    "panel": "#0f1722",
+    "panelAlt": "#1b2636",
+    "panelText": "#ffffff",
+    "muted": "#9fb0c6",
+    "accent": "#f5c400",
+    "accentText": "#0f1722",
+    "clock": "#ffffff",
+    "clockBg": "#000000",
+    "yellow": "#ffd200",
+    "red": "#e3121b",
+    "green": "#20c060"
+  },
+  "fonts": {
+    "heading": "Barlow Condensed",
+    "body": "Barlow"
+  },
+  "labels": {
+    "goal": "GOAL!",
+    "ownGoal": "OWN GOAL",
+    "kickOff": "KICK OFF",
+    "halfTime": "HALF TIME",
+    "fullTime": "FULL TIME",
+    "startingXI": "STARTING XI",
+    "substitutes": "SUBSTITUTES",
+    "substitution": "SUBSTITUTION",
+    "yellowCard": "YELLOW CARD",
+    "redCard": "RED CARD",
+    "secondYellow": "SECOND YELLOW",
+    "versus": "VS",
+    "extraTime": "ET",
+    "penalties": "PENS"
+  },
+  "timings": {
+    "lowerThirdSec": 8,
+    "stingMs": 2600
+  },
+  "autoShow": {
+    "goal": true,
+    "card": true,
+    "sub": true
+  }
+}
