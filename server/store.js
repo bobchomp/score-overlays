@@ -25,7 +25,7 @@ export function defaultState() {
     clock: { period: 'PRE', running: false, startedAt: null, accumulatedMs: 0, addedTime: 0 },
     events: [],
     graphics: {
-      scorebug: { visible: true },
+      scorebug: { visible: true, clock: true },
       lowerThird: { visible: false, kind: null, eventId: null, title: '', subtitle: '', team: null, sting: false, shownAt: 0, hideAt: 0, id: null },
       board: { visible: false, kind: 'KO' },
       lineup: { visible: false, team: 'home' },

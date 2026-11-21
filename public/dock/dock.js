@@ -348,6 +348,7 @@ document.addEventListener('click', async e => {
     case 'added': return act('clock.addedTime', { minutes: (st.clock.addedTime || 0) + Number(d.delta) });
     case 'added-clear': return act('clock.addedTime', { minutes: 0 });
     case 'tog-scorebug': return act('scorebug.set', { visible: !st.graphics.scorebug.visible });
+    case 'tog-clock': return act('scorebug.clock', { visible: st.graphics.scorebug.clock === false });
     case 'tog-lt': {
       if (st.graphics.lowerThird.visible) return act('lowerThird.hide');
       const last = [...st.events].pop();
@@ -541,6 +542,7 @@ function render() {
 
   // toggles
   setOn('tog-scorebug', g.scorebug.visible);
+  setOn('tog-clock', g.scorebug.clock !== false);
   setOn('tog-lt', g.lowerThird.visible);
   for (const k of ['KO', 'HT', 'FT']) setOn(`tog-${k}`, g.board.visible && g.board.kind === k);
   setOn('tog-lu-home', g.lineup.visible && g.lineup.team === 'home');

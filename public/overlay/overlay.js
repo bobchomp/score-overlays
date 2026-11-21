@@ -289,6 +289,7 @@ function render() {
   const g = state.graphics;
   const full = g.board.visible || g.lineup.visible;
   document.body.classList.toggle('has-full', full);
+  $('scorebug').classList.toggle('no-clock', g.scorebug.clock === false);
 
   gfx.scorebug.set(g.scorebug.visible, `${themeRev}|${teamsKey(state)}|${snap.theme.clubLogo}`, renderScorebug);
   updateScorebugLive();

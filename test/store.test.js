@@ -124,3 +124,13 @@ test('pending goal: score now with sting only, scorer lower third later', () => 
   assert.equal(s.state.graphics.lowerThird.visible, false);
   clearTimeout(s.timer);
 });
+
+test('scorebug clock can be hidden and shown without affecting the clock', () => {
+  const { s, ok } = fresh();
+  ok(s.dispatch('clock.start'));
+  ok(s.dispatch('scorebug.clock', { visible: false }));
+  assert.equal(s.state.graphics.scorebug.clock, false);
+  assert.equal(s.state.clock.running, true);
+  ok(s.dispatch('scorebug.clock', {}));
+  assert.equal(s.state.graphics.scorebug.clock, true);
+});

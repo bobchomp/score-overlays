@@ -334,6 +334,10 @@ export const actions = {
   'scorebug.set': {
     run(state, p) { state.graphics.scorebug.visible = p.visible ?? !state.graphics.scorebug.visible; },
   },
+  /** Show/hide the clock part of the scorebug (time, added time, ET tag). The clock keeps running. */
+  'scorebug.clock': {
+    run(state, p) { state.graphics.scorebug.clock = p.visible ?? !state.graphics.scorebug.clock; },
+  },
   'lowerThird.event': {
     run(state, p, ctx) {
       const ev = state.events.find(e => e.id === p.id);

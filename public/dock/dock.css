@@ -57,9 +57,6 @@ body { padding-bottom: 40px; }
 .tog-split .tog.on:last-child { border-left-color: var(--ui-ok); }
 .tog-split small { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ui-muted); }
 .tog-split .lu-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tog.spare { cursor: default; border-style: dashed; border-color: #262e38; background: transparent; }
-.tog.spare::before { display: none; }
-.tog.spare:active { transform: none; }
 
 /* log grid */
 .log-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }

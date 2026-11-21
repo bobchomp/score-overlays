@@ -38,7 +38,10 @@ img { display: block; }
   30% { transform: scale(1.18); }
   100% { background: var(--c-panel-alt); transform: scale(1); }
 }
-.sb-clockbox { display: flex; align-items: center; background: var(--c-clock-bg); color: var(--c-clock); }
+.sb-clockbox { display: flex; align-items: center; background: var(--c-clock-bg); color: var(--c-clock); max-width: 260px; overflow: hidden; transition: max-width .45s cubic-bezier(.7,0,.3,1), opacity .3s ease; }
+/* clock hidden from the dock: the clock box slides shut; period tag and added time go with it */
+#scorebug.no-clock .sb-clockbox { max-width: 0; opacity: 0; }
+#scorebug.no-clock .sb-period, #scorebug.no-clock .sb-added { display: none !important; }
 .sb-time { font-size: 36px; font-weight: 700; padding: 0 16px; min-width: 116px; text-align: center; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 .sb-period { font-size: 24px; font-weight: 700; padding: 0 12px; height: 100%; display: grid; place-items: center; background: var(--c-accent); color: var(--c-accent-text); min-width: 52px; }
 .sb-added {
