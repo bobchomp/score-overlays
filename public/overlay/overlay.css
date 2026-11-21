@@ -24,7 +24,6 @@ img { display: block; }
 .sb-row { display: flex; height: 58px; }
 .sb-logo { width: 58px; background: var(--c-panel); display: grid; place-items: center; border-right: 1px solid rgba(255,255,255,.08); }
 .sb-logo img { max-width: 44px; max-height: 44px; }
-.sb-logo.away { border-right: 0; border-left: 1px solid rgba(255,255,255,.08); }
 .sb-team { display: flex; align-items: center; background: var(--c-panel); }
 .sb-chip { width: 10px; align-self: stretch; background: var(--tp); box-shadow: inset -3px 0 0 var(--ts); }
 .sb-team.away .sb-chip { box-shadow: inset 3px 0 0 var(--ts); }
