@@ -69,8 +69,10 @@ function renderScorebug() {
   const { state, theme } = snap;
   const h = state.teams.home;
   const a = state.teams.away;
+  // One badge: the home team's crest, or the club badge from the theme if the home team has none.
+  const badge = h.logo || theme.clubLogo;
   return `<div class="sb-row">
-    ${theme.clubLogo ? `<div class="sb-logo">${logo(theme.clubLogo)}</div>` : ''}
+    ${badge ? `<div class="sb-logo">${logo(badge)}</div>` : ''}
     <div class="sb-team home" style="${teamVars(h)}"><span class="sb-chip"></span><span class="sb-name">${esc(h.short || 'HOM')}</span></div>
     <div class="sb-score" id="sb-home">0</div>
     <div class="sb-score" id="sb-away">0</div>
