@@ -73,10 +73,6 @@ body { padding-bottom: 40px; }
 .events .btn { min-height: 32px; padding: 4px 8px; font-size: 12px; }
 .events .empty { color: var(--ui-muted); justify-content: center; }
 
-/* scenes */
-.scenes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.scenes .btn.current { background: #5a1e1e; border-color: var(--ui-bad); }
-.scenes .none { grid-column: 1 / -1; color: var(--ui-muted); font-size: 13px; }
 
 /* goal picker options */
 .opts { display: flex; gap: 6px; margin-bottom: 6px; }
@@ -98,7 +94,6 @@ body { padding-bottom: 40px; }
    Wide: three columns that each fit the screen height. */
 .col { display: contents; }
 #preview-card { order: -1; }
-.scenes-card { order: 1; }
 .options-card { order: 2; }
 .reset-card { order: 3; }
 .reset-btn { width: 100%; min-height: 48px; font-size: 17px; }

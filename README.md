@@ -6,7 +6,7 @@ Browser Source and you run the match from a control dock inside OBS, or from you
 - **Overlay**: scorebug with match clock, half indicator and added time; goal sting with a scorer lower third; yellow,
   red and second-yellow cards; substitutions; kick-off, half-time and full-time boards with goalscorers;
   full-screen lineups; free-text lower thirds.
-- **Control dock**: big buttons, squad pickers (no typing names mid-match), multi-level undo, keyboard shortcuts, OBS scene buttons,
+- **Control dock**: big buttons, squad pickers (no typing names mid-match), multi-level undo, keyboard shortcuts,
   live preview, event export.
 - **Setup screen**: pick teams and lineups, and edit squads, kit colours, badges, theme colours, fonts and every on-screen title.
 - **Reliable**: the server owns all state and saves it to `data/state.json` on every change. Refresh any page, or
@@ -55,8 +55,8 @@ You need OBS Studio 28 or newer, which has obs-websocket built in.
 3. Tick **Enable Authentication**, click **Show Connect Info**, and copy the password into `OBS_PASSWORD` in `.env`.
 4. Restart the score server. The dock's OBS dot turns green.
 
-If OBS isn't reachable, the graphics keep working. The dock shows a yellow warning and scene buttons are switched
-off until OBS comes back; the server retries every 5 seconds.
+If OBS isn't reachable, the graphics keep working. The dock shows a yellow warning and scene switching (the
+`/api/scene/...` endpoint) is unavailable until OBS comes back; the server retries every 5 seconds.
 
 ### Add the overlay (Browser Source)
 1. In your main scene: **+ → Browser**, name it `Match Graphics`.
@@ -104,7 +104,6 @@ Firewall → *Allow an app* → Node.js → Private.
 | Text lower third | Type a title and subtitle (or click a preset, or *From player…*), then **Show**. |
 | Re-show a graphic | **Show** next to any event in *Match events*. |
 | Undo | **⟲ Undo** at the top (it shows what will be undone). It goes back up to 30 steps of goals, cards, subs and clock changes. |
-| OBS scenes | Buttons under *OBS scenes*; the live scene is red. |
 | Reset game | **Reset game…** at the bottom of the dock. Choose *Reset score, events & clock* (keeps teams, lineups and competition) or *Reset EVERYTHING* (clears those too). All graphics are hidden. **Undo** brings it all back if pressed by mistake. |
 
 Lower thirds for goals, cards and subs hide themselves after 8 seconds (change this in *Theme → Timings*). Text lower thirds stay
@@ -137,8 +136,7 @@ Everything can be edited in the **setup screen**; it writes these files for you:
   `position` is `GK`, `DEF`, `MID` or `FWD`. The **Teams** tab can also import a pasted list, one player per line, e.g. `9 Dan Kerr FWD`.
 - `config/theme.json`: club name and badge, all graphic colours, fonts, every on-screen title ("GOAL!", "HALF TIME",
   "STARTING XI"…) and timings. Saving the theme updates the live overlay immediately.
-- `config/obs.json`: `scenes`, an optional list of scene names to show as dock buttons, e.g. `["Main", "Wide", "Half time"]`.
-  When it's empty, every OBS scene gets a button.
+- `config/obs.json`: OBS scene settings (only used by the `/api/scene/...` Stream Deck endpoint).
 - `public/assets/logos/`: badges. Uploads from the setup screen land here; PNG, JPG, SVG, WebP and GIF all work.
 - `public/assets/fonts/<Font Name>/<weight>.woff2`: bundled fonts are Barlow, Barlow Condensed, Oswald, Teko and
   Roboto Condensed (all SIL Open Font License). Drop in another font folder and restart to make it selectable.

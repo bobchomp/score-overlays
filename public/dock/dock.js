@@ -493,7 +493,6 @@ function eventRow(ev, st) {
 }
 
 let lastEventsKey = '';
-let lastScenesKey = '';
 
 function render() {
   if (!snap) return;
@@ -561,15 +560,6 @@ function render() {
     const evs = [...st.events].reverse();
     $('events').innerHTML = evs.length ? evs.map(ev => eventRow(ev, st)).join('') : '<li class="empty">No events yet</li>';
     $('ev-count').textContent = evs.length ? `(${evs.length})` : '';
-  }
-
-  // scenes
-  const scKey = JSON.stringify([obs.connected, obs.buttons, obs.currentScene]);
-  if (scKey !== lastScenesKey) {
-    lastScenesKey = scKey;
-    $('scenes').innerHTML = !obs.connected ? '<div class="none">Scene switching unavailable: OBS not connected.</div>'
-      : obs.buttons.length ? obs.buttons.map(s => `<button class="btn ${s === obs.currentScene ? 'current' : ''}" data-scene="${esc(s)}">${esc(s)}</button>`).join('')
-        : '<div class="none">No scenes found in OBS.</div>';
   }
 
   // exports carry the PIN as a query param because downloads can't send headers
