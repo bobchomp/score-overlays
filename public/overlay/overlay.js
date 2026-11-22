@@ -511,7 +511,7 @@ const sock = new MatchSocket({
     syncThemeCss(msg.themeRev);
     render();
     // Replays are isolated: whatever happens there must not affect the match graphics.
-    try { updateReplayBug(msg); } catch (err) { console.warn('replay bug:', err); }
+    try { updateReplayBug(msg, sock.now()); } catch (err) { console.warn('replay graphics:', err); }
   },
   onStatus(connected) {
     if (params.has('preview')) $('offline').hidden = connected;

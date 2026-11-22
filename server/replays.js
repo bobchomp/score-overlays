@@ -23,6 +23,11 @@ export const DEFAULT_SETTINGS = {
     // two scenes so the stinger plays between every clip (OBS can't transition a scene to itself).
     sceneB: '', playerB: '',
   },
+  // How the replay is wiped in and out:
+  //  'overlay': the graphics overlay plays a full-screen wipe in the home team's colours and OBS
+  //             cuts underneath it (no video file needed; works between every Play-all clip too)
+  //  'obs':     an OBS Stinger transition (your own video), named in names.transition
+  stinger: { mode: 'overlay', cutTransition: 'Cut' },
   lengthSec: 8,          // play the last N seconds of each clip
   slowSpeed: 50,         // speed of the slow-motion button, in %
   saveTimeoutMs: 5000,   // wait this long for ReplayBufferSaved before falling back
@@ -31,6 +36,9 @@ export const DEFAULT_SETTINGS = {
 export const TAGS = ['Goal', 'Chance', 'Save', 'Foul', 'Other'];
 
 const MEDIA_STOP = 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_STOP';
+// Graphics stinger timing (the overlay animation in public/overlay/replay-bug.js uses the same numbers).
+export const WIPE = { totalMs: 1300, switchAtMs: 600 };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 const ABORTED = Symbol('aborted');
 
 function mergeSettings(base, over) {
@@ -74,7 +82,7 @@ export class Replays extends EventEmitter {
     this.queue = Array.isArray(saved.queue) ? saved.queue.filter(c => c && c.id && c.path) : [];
     this.bus = new EventEmitter(); // internal: 'saved', 'ended', 'transitionEnded', 'abort'
     this.bus.setMaxListeners(50);
-    this.status = { saving: false, playing: null, bug: { visible: false, speed: 100 }, bufferActive: null, bufferWarning: null };
+    this.status = { saving: false, playing: null, bug: { visible: false, speed: 100 }, wipe: null, bufferActive: null, bufferWarning: null };
     this.notice = null; // { id, level, text } — latest message for the dock
     this.session = null;
     this.lastSavedPath = null;
@@ -174,6 +182,7 @@ export class Replays extends EventEmitter {
       saving: this.status.saving,
       playing: this.status.playing,
       bug: this.status.bug,
+      wipe: this.status.wipe,
       saveBlocked: this.saveBlockedReason(),
       playBlocked: this.playBlockedReason(),
       notice: this.notice,
@@ -319,9 +328,11 @@ export class Replays extends EventEmitter {
     const transSet = new Set((transitions.transitions || []).map(t => t.transitionName));
     const fix = 'Create it in the main OBS or change the name in Replays → Settings.';
     if (!sceneSet.has(n.scene)) throw new Error(`Scene "${n.scene}" not found in the main OBS. ${fix}`);
-    if (!transSet.has(n.transition)) throw new Error(`Transition "${n.transition}" not found in the main OBS. ${fix}`);
+    const overlayStinger = this.settings.stinger.mode === 'overlay';
+    const needTransition = overlayStinger ? this.settings.stinger.cutTransition : n.transition;
+    if (!transSet.has(needTransition)) throw new Error(`Transition "${needTransition}" not found in the main OBS. ${fix}`);
     const players = [n.player];
-    if (this.useB()) {
+    if (!overlayStinger && this.useB()) {
       if (!sceneSet.has(n.sceneB)) throw new Error(`Scene "${n.sceneB}" (second replay scene) not found in the main OBS. ${fix}`);
       players.push(n.playerB);
     }
@@ -330,7 +341,18 @@ export class Replays extends EventEmitter {
     }
   }
 
-  useB() { const n = this.settings.names; return !!(n.sceneB && n.playerB); }
+  useB() { const n = this.settings.names; return this.settings.stinger.mode !== 'overlay' && !!(n.sceneB && n.playerB); }
+
+  /**
+   * Graphics stinger: start the overlay wipe, and once it covers the screen run `whileCovered`
+   * (cut to a scene and/or load the next clip). Resolves at the switch point.
+   */
+  async wipe(whileCovered) {
+    this.status.wipe = { id: crypto.randomBytes(4).toString('hex'), at: Date.now(), ...WIPE };
+    this.changed();
+    await sleep(WIPE.switchAtMs);
+    await whileCovered();
+  }
 
   /** Wait until the media source has loaded the clip, then jump to the last N seconds. Returns media ms left. */
   async seekToTail(player) {
@@ -379,20 +401,35 @@ export class Replays extends EventEmitter {
           if (clips.length === 1) break;
           continue;
         }
-        const alt = this.useB() && current === n.scene; // alternate scenes so the stinger can play between clips
+        const overlayStinger = this.settings.stinger.mode === 'overlay';
+        const alt = this.useB() && current === n.scene; // OBS stinger: alternate scenes so it can play between clips
         const scene = alt ? n.sceneB : n.scene;
         const player = alt ? n.playerB : n.player;
-        await this.mainObs.call('SetInputSettings', {
+        const loadClip = () => this.mainObs.call('SetInputSettings', {
           inputName: player,
           inputSettings: { is_local_file: true, local_file: clip.path, speed_percent: speed, restart_on_activate: true, close_when_inactive: true },
           overlay: true,
         });
-        if (scene !== current) {
-          await this.mainObs.call('SetCurrentSceneTransition', { transitionName: n.transition });
+        const enterScene = async () => {
           await this.mainObs.call('SetCurrentProgramScene', { sceneName: scene });
           current = scene;
           wentToReplay = true;
           session.onReplay = true;
+        };
+        if (overlayStinger) {
+          if (current !== scene) {
+            await loadClip();
+            await this.mainObs.call('SetCurrentSceneTransition', { transitionName: this.settings.stinger.cutTransition });
+            await this.wipe(enterScene);               // wipe in, cut to REPLAY under it
+          } else {
+            await this.wipe(loadClip);                 // between Play-all clips: swap the clip under the wipe
+          }
+        } else {
+          await loadClip();
+          if (scene !== current) {
+            await this.mainObs.call('SetCurrentSceneTransition', { transitionName: n.transition });
+            await enterScene();
+          }
         }
         const leftMs = await this.seekToTail(player);
         if (!this.status.bug.visible) { this.status.bug = { visible: true, speed }; this.changed(); }
@@ -426,6 +463,11 @@ export class Replays extends EventEmitter {
           }
           if (prevTransition) await this.mainObs.call('SetCurrentSceneTransition', { transitionName: prevTransition });
           await this.mainObs.call('SetCurrentProgramScene', { sceneName: prevScene });
+        } else if (this.settings.stinger.mode === 'overlay') {
+          await this.mainObs.call('SetCurrentSceneTransition', { transitionName: this.settings.stinger.cutTransition });
+          await this.wipe(() => this.mainObs.call('SetCurrentProgramScene', { sceneName: prevScene }));
+          await sleep(WIPE.totalMs - WIPE.switchAtMs);
+          if (prevTransition) await this.mainObs.call('SetCurrentSceneTransition', { transitionName: prevTransition });
         } else {
           await this.mainObs.call('SetCurrentSceneTransition', { transitionName: n.transition });
           const ended = this.waitFor('transitionEnded', 6000).catch(() => null);
@@ -487,6 +529,10 @@ export class Replays extends EventEmitter {
     }
     if (p.names) for (const k of Object.keys(DEFAULT_SETTINGS.names)) if (p.names[k] !== undefined) s.names[k] = str(p.names[k], 100);
     for (const k of ['scene', 'player', 'transition']) if (!s.names[k]) s.names[k] = DEFAULT_SETTINGS.names[k];
+    if (p.stinger) {
+      if (p.stinger.mode !== undefined) s.stinger.mode = p.stinger.mode === 'obs' ? 'obs' : 'overlay';
+      if (p.stinger.cutTransition !== undefined) s.stinger.cutTransition = str(p.stinger.cutTransition, 100) || 'Cut';
+    }
     if (p.lengthSec !== undefined) s.lengthSec = clampInt(p.lengthSec, 2, 60, s.lengthSec);
     if (p.slowSpeed !== undefined) s.slowSpeed = clampInt(p.slowSpeed, 10, 99, s.slowSpeed);
     if (p.shortcuts) {

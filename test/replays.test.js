@@ -34,6 +34,7 @@ async function setup(mockOpts = {}) {
   replays.settings.replay.url = `ws://127.0.0.1:${REPLAY_PORT}`;
   replays.replayObs.url = replays.settings.replay.url;
   replays.settings.lengthSec = 2;
+  replays.settings.stinger.mode = 'obs'; // most tests use an OBS Stinger transition; the graphics wipe is tested separately
   mainObs.start();
   replays.start();
   await until(() => mainObs.status.connected && replays.replayObs.status.connected && replays.status.bufferActive === true, 4000, 'connections');
@@ -222,6 +223,35 @@ test('replay flow', async t => {
     await assert.rejects(p, /timed out/);
     rep.st.emitSaved = true;
     replays.settings.saveTimeoutMs = 5000;
+  });
+
+  await t.test('graphics wipe: overlay wipes, OBS cuts underneath at the switch point, then restores the transition', async () => {
+    replays.settings.stinger.mode = 'overlay';
+    replays.settings.names.sceneB = ''; replays.settings.names.playerB = '';
+    main.st.program = 'Main';
+    main.st.transition = 'Fade';
+    const wipes = [];
+    const onChange = () => { const w = replays.status.wipe; if (w && w.id !== wipes.at(-1)?.id) wipes.push({ ...w }); };
+    replays.on('change', onChange);
+    const mark = main.st.log.length;
+    while (replays.queue.length < 2) replays.addClip(replays.queue[0].path);
+    replays.queue = replays.queue.slice(0, 2);
+    await replays.handle('playAll', { speed: 100 });
+    await idle();
+    replays.off('change', onChange);
+    const log = main.st.log.slice(mark);
+    const switches = log.filter(l => l.requestType === 'SetCurrentProgramScene');
+    assert.deepEqual(switches.map(l => [l.requestData.sceneName, l.transition]), [['REPLAY', 'Cut'], ['Main', 'Cut']], 'cuts only, no OBS stinger');
+    assert.equal(wipes.length, 3, 'wipe in, between the two clips, and out');
+    assert.ok(switches[0].at - wipes[0].at >= 550, 'cut happens while the wipe covers the screen');
+    assert.ok(switches[1].at - wipes[2].at >= 550);
+    const loads = log.filter(l => l.requestType === 'SetInputSettings');
+    assert.equal(loads.length, 2);
+    assert.ok(loads[1].at - wipes[1].at >= 550, 'second clip swapped under the wipe');
+    assert.equal(main.st.program, 'Main');
+    assert.equal(main.st.transition, 'Fade', 'operator transition restored');
+    assert.equal(replays.publicStatus().wipe.id, wipes[2].id, 'overlay gets the wipe in the status');
+    replays.settings.stinger.mode = 'obs';
   });
 
   await t.test('Replay OBS closed: replay buttons blocked with a reason; nothing else affected', async () => {

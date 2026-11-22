@@ -116,12 +116,21 @@ export function initReplays({ sock, toast, promptSheet }) {
       <div class="r-sec">Names in the main OBS</div>
       ${field('Replay scene', 'names.scene', n.scene)}
       ${field('Media source', 'names.player', n.player)}
+      <div class="r-sec">Stinger</div>
+      <label class="check"><input type="radio" name="stinger.mode" value="overlay" ${s.stinger.mode !== 'obs' ? 'checked' : ''}> Graphics wipe in the home team's colours (no video needed)</label>
+      <label class="check"><input type="radio" name="stinger.mode" value="obs" ${s.stinger.mode === 'obs' ? 'checked' : ''}> OBS Stinger transition (your own video)</label>
+      <div class="r-mode r-mode-overlay" ${s.stinger.mode === 'obs' ? 'hidden' : ''}>
+        ${field('Cut transition to use under the wipe', 'stinger.cutTransition', s.stinger.cutTransition, 'placeholder="Cut"')}
+        <p class="hint">The wipe is part of the graphics overlay, so the overlay Browser Source must be in both your live scene and the replay scene (Paste (Reference)), at the top of each.</p>
+      </div>
+      <div class="r-mode r-mode-obs" ${s.stinger.mode === 'obs' ? '' : 'hidden'}>
       ${field('Stinger transition', 'names.transition', n.transition)}
       <details class="r-details"${n.sceneB || n.playerB ? ' open' : ''}><summary>Stinger between clips in "Play all" (optional)</summary>
         <p class="hint">OBS can't transition a scene to itself, so for a stinger between every queued clip, add a second scene with its own media source. Leave blank to cut between clips.</p>
         ${field('Second replay scene', 'names.sceneB', n.sceneB, 'placeholder="e.g. REPLAY 2"')}
         ${field('Its media source', 'names.playerB', n.playerB, 'placeholder="e.g. Replay Player 2"')}
       </details>
+      </div>
       <div class="r-sec">Playback</div>
       <div class="r-grid2">
         ${field('Replay length (seconds)', 'lengthSec', s.lengthSec, 'type="number" min="2" max="60"')}
@@ -150,6 +159,12 @@ export function initReplays({ sock, toast, promptSheet }) {
 
   const form = $('r-settings');
   form.addEventListener('input', () => { settingsDirty = true; });
+  form.addEventListener('change', e => {
+    if (e.target.name !== 'stinger.mode') return;
+    const obs = e.target.value === 'obs';
+    form.querySelector('.r-mode-obs').hidden = !obs;
+    form.querySelector('.r-mode-overlay').hidden = obs;
+  });
   form.addEventListener('click', e => {
     const clear = e.target.closest('[data-clear-pw]');
     if (clear) {
@@ -180,6 +195,7 @@ export function initReplays({ sock, toast, promptSheet }) {
         scene: v('names.scene'), player: v('names.player'), transition: v('names.transition'),
         sceneB: v('names.sceneB'), playerB: v('names.playerB'),
       },
+      stinger: { mode: form.querySelector('[name="stinger.mode"]:checked')?.value || 'overlay', cutTransition: v('stinger.cutTransition') },
       lengthSec: Number(v('lengthSec')),
       slowSpeed: Number(v('slowSpeed')),
       shortcuts: Object.fromEntries(['replay', 'replaySlow', 'mark', 'abort'].map(k => [k, form.elements[`shortcuts.${k}`]?.dataset.key || ''])),
