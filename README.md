@@ -179,6 +179,7 @@ highlights and match reports.
 - **Dock shows "DISCONNECTED"**: the server isn't running. Start `start.bat`. Pages reconnect on their own.
 - **Overlay blank in OBS**: check the URL, then right-click the source → *Interact* or *Refresh*. Make sure the scorebug toggle is on.
 - **"Port 3000 already in use"**: the server is already running in another window, or change `PORT` in `.env`.
+- **"Connection was reset" on localhost:3000** / **"ANOTHER PROGRAM IS USING PORT"** in the server window: on Windows another app can quietly take `127.0.0.1:3000`. Run `netstat -ano | findstr :3000` and `tasklist /FI "PID eq <number>"` to see what it is; close it, or set `PORT=3080` in `.env` and update the URLs in OBS.
 - **OBS warning in the dock**: OBS is closed, WebSocket is disabled, or the password in `.env` is wrong. Graphics still work.
 - **Shortcuts don't work in OBS**: click inside the dock first, so it has keyboard focus.
 - **Reset everything**: stop the server and delete `data/state.json`.

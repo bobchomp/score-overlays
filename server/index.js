@@ -1,6 +1,7 @@
 // Entry point: HTTP server (pages + API) and WebSocket hub.
 import http from 'node:http';
 import os from 'node:os';
+import crypto from 'node:crypto';
 import path from 'node:path';
 import express from 'express';
 import { WebSocketServer } from 'ws';
@@ -58,6 +59,10 @@ const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', false);
 
+// Lets the server check at startup that "localhost:PORT" really reaches *this* process.
+const INSTANCE_ID = crypto.randomBytes(8).toString('hex');
+app.get('/__instance', (req, res) => res.type('text/plain').send(INSTANCE_ID));
+
 app.get('/theme.css', (req, res) => {
   res.type('text/css').set('Cache-Control', 'no-cache').send(themeCss(theme));
 });
@@ -82,6 +87,8 @@ const server = http.createServer(app);
 
 // ---------------- WebSocket ----------------
 const wss = new WebSocketServer({ server, path: '/ws' });
+// ws re-emits the HTTP server's errors (e.g. port in use); server.on('error') below handles them.
+wss.on('error', () => {});
 
 function send(ws, msg) {
   if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg));
@@ -164,10 +171,41 @@ replays.on('change', broadcastState);
 
 // A live show must keep going: log unexpected errors (e.g. from an OBS callback) instead of exiting.
 process.on('unhandledRejection', err => console.error('[server] unhandled rejection (ignored):', err));
-process.on('uncaughtException', err => console.error('[server] unexpected error (ignored):', err));
+process.on('uncaughtException', err => {
+  // A port problem at startup is fatal: say so plainly and stop, rather than sit there doing nothing.
+  if (err?.code === 'EADDRINUSE' || err?.code === 'EACCES') return onListenError(err);
+  console.error('[server] unexpected error (ignored):', err);
+});
 
 // ---------------- start ----------------
+/**
+ * On Windows another program can listen on 127.0.0.1:PORT alongside us on 0.0.0.0:PORT, and it
+ * then receives every "localhost" request (OBS, the dock) while we sit unused. Detect that loudly.
+ */
+function checkLocalhostReachesUs() {
+  const req = http.get({ host: '127.0.0.1', port: env.port, path: '/__instance', timeout: 3000 }, res => {
+    let body = '';
+    res.on('data', c => { body += c; });
+    res.on('end', () => { if (body.trim() !== INSTANCE_ID) warnPortClash(); });
+  });
+  req.on('timeout', () => req.destroy(new Error('timeout')));
+  req.on('error', () => warnPortClash());
+}
+
+function warnPortClash() {
+  const line = '!'.repeat(72);
+  console.error(`\n${line}`);
+  console.error(` ANOTHER PROGRAM IS USING PORT ${env.port} ON THIS PC.`);
+  console.error(` http://localhost:${env.port} goes to that program, not to the score server,`);
+  console.error(' so OBS and the dock will not work.');
+  console.error(` Fix: close the other program, or set PORT=3080 (any free number) in .env,`);
+  console.error(' restart, and update the URLs in OBS. To see what it is, run:');
+  console.error(`   netstat -ano | findstr :${env.port}     then   tasklist /FI "PID eq <number>"`);
+  console.error(`${line}\n`);
+}
+
 server.listen(env.port, '0.0.0.0', () => {
+  setTimeout(checkLocalhostReachesUs, 500);
   const lan = Object.values(os.networkInterfaces()).flat().filter(i => i && i.family === 'IPv4' && !i.internal).map(i => i.address);
   const line = '-'.repeat(60);
   console.log(line);
@@ -188,11 +226,17 @@ server.listen(env.port, '0.0.0.0', () => {
   }
 });
 
-server.on('error', err => {
-  if (err.code === 'EADDRINUSE') console.error(`Port ${env.port} is already in use. Is the server already running? Change PORT in .env to use another.`);
-  else console.error(err);
+function onListenError(err) {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`\nPort ${env.port} is already in use: the score server may already be running in another window,`);
+    console.error('or another program is using it. Close the other window, or set a different PORT in .env.');
+    console.error(`To see what's using it:  netstat -ano | findstr :${env.port}   then   tasklist /FI "PID eq <number>"\n`);
+  } else {
+    console.error(err);
+  }
   process.exit(1);
-});
+}
+server.on('error', onListenError);
 
 function shutdown() {
   console.log('\nSaving and shutting down…');
