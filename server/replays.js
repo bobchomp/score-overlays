@@ -28,6 +28,7 @@ export const DEFAULT_SETTINGS = {
   //             cuts underneath it (no video file needed; works between every Play-all clip too)
   //  'obs':     an OBS Stinger transition (your own video), named in names.transition
   stinger: { mode: 'overlay', cutTransition: 'Cut', durationMs: 1300 }, // durationMs: length of the graphics wipe
+  autoGoalClip: true,    // pressing + GOAL saves a replay into the queue as "<team> <goal number>"
   lengthSec: 8,          // play the last N seconds of each clip
   slowSpeed: 50,         // speed of the slow-motion button, in %
   saveTimeoutMs: 5000,   // wait this long for ReplayBufferSaved before falling back
@@ -284,14 +285,20 @@ export class Replays extends EventEmitter {
   }
 
   /** MARK: save and queue without playing. */
-  async mark(tag = '') {
+  async mark(tag = '', { label, silent = false } = {}) {
     if (this.status.saving) return { ok: false, busy: true, error: 'Already saving a replay…' };
     const file = await this.saveBuffer();
     const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
     const minute = this.safeMinute();
-    const clip = this.addClip(file, { label: `${time}${minute ? ` · ${minute}'` : ''}`, tag });
-    this.say('info', `Marked: ${clip.label}${clip.tag ? ` (${clip.tag})` : ''}`);
+    const clip = this.addClip(file, { label: label || `${time}${minute ? ` · ${minute}'` : ''}`, tag });
+    if (!silent) this.say('info', `Marked: ${clip.label}${clip.tag ? ` (${clip.tag})` : ''}`);
     return { ok: true, clip };
+  }
+
+  /** Goal logged from the Stream Deck / HTTP: save a clip named "<team> <n>". Never throws. */
+  async goalClip(label) {
+    if (!this.settings.autoGoalClip || this.saveBlockedReason()) return null;
+    try { return (await this.mark('Goal', { label, silent: true })).clip || null; } catch { return null; }
   }
 
   playClip(id, speed = 100) {
@@ -546,6 +553,7 @@ export class Replays extends EventEmitter {
       if (p.stinger.cutTransition !== undefined) s.stinger.cutTransition = str(p.stinger.cutTransition, 100) || 'Cut';
       if (p.stinger.durationMs !== undefined) s.stinger.durationMs = wipeTiming(p.stinger.durationMs).totalMs;
     }
+    if (p.autoGoalClip !== undefined) s.autoGoalClip = !!p.autoGoalClip;
     if (p.lengthSec !== undefined) s.lengthSec = clampInt(p.lengthSec, 2, 60, s.lengthSec);
     if (p.slowSpeed !== undefined) s.slowSpeed = clampInt(p.slowSpeed, 10, 99, s.slowSpeed);
     if (p.shortcuts) {
@@ -569,7 +577,7 @@ export class Replays extends EventEmitter {
   async handle(op, args = {}) {
     switch (op) {
       case 'now': return this.replayNow(args.speed === 'slow' ? this.settings.slowSpeed : args.speed);
-      case 'mark': return this.mark(args.tag);
+      case 'mark': return this.mark(args.tag, { label: args.label, silent: !!args.silent });
       case 'abort': return this.abort();
       case 'play': return this.playClip(args.id, args.speed === 'slow' ? this.settings.slowSpeed : args.speed);
       case 'playAll': return this.playAll(args.speed === 'slow' ? this.settings.slowSpeed : args.speed);

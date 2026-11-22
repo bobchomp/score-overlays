@@ -185,7 +185,7 @@ export const actions = {
           showEvent(state, ctx, ev, { sting });
         }
       }
-      return { event: ev };
+      return { event: ev, teamGoals: state.events.filter(e => e.type === 'goal' && e.team === s).length };
     },
   },
 

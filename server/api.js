@@ -41,7 +41,12 @@ export function createApi({ store, obs, auth, demo, onThemeChange, snapshot, rep
   api.post('/undo', (req, res) => run(res, 'undo'));
 
   // ---------- simple endpoints for Stream Deck / Companion ----------
-  api.post('/goal/:team', (req, res) => run(res, 'goal.add', { team: req.params.team, playerId: req.body?.playerId }));
+  api.post('/goal/:team', (req, res) => {
+    const r = store.dispatch('goal.add', { team: req.params.team, playerId: req.body?.playerId }, { source: 'http' });
+    res.status(r.ok ? 200 : 400).json(r);
+    // Save a replay of the goal into the queue (replay problems never affect the goal itself).
+    if (r.ok && replays?.goalClip) replays.goalClip(`${store.state.teams[r.result.event.team].name} ${r.result.teamGoals}`).catch(() => {});
+  });
   api.post('/goal/:team/remove', (req, res) => run(res, 'goal.removeLast', { team: req.params.team }));
   api.post('/clock/:op', (req, res) => {
     const map = { toggle: 'clock.toggle', start: 'clock.start', pause: 'clock.pause', reset: 'clock.reset' };

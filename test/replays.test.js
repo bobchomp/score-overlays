@@ -179,6 +179,17 @@ test('replay flow', async t => {
     assert.match(replays.notice.text, /switched to "Wide"/);
   });
 
+  await t.test('goal clips: named "<team> <n>", tagged Goal, silent, and switchable off', async () => {
+    const notice = replays.notice?.id;
+    const c = await replays.goalClip('Riverside FC 3');
+    assert.equal(c.label, 'Riverside FC 3');
+    assert.equal(c.tag, 'Goal');
+    assert.equal(replays.notice?.id, notice, 'no toast for automatic clips');
+    replays.settings.autoGoalClip = false;
+    assert.equal(await replays.goalClip('Riverside FC 4'), null);
+    replays.settings.autoGoalClip = true;
+  });
+
   await t.test('queue: rename, tag, reorder, delete, and it persists to disk', async () => {
     const [c1, c2] = replays.queue;
     await replays.handle('rename', { id: c1.id, label: 'Great save' });

@@ -174,6 +174,27 @@ async function goalFlow(side, existing = null) {
   let ownGoal = existing?.ownGoal || false;
   let pending = null; // goal already on the scorebug, waiting for its scorer
   const short = s => snap.state.teams[s].short || s.toUpperCase();
+
+  // Save a replay the moment + GOAL is pressed (while the goal is still in the buffer), then name it
+  // "<team> <goal number>" once the goal is logged, or remove it if the popup is closed without one.
+  // Replay problems never get in the way of logging the goal.
+  let clip = null;
+  const rs = snap.replay?.settings;
+  if (!existing && rs?.autoGoalClip && !snap.replay.saveBlocked) {
+    clip = sock.request({ type: 'replay', op: 'mark', args: { tag: 'Goal', label: `${snap.state.teams[side].name || short(side)} goal`, silent: true } })
+      .then(r => (r.ok && r.clip ? r.clip.id : null)).catch(() => null);
+  }
+  const nameClip = async teamGoals => {
+    if (!clip) return;
+    const id = await clip; clip = null;
+    if (id) sock.request({ type: 'replay', op: 'rename', args: { id, label: `${snap.state.teams[side].name || short(side)} ${teamGoals}` } });
+  };
+  const dropClip = async () => {
+    if (!clip) return;
+    const id = await clip; clip = null;
+    if (id) sock.request({ type: 'replay', op: 'delete', args: { id } });
+  };
+
   for (;;) {
     const squadSide = ownGoal ? otherSide(side) : side;
     const top = `${pending ? `<p class="pending-note">✓ Goal ${esc(short(side))} ${esc(pending.minute)}' is on the scorebug. Pick the scorer when you know it to show their name.</p>` : ''}
@@ -205,12 +226,13 @@ async function goalFlow(side, existing = null) {
     }
     if (toggled === 'now') {
       const r = await act('goal.add', { team: side, playerId: null, penalty, ownGoal, pending: true });
-      if (!r.ok) return;
+      if (!r.ok) { dropClip(); return; }
       pending = r.result.event;
+      nameClip(r.result.teamGoals);
       toast(`Goal ${short(side)} ${pending.minute}': pick the scorer when you know`);
       continue;
     }
-    if (pid === undefined) return; // closed with ✕ / Esc (a pending goal stays, scorer unknown)
+    if (pid === undefined) { if (!pending) dropClip(); return; } // closed with ✕ / Esc (a pending goal stays, scorer unknown)
     if (pending) {
       if (pid === null) return;
       const r = await act('event.update', { id: pending.id, playerId: pid, penalty, ownGoal });
@@ -219,7 +241,7 @@ async function goalFlow(side, existing = null) {
       await act('event.update', { id: existing.id, playerId: pid, penalty, ownGoal });
     } else {
       const r = await act('goal.add', { team: side, playerId: pid, penalty, ownGoal });
-      if (r.ok) toast(`Goal ${short(side)} ${r.result.event.minute}'`);
+      if (r.ok) { toast(`Goal ${short(side)} ${r.result.event.minute}'`); nameClip(r.result.teamGoals); } else dropClip();
     }
     return;
   }

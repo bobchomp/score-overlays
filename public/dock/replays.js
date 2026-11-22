@@ -121,6 +121,8 @@ export function initReplays({ sock, toast, promptSheet }) {
         ${field('Its media source', 'names.playerB', n.playerB, 'placeholder="e.g. Replay Player 2"')}
       </details>
       </div>
+      <div class="r-sec">Goals</div>
+      <label class="check"><input type="checkbox" name="autoGoalClip" ${s.autoGoalClip !== false ? 'checked' : ''}> Save a replay for every goal (named e.g. "${esc('Ross County 2')}", tagged Goal)</label>
       <div class="r-sec">Playback</div>
       <div class="r-grid2">
         ${field('Replay length (seconds)', 'lengthSec', s.lengthSec, 'type="number" min="2" max="60"')}
@@ -189,6 +191,7 @@ export function initReplays({ sock, toast, promptSheet }) {
         sceneB: v('names.sceneB'), playerB: v('names.playerB'),
       },
       stinger: { mode: form.querySelector('[name="stinger.mode"]:checked')?.value || 'overlay', cutTransition: v('stinger.cutTransition'), durationMs: Number(v('stinger.durationMs')) || 1300 },
+      autoGoalClip: !!form.elements.autoGoalClip?.checked,
       lengthSec: Number(v('lengthSec')),
       slowSpeed: Number(v('slowSpeed')),
       shortcuts: Object.fromEntries(['replay', 'replaySlow', 'mark', 'abort'].map(k => [k, form.elements[`shortcuts.${k}`]?.dataset.key || ''])),
