@@ -27,11 +27,11 @@ img { display: block; }
 .sb-team { display: flex; align-items: center; background: var(--c-panel); position: relative; }
 /* red cards: rise out of the top edge of the scorebug, above the team name */
 .sb-reds {
-  position: absolute; bottom: 100%; left: 0; right: 0; height: 40px; overflow: hidden;
+  position: absolute; bottom: 100%; left: 0; right: 0; height: 24px; overflow: hidden;
   display: flex; justify-content: center; align-items: flex-end; gap: 6px; pointer-events: none;
 }
 .sb-red {
-  width: 22px; height: 30px; border-radius: 3px; background: var(--c-red);
+  width: 22px; height: 15px; border-radius: 2px 2px 0 0; background: var(--c-red);
   box-shadow: 0 -2px 8px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.18);
   animation: red-up .5s cubic-bezier(.2,.9,.25,1.2) both;
 }
