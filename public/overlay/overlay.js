@@ -75,13 +75,13 @@ function renderScorebug() {
   const badge = h.logo || theme.clubLogo;
   return `<div class="sb-row">
     ${badge ? `<div class="sb-logo">${logo(badge)}</div>` : ''}
-    <div class="sb-team home" style="${teamVars(h)}"><span class="sb-chip"></span><span class="sb-name">${esc(h.short || 'HOM')}</span></div>
+    <div class="sb-team home" style="${teamVars(h)}"><div class="sb-reds" id="sb-reds-home"></div><span class="sb-chip"></span><span class="sb-name">${esc(h.short || 'HOM')}</span></div>
     <div class="sb-scores">
       <div class="sb-score" id="sb-home">${snap.score.home}</div>
       <div class="sb-score" id="sb-away">${snap.score.away}</div>
       <div class="sb-agg" id="sb-agg"><span class="lbl" id="sb-agg-lbl"></span><span class="val" id="sb-agg-val"></span></div>
     </div>
-    <div class="sb-team away" style="${teamVars(a)}"><span class="sb-name">${esc(a.short || 'AWY')}</span><span class="sb-chip"></span></div>
+    <div class="sb-team away" style="${teamVars(a)}"><div class="sb-reds" id="sb-reds-away"></div><span class="sb-name">${esc(a.short || 'AWY')}</span><span class="sb-chip"></span></div>
     <div class="sb-clockgroup">
       <div class="sb-clockbox"><span class="sb-time" id="sb-time">00:00</span></div>
       <div class="sb-period" id="sb-period"></div>
@@ -129,6 +129,12 @@ function updateScorebugLive() {
   }
   lastScore = { ...score };
 
+  // Sent-off players: one red card per dismissal rises out of the scorebug above the team name.
+  for (const side of ['home', 'away']) {
+    const n = state.events.filter(e => e.type === 'card' && e.card === 'red' && e.team === side).length;
+    updateRedCards($(`sb-reds-${side}`), n);
+  }
+
   // Two-legged tie: "AGG 3-2" tab drops down under the scores.
   const agg = aggregate(state);
   const aggEl = $('sb-agg');
@@ -140,6 +146,22 @@ function updateScorebugLive() {
     if (valEl._flipping) valEl._flipTarget = v;
     else if (!valEl.textContent) valEl.textContent = v;
     else if (valEl.textContent !== v) flipTo(valEl, v);
+  }
+}
+
+/** Add/remove red cards so the strip shows exactly n, animating each one up or down. */
+function updateRedCards(el, n) {
+  if (!el) return;
+  const live = [...el.children].filter(c => !c.classList.contains('out'));
+  for (let i = live.length; i < n; i++) {
+    const card = document.createElement('i');
+    card.className = 'sb-red';
+    el.appendChild(card);
+  }
+  for (let i = live.length - 1; i >= n; i--) {
+    const card = live[i];
+    card.classList.add('out');
+    setTimeout(() => card.remove(), 450);
   }
 }
 

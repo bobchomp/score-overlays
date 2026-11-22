@@ -102,6 +102,7 @@ Firewall → *Allow an app* → Node.js → Private.
 | Fix the clock | Nudge ±1s / ±10s / ±1m, or **Set time…** (type what the scorebug should show, e.g. `23:15`). |
 | Added time | Type the minutes in the *Added time* box and press Enter, or use **+ / −**. This shows the "+3" badge; **Clear** removes it. It clears automatically when the period changes. |
 | Cards | Yellow/red per team, then pick the player. A second yellow automatically becomes a red (shown as yellow + red). |
+| Sent off | Every red card (including a second yellow) makes a small red card rise out of the top of the scorebug above that team's name, one per dismissal. Undoing or deleting the card slides it back down. |
 | Subs | Pick the player **off**, then the player **on**. |
 | Hide the clock | **Scorebug clock** in *Graphics* hides the time (plus added time and ET tag) on the scorebug; the clock keeps running, so it's right when you bring it back. |
 | Penalty shootout | Set the period to **PEN** and a *Penalty shootout* tile appears. Tap **✓ Scored** / **✗ Missed** for each kick (the team due next is highlighted). **Penalties lower third** shows/hides the on-screen dots; it updates live. Level after 5 each → a fresh row of 5 marked *Sudden death*. When it's decided the graphic shows the winner, the scorebug reads e.g. `PENS (5-4)`, and the full-time board adds "… win 5–4 on penalties". **Remove last kick** / **Clear shootout** / **Undo** fix mistakes. |
