@@ -10,7 +10,8 @@ import { ObsLink } from './obs.js';
 import { Demo } from './demo.js';
 import { createAuth } from './auth.js';
 import { createApi } from './api.js';
-import { score } from '../public/shared/match.js';
+import { score, eventMinute, PLAYING_PERIODS } from '../public/shared/match.js';
+import { Replays, disabledReplays } from './replays.js';
 
 const env = loadEnv();
 let theme = loadTheme();
@@ -18,8 +19,25 @@ let themeRev = Date.now();
 
 const store = new Store({ getTheme: () => theme });
 const auth = createAuth(env.pin);
-const obs = new ObsLink(env.obs, loadObsConfig());
+const obs = new ObsLink(env.obs, loadObsConfig(), 'Main OBS');
 const demo = new Demo(store);
+
+// Replays are isolated: if the module can't start, graphics carry on and the dock shows why.
+let replays;
+try {
+  replays = new Replays({
+    mainObs: obs,
+    mainDefault: { url: `ws://${env.obs.host}:${env.obs.port}`, password: env.obs.password },
+    getMinute: () => (PLAYING_PERIODS.includes(store.state.clock.period) ? eventMinute(store.state.clock, store.state.match, Date.now()) : null),
+  });
+} catch (err) {
+  console.error('[replays] disabled:', err);
+  replays = disabledReplays(err.message);
+}
+
+function replayStatus() {
+  try { return replays.publicStatus(); } catch (err) { return { disabled: err.message, queue: [], bug: { visible: false } }; }
+}
 
 function snapshot() {
   return {
@@ -28,6 +46,7 @@ function snapshot() {
     undo: store.undoInfo(),
     obs: obs.publicStatus(),
     demo: demo.status(),
+    replay: replayStatus(),
     theme,
     themeRev,
     serverTime: Date.now(),
@@ -44,7 +63,7 @@ app.get('/theme.css', (req, res) => {
 });
 
 app.use('/api', createApi({
-  store, obs, auth, demo, snapshot,
+  store, obs, auth, demo, snapshot, replays,
   onThemeChange() { theme = loadTheme(); themeRev = Date.now(); broadcastState(); },
 }));
 
@@ -109,6 +128,16 @@ wss.on('connection', (ws, req) => {
         try { await obs.setScene(msg.scene); send(ws, { type: 'ack', id: msg.id, ok: true }); } catch (err) { send(ws, { type: 'ack', id: msg.id, ok: false, error: err.message }); }
         break;
       }
+      case 'replay': {
+        if (!ws.authed) { send(ws, { type: 'ack', id: msg.id, ok: false, error: 'PIN required', auth: false }); break; }
+        try {
+          const r = await replays.handle(msg.op, msg.args || {});
+          send(ws, { type: 'ack', id: msg.id, ok: r?.ok !== false, ...(r && typeof r === 'object' ? r : {}) });
+        } catch (err) {
+          send(ws, { type: 'ack', id: msg.id, ok: false, error: err.message });
+        }
+        break;
+      }
       case 'demo': {
         if (!ws.authed) { send(ws, { type: 'ack', id: msg.id, ok: false, error: 'PIN required', auth: false }); break; }
         try { msg.op === 'start' ? demo.start() : demo.stop(); send(ws, { type: 'ack', id: msg.id, ok: true }); } catch (err) { send(ws, { type: 'ack', id: msg.id, ok: false, error: err.message }); }
@@ -131,6 +160,11 @@ wss.on('close', () => clearInterval(heartbeat));
 store.on('change', broadcastState);
 obs.on('status', broadcastState);
 demo.on('change', broadcastState);
+replays.on('change', broadcastState);
+
+// A live show must keep going: log unexpected errors (e.g. from an OBS callback) instead of exiting.
+process.on('unhandledRejection', err => console.error('[server] unhandled rejection (ignored):', err));
+process.on('uncaughtException', err => console.error('[server] unexpected error (ignored):', err));
 
 // ---------------- start ----------------
 server.listen(env.port, '0.0.0.0', () => {
@@ -148,6 +182,7 @@ server.listen(env.port, '0.0.0.0', () => {
   }
   console.log(line);
   obs.start();
+  try { replays.start(); } catch (err) { console.error('[replays] could not start:', err.message); }
   if (process.argv.includes('--demo')) {
     try { demo.start(); } catch (err) { console.warn('[demo]', err.message); }
   }
@@ -163,6 +198,7 @@ function shutdown() {
   console.log('\nSaving and shutting down…');
   store.save();
   obs.stop();
+  try { replays.stop(); } catch {}
   process.exit(0);
 }
 process.on('SIGINT', shutdown);

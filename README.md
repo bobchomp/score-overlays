@@ -8,6 +8,7 @@ Browser Source and you run the match from a control dock inside OBS, or from you
   full-screen lineups; free-text lower thirds.
 - **Control dock**: big buttons, squad pickers (no typing names mid-match), multi-level undo, keyboard shortcuts,
   live preview, event export.
+- **Replays** (optional): a *Replays* tab in the dock does instant replays from a second OBS: replay at 100% or slow-mo, mark clips, and keep a queue for half-time packages. See **[REPLAYS.md](REPLAYS.md)** for the OBS setup.
 - **Setup screen**: pick teams and lineups, and edit squads, kit colours, badges, theme colours, fonts and every on-screen title.
 - **Reliable**: the server owns all state and saves it to `data/state.json` on every change. Refresh any page, or
   restart the server, and everything comes back, clock included. The clock is timestamp-based, so it never drifts.
@@ -186,7 +187,7 @@ highlights and match reports.
 
 ```
 server/      index.js (HTTP + WebSocket), store.js (state, undo, persistence), actions.js (match logic),
-             obs.js (obs-websocket), api.js (REST), demo.js, export.js, auth.js, config.js
+             obs.js (obs-websocket), replays.js (replay module, see REPLAYS.md), api.js (REST), demo.js, export.js, auth.js, config.js
 public/      overlay/ (Browser Source), dock/ (control panel), setup/ (setup screen),
              shared/ (clock maths + socket client used by server and browsers), assets/ (fonts, logos)
 config/      theme.json, obs.json, teams/*.json

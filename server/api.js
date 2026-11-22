@@ -6,7 +6,7 @@ import {
 import { pinFromRequest } from './auth.js';
 import { exportJson, exportCsv } from './export.js';
 
-export function createApi({ store, obs, auth, demo, onThemeChange, snapshot }) {
+export function createApi({ store, obs, auth, demo, onThemeChange, snapshot, replays }) {
   const api = express.Router();
   api.use(express.json({ limit: '1mb' }));
 
@@ -59,6 +59,16 @@ export function createApi({ store, obs, auth, demo, onThemeChange, snapshot }) {
     run(res, 'shootout.kick', { team: req.params.team, scored: req.params.result === 'scored' });
   });
   api.post('/pens/toggle', (req, res) => run(res, 'shootout.show', {}));
+  // replays (Stream Deck / Companion)
+  const replay = (op, args) => async (req, res) => {
+    try { const r = await replays.handle(op, typeof args === 'function' ? args(req) : args); res.status(r?.ok === false ? 409 : 200).json({ ok: r?.ok !== false, ...(r || {}) }); }
+    catch (err) { res.status(400).json({ ok: false, error: err.message }); }
+  };
+  api.post('/replay/now', replay('now', { speed: 100 }));
+  api.post('/replay/slow', replay('now', { speed: 'slow' }));
+  api.post('/replay/mark', replay('mark', req => ({ tag: req.body?.tag || req.query.tag })));
+  api.post('/replay/abort', replay('abort'));
+  api.post('/replay/play-all', replay('playAll', { speed: 100 }));
   api.post('/hide-all', (req, res) => run(res, 'graphics.hideAll'));
   api.post('/scene/:name', async (req, res) => {
     try { await obs.setScene(req.params.name); res.json({ ok: true }); } catch (err) { res.status(400).json({ ok: false, error: err.message }); }

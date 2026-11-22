@@ -3,15 +3,21 @@ import {
   displayMs, formatClock, findPlayer, otherSide, onPitch, yellowCount, isSentOff, PLAYING_PERIODS, shootoutSummary, aggregate,
 } from '/shared/match.js';
 import { getPin, setPin, clearPin } from '/shared/pin.js';
+import { initReplays } from '/dock/replays.js';
 
 const $ = id => document.getElementById(id);
 let snap = null;
+let replaysUi = null; // Replays tab (isolated: errors there never stop match control)
 
 // ------------------------------------------------------------------ socket + PIN
 const sock = new MatchSocket({
   role: 'control',
   pin: getPin(),
-  onState(msg) { snap = msg; render(); },
+  onState(msg) {
+    snap = msg;
+    render();
+    try { replaysUi?.render(msg); } catch (err) { console.warn('replays tab:', err); }
+  },
   onStatus(connected) {
     $('banner-offline').hidden = connected;
     $('dot-server').classList.toggle('on', connected);
@@ -26,6 +32,7 @@ const sock = new MatchSocket({
 });
 
 if (!getPin()) $('pin-screen').hidden = false;
+try { replaysUi = initReplays({ sock, toast, promptSheet }); } catch (err) { console.warn('replays tab failed to start:', err); }
 $('pin-form').addEventListener('submit', e => {
   e.preventDefault();
   const pin = $('pin-input').value.trim();

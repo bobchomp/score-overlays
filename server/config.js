@@ -76,7 +76,7 @@ export const DEFAULT_THEME = {
     startingXI: 'STARTING XI', substitutes: 'SUBSTITUTES', substitution: 'SUBSTITUTION',
     yellowCard: 'YELLOW CARD', redCard: 'RED CARD', secondYellow: 'SECOND YELLOW', versus: 'VS',
     extraTime: 'ET', penalties: 'PENS', shootout: 'PENALTIES', suddenDeath: 'SUDDEN DEATH', win: 'WIN',
-    aggregate: 'AGG',
+    aggregate: 'AGG', replay: 'REPLAY', slowMo: 'SLOW MO',
   },
   timings: { lowerThirdSec: 8, stingMs: 2600 },
 };

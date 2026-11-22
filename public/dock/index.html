@@ -8,6 +8,7 @@
   <link id="theme-css" rel="stylesheet" href="/theme.css">
   <link rel="stylesheet" href="/shared/ui.css">
   <link rel="stylesheet" href="/dock/dock.css">
+  <link rel="stylesheet" href="/dock/replays.css">
 </head>
 <body>
   <!-- Connection banners -->
@@ -25,6 +26,15 @@
     <span class="dot" id="dot-obs" title="OBS"></span>
     <span class="top-title" id="top-title">Match Control</span>
     <button class="btn undo" id="btn-undo" data-act="undo" title="Undo (Ctrl+Z)" disabled>⟲ Undo</button>
+    <nav class="dock-tabs" role="tablist">
+      <button class="dock-tab active" data-dock-tab="match" role="tab">Match</button>
+      <button class="dock-tab" data-dock-tab="replays" role="tab">Replays <span class="tab-dot" id="tab-replay-dot"></span></button>
+    </nav>
+    <!-- Always visible (both tabs) while a replay is on air -->
+    <div class="replay-onair" id="replay-onair" hidden>
+      <span class="onair-dot"></span><span class="onair-text" id="replay-onair-text">REPLAY ON AIR</span>
+      <button class="btn danger" data-replay="abort">■ ABORT / BACK TO LIVE</button>
+    </div>
   </header>
 
   <main id="app">
@@ -193,6 +203,42 @@
           <button class="btn small ghost" data-act="lock">Lock (forget PIN)</button>
         </div>
         <p class="hint">Shortcuts: <kbd>G</kbd> home goal · <kbd>H</kbd> away goal · <kbd>Space</kbd> start/pause · <kbd>Esc</kbd> hide all · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo</p>
+      </section>
+    </div>
+  </main>
+
+  <!-- ================= REPLAYS TAB (rendered by /dock/replays.js) ================= -->
+  <main id="replays-app" hidden>
+    <div class="rcol rcol-a">
+      <section class="card r-actions">
+        <div class="r-status" id="r-status"></div>
+        <div class="r-blocked" id="r-blocked" hidden></div>
+        <div class="r-big">
+          <button class="btn r-btn r-now" data-replay="now" data-speed="100">REPLAY <small>100%</small></button>
+          <button class="btn r-btn r-slow" data-replay="now" data-speed="slow">REPLAY <small id="r-slow-label">50%</small></button>
+        </div>
+        <button class="btn r-btn r-mark" data-replay="mark">● MARK</button>
+        <div class="r-tags" id="r-tags"></div>
+        <button class="btn r-btn r-abort" data-replay="abort" id="r-abort">■ ABORT / BACK TO LIVE</button>
+        <p class="hint" id="r-keys"></p>
+      </section>
+      <section class="card r-notice-card" id="r-notice-card" hidden><div id="r-notice"></div></section>
+    </div>
+    <div class="rcol rcol-b">
+      <section class="card r-queue-card">
+        <h2>Queue <span class="muted" id="r-queue-count"></span></h2>
+        <div class="row r-queue-actions">
+          <button class="btn primary grow" data-replay="playAll" data-speed="100">▶ Play all</button>
+          <button class="btn grow" data-replay="playAll" data-speed="slow" id="r-playall-slow">▶ Play all slow</button>
+          <button class="btn small danger-ghost" data-replay="clearQueue">Clear</button>
+        </div>
+        <ul class="r-queue" id="r-queue"></ul>
+      </section>
+    </div>
+    <div class="rcol rcol-c">
+      <section class="card r-settings-card">
+        <h2>Replay settings</h2>
+        <form id="r-settings" autocomplete="off"></form>
       </section>
     </div>
   </main>

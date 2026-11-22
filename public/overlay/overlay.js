@@ -1,4 +1,5 @@
 import { MatchSocket, syncThemeCss, esc } from '/shared/socket.js';
+import { updateReplayBug } from '/overlay/replay-bug.js';
 import {
   displayMs, formatClock, findPlayer, otherSide, scorers, shootoutSummary, aggregate, POSITION_ORDER, POSITION_NAMES, PLAYING_PERIODS,
 } from '/shared/match.js';
@@ -509,6 +510,8 @@ const sock = new MatchSocket({
     snap = msg;
     syncThemeCss(msg.themeRev);
     render();
+    // Replays are isolated: whatever happens there must not affect the match graphics.
+    try { updateReplayBug(msg); } catch (err) { console.warn('replay bug:', err); }
   },
   onStatus(connected) {
     if (params.has('preview')) $('offline').hidden = connected;

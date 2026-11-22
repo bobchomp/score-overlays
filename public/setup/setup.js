@@ -361,7 +361,7 @@ const LABEL_NAMES = {
   startingXI: 'Lineup title', substitutes: 'Lineup subs title', substitution: 'Substitution tag', yellowCard: 'Yellow card tag',
   redCard: 'Red card tag', secondYellow: 'Second yellow tag', versus: 'Kick-off "VS"', extraTime: 'Extra time period', penalties: 'Penalties period (scorebug)',
   shootout: 'Shootout title', suddenDeath: 'Shootout sudden death', win: 'Shootout winner (e.g. HIL WIN)',
-  aggregate: 'Aggregate tab (e.g. AGG)',
+  aggregate: 'Aggregate tab (e.g. AGG)', replay: 'Replay bug', slowMo: 'Replay bug slow-motion tag',
 };
 
 function renderTheme() {
