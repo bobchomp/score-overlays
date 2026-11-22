@@ -1,6 +1,6 @@
 # Replays
 
-The **Replays** tab in the control dock does instant replays using a second OBS. It saves the last few seconds
+The **Replays** section of the control dock (on the **Live** tab, next to the match controls) does instant replays using a second OBS. It saves the last few seconds
 of the clean camera, plays them in the main OBS behind a stinger with a **REPLAY** bug on screen, and then
 returns to live on its own.
 
@@ -39,7 +39,7 @@ the replay buttons grey out with the reason, and the scorebug, lower thirds and 
 
 ## 2. Set up the main OBS
 
-Create these yourself. The names can be changed in **Replays → Settings**; these are the defaults:
+Create these yourself. The names can be changed in the dock under **Settings → Replay settings**; these are the defaults:
 
 | What | Default name | Notes |
 |---|---|---|
@@ -65,14 +65,14 @@ and enter both names under *Stinger between clips*. Without them, Play all cuts 
 
 ## 3. Connect the dock
 
-Open the dock's **Replays** tab, then **Replay settings**:
+Open the dock's **Settings** tab and find **Replay settings**:
 
 - **Main OBS**: leave the URL blank to use `OBS_HOST` / `OBS_PORT` / `OBS_PASSWORD` from `.env`, or enter
   another address and password.
 - **Replay OBS**: `ws://127.0.0.1:4456` and the password from step 1.4.
 - Replay length (default **8 s**), slow-motion speed (default **50 %**) and keyboard shortcuts.
 
-**Save settings.** The dots at the top of the tab turn green: **Main OBS**, **Replay OBS**, and **Buffer: running**.
+**Save settings.** The dots at the top of the Replays section (Live tab) turn green: **Main OBS**, **Replay OBS**, and **Buffer: running**.
 Both connections retry every 5 seconds, so restarting either OBS reconnects on its own.
 
 Settings and the queue are stored in `data/replays.json` on the server PC. The passwords in it are plain
@@ -100,7 +100,7 @@ Safety rules:
 
 ### Keyboard shortcuts (dock focused, either tab)
 Defaults: **R** replay 100 % · **T** replay slow-mo · **M** mark · **B** abort. Change them under Settings: click
-the box and press a key (Backspace clears it). G, H, Space, Esc and Z are reserved for the Match tab.
+the box and press a key (Backspace clears it). G, H, Space, Esc and Z are reserved for the match controls.
 
 ### Stream Deck / Companion
 POST with the PIN (`X-Pin` header or `?pin=`):

@@ -27,19 +27,19 @@
     <span class="top-title" id="top-title">Match Control</span>
     <button class="btn undo" id="btn-undo" data-act="undo" title="Undo (Ctrl+Z)" disabled>⟲ Undo</button>
     <nav class="dock-tabs" role="tablist">
-      <button class="dock-tab active" data-dock-tab="match" role="tab">Match</button>
-      <button class="dock-tab" data-dock-tab="replays" role="tab">Replays <span class="tab-dot" id="tab-replay-dot"></span></button>
+      <button class="dock-tab active" data-dock-tab="live" role="tab">Live</button>
+      <button class="dock-tab" data-dock-tab="settings" role="tab">Settings</button>
     </nav>
-    <!-- Always visible (both tabs) while a replay is on air -->
+    <!-- Always visible while a replay is on air -->
     <div class="replay-onair" id="replay-onair" hidden>
       <span class="onair-dot"></span><span class="onair-text" id="replay-onair-text">REPLAY ON AIR</span>
       <button class="btn danger" data-replay="abort">■ ABORT / BACK TO LIVE</button>
     </div>
   </header>
 
+  <!-- ================= LIVE TAB: everything used during a match ================= -->
   <main id="app">
     <div class="col col-a">
-      <!-- SCORE -->
       <section class="card score-card">
         <div class="score-grid">
           <div class="team-col" data-side="home">
@@ -57,7 +57,6 @@
         </div>
         <div class="agg-line" id="agg-line" hidden></div>
       </section>
-      <!-- CLOCK -->
       <section class="card clock-card">
         <div class="clock-row">
           <div class="clock" id="clock">00:00</div>
@@ -94,7 +93,6 @@
           <button class="btn small ghost" data-act="added-clear">Clear</button>
         </div>
       </section>
-      <!-- PENALTIES (only shown while the period is PEN) -->
       <section class="card pens-card" id="pens-card" hidden>
         <h2>Penalty shootout <span class="pens-status" id="pens-status"></span></h2>
         <button class="tog" id="tog-pens" data-act="pens-toggle">Penalties lower third</button>
@@ -117,16 +115,9 @@
           <button class="btn small danger-ghost" data-act="pen-clear">Clear shootout</button>
         </div>
       </section>
-      <!-- RESET -->
-      <section class="card reset-card">
-        <h2>Reset game</h2>
-        <button class="btn danger reset-btn" data-act="reset-game">Reset game…</button>
-        <p class="hint">Clears score, events &amp; clock and hides graphics. You choose whether to keep teams &amp; lineups. Undo works afterwards.</p>
-      </section>
     </div>
     <div class="col col-b">
-      <!-- GRAPHICS -->
-      <section class="card">
+      <section class="card graphics-card">
         <h2>Graphics</h2>
         <div class="toggles">
           <button class="tog" id="tog-scorebug" data-act="tog-scorebug">Scorebug</button>
@@ -142,8 +133,7 @@
           <button class="tog hide-all" data-act="hide-all">Hide all <kbd>Esc</kbd></button>
         </div>
       </section>
-      <!-- LOG CARDS / SUBS -->
-      <section class="card">
+      <section class="card cards-card">
         <h2>Cards &amp; subs</h2>
         <div class="log-grid">
           <button class="btn log" data-act="card" data-side="home" data-card="yellow"><i class="ci yellow"></i><span class="lbl-home">HOME</span></button>
@@ -154,8 +144,7 @@
           <button class="btn log" data-act="sub" data-side="away"><span class="sub-ico">⇅</span><span class="lbl-away">AWAY</span> sub</button>
         </div>
       </section>
-      <!-- FREE TEXT -->
-      <section class="card">
+      <section class="card text-card">
         <h2>Lower third (text)</h2>
         <div class="presets" id="presets"></div>
         <input id="lt-title" class="input" placeholder="Title (e.g. Man of the Match)" maxlength="80">
@@ -174,17 +163,46 @@
         </div>
       </section>
     </div>
-    <div class="col col-c">
-      <!-- PREVIEW -->
-      <section class="card" id="preview-card" hidden>
-        <div class="preview-wrap" id="preview-wrap"><iframe id="preview" title="Overlay preview" tabindex="-1"></iframe></div>
+    <!-- Replays (rendered by /dock/replays.js) -->
+    <div class="col col-r">
+      <section class="card r-actions">
+        <h2>Replays</h2>
+        <div class="r-status" id="r-status"></div>
+        <div class="r-blocked" id="r-blocked" hidden></div>
+        <div class="r-big">
+          <button class="btn r-btn r-now" data-replay="now" data-speed="100">REPLAY <small>100%</small></button>
+          <button class="btn r-btn r-slow" data-replay="now" data-speed="slow">REPLAY <small id="r-slow-label">50%</small></button>
+        </div>
+        <button class="btn r-btn r-mark" data-replay="mark">● MARK</button>
+        <div class="r-tags" id="r-tags"></div>
+        <button class="btn r-btn r-abort" data-replay="abort" id="r-abort">■ ABORT / BACK TO LIVE</button>
+        <p class="hint" id="r-keys"></p>
       </section>
-      <!-- EVENTS -->
+      <section class="card r-notice-card" id="r-notice-card" hidden><div id="r-notice"></div></section>
+      <section class="card r-queue-card">
+        <h2>Queue <span class="muted" id="r-queue-count"></span></h2>
+        <div class="row r-queue-actions">
+          <button class="btn primary grow" data-replay="playAll" data-speed="100">▶ Play all</button>
+          <button class="btn grow" data-replay="playAll" data-speed="slow" id="r-playall-slow">▶ Play all slow</button>
+          <button class="btn small danger-ghost" data-replay="clearQueue">Clear</button>
+        </div>
+        <ul class="r-queue" id="r-queue"></ul>
+      </section>
+    </div>
+    <div class="col col-e">
       <section class="card events-card">
         <h2>Match events <span class="muted" id="ev-count"></span></h2>
         <ul class="events" id="events"></ul>
       </section>
-      <!-- MORE -->
+    </div>
+  </main>
+
+  <!-- ================= SETTINGS TAB: set once / rarely ================= -->
+  <main id="settings-app" hidden>
+    <div class="scol">
+      <section class="card" id="preview-card" hidden>
+        <div class="preview-wrap" id="preview-wrap"><iframe id="preview" title="Overlay preview" tabindex="-1"></iframe></div>
+      </section>
       <section class="card options-card">
         <h2>Options</h2>
         <label class="check"><input type="checkbox" id="opt-show-goal"> Auto-show goal graphic</label>
@@ -204,38 +222,13 @@
         </div>
         <p class="hint">Shortcuts: <kbd>G</kbd> home goal · <kbd>H</kbd> away goal · <kbd>Space</kbd> start/pause · <kbd>Esc</kbd> hide all · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo</p>
       </section>
-    </div>
-  </main>
-
-  <!-- ================= REPLAYS TAB (rendered by /dock/replays.js) ================= -->
-  <main id="replays-app" hidden>
-    <div class="rcol rcol-a">
-      <section class="card r-actions">
-        <div class="r-status" id="r-status"></div>
-        <div class="r-blocked" id="r-blocked" hidden></div>
-        <div class="r-big">
-          <button class="btn r-btn r-now" data-replay="now" data-speed="100">REPLAY <small>100%</small></button>
-          <button class="btn r-btn r-slow" data-replay="now" data-speed="slow">REPLAY <small id="r-slow-label">50%</small></button>
-        </div>
-        <button class="btn r-btn r-mark" data-replay="mark">● MARK</button>
-        <div class="r-tags" id="r-tags"></div>
-        <button class="btn r-btn r-abort" data-replay="abort" id="r-abort">■ ABORT / BACK TO LIVE</button>
-        <p class="hint" id="r-keys"></p>
-      </section>
-      <section class="card r-notice-card" id="r-notice-card" hidden><div id="r-notice"></div></section>
-    </div>
-    <div class="rcol rcol-b">
-      <section class="card r-queue-card">
-        <h2>Queue <span class="muted" id="r-queue-count"></span></h2>
-        <div class="row r-queue-actions">
-          <button class="btn primary grow" data-replay="playAll" data-speed="100">▶ Play all</button>
-          <button class="btn grow" data-replay="playAll" data-speed="slow" id="r-playall-slow">▶ Play all slow</button>
-          <button class="btn small danger-ghost" data-replay="clearQueue">Clear</button>
-        </div>
-        <ul class="r-queue" id="r-queue"></ul>
+      <section class="card reset-card">
+        <h2>Reset game</h2>
+        <button class="btn danger reset-btn" data-act="reset-game">Reset game…</button>
+        <p class="hint">Clears score, events &amp; clock and hides graphics. You choose whether to keep teams &amp; lineups. Undo works afterwards.</p>
       </section>
     </div>
-    <div class="rcol rcol-c">
+    <div class="scol">
       <section class="card r-settings-card">
         <h2>Replay settings</h2>
         <form id="r-settings" autocomplete="off"></form>

@@ -33,6 +33,18 @@ const sock = new MatchSocket({
 
 if (!getPin()) $('pin-screen').hidden = false;
 try { replaysUi = initReplays({ sock, toast, promptSheet }); } catch (err) { console.warn('replays tab failed to start:', err); }
+
+// ------------------------------------------------------------------ tabs: Live (match + replays) / Settings
+function setTab(tab) {
+  if (tab !== 'settings') tab = 'live';
+  document.querySelectorAll('[data-dock-tab]').forEach(b => b.classList.toggle('active', b.dataset.dockTab === tab));
+  $('app').hidden = tab !== 'live';
+  $('settings-app').hidden = tab !== 'settings';
+  try { localStorage.setItem('dock-tab', tab); } catch {}
+  fitPreview();
+}
+document.querySelectorAll('[data-dock-tab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.dockTab)));
+try { setTab(localStorage.getItem('dock-tab') || 'live'); } catch { setTab('live'); }
 $('pin-form').addEventListener('submit', e => {
   e.preventDefault();
   const pin = $('pin-input').value.trim();

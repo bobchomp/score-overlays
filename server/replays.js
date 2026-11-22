@@ -332,7 +332,7 @@ export class Replays extends EventEmitter {
     ]);
     const sceneSet = new Set((scenes.scenes || []).map(s => s.sceneName));
     const transSet = new Set((transitions.transitions || []).map(t => t.transitionName));
-    const fix = 'Create it in the main OBS or change the name in Replays → Settings.';
+    const fix = 'Create it in the main OBS or change the name in the dock under Settings → Replay settings.';
     if (!sceneSet.has(n.scene)) throw new Error(`Scene "${n.scene}" not found in the main OBS. ${fix}`);
     const overlayStinger = this.settings.stinger.mode === 'overlay';
     const needTransition = overlayStinger ? this.settings.stinger.cutTransition : n.transition;

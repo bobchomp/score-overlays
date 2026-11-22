@@ -1,10 +1,10 @@
-// Replays tab for the control dock. Self-contained: the dock calls initReplays() and
+// Replays section of the control dock (Live tab) + Replay settings (Settings tab). Self-contained: the dock calls initReplays() and
 // replaysUi.render(snapshot) inside try/catch, so nothing here can break match control.
 // All the replay logic runs on the server (server/replays.js); this file only sends commands.
 import { esc } from '/shared/socket.js';
 
 const $ = id => document.getElementById(id);
-const RESERVED_KEYS = ['g', 'h', ' ', 'escape', 'z']; // already used by the Match tab
+const RESERVED_KEYS = ['g', 'h', ' ', 'escape', 'z']; // already used by the match controls
 
 function keyName(k) {
   if (k === ' ') return 'Space';
@@ -32,18 +32,6 @@ export function initReplays({ sock, toast, promptSheet }) {
     else if (r.queued && !r.aborted && op === 'now') toast('Replay already on air: clip added to the queue');
     return r;
   }
-
-  // ---------------------------------------------------------------- tabs
-  function setTab(tab) {
-    document.querySelectorAll('[data-dock-tab]').forEach(b => b.classList.toggle('active', b.dataset.dockTab === tab));
-    $('app').hidden = tab !== 'match';
-    $('replays-app').hidden = tab !== 'replays';
-    try { localStorage.setItem('dock-tab', tab); } catch {}
-  }
-  document.querySelectorAll('[data-dock-tab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.dockTab)));
-  let saved = 'match';
-  try { saved = localStorage.getItem('dock-tab') || 'match'; } catch {}
-  setTab(saved);
 
   // ---------------------------------------------------------------- clicks (no confirmations on live actions)
   document.addEventListener('click', async e => {
@@ -185,7 +173,7 @@ export function initReplays({ sock, toast, promptSheet }) {
     e.preventDefault();
     e.stopPropagation();
     const key = e.key === 'Backspace' || e.key === 'Delete' ? '' : e.key.toLowerCase();
-    if (RESERVED_KEYS.includes(key)) { toast(`${keyName(key)} is already used on the Match tab`, true); return; }
+    if (RESERVED_KEYS.includes(key)) { toast(`${keyName(key)} is already used by the match controls`, true); return; }
     k.dataset.key = key;
     k.value = keyName(key);
     settingsDirty = true;
@@ -233,7 +221,6 @@ export function initReplays({ sock, toast, promptSheet }) {
       <span class="r-conn" title="${esc(r.replayObs.url)} ${esc(r.replayObs.error || '')}">${dot(r.replayObs.connected)} Replay OBS</span>
       <span class="r-conn">${dot(r.bufferActive === true, r.bufferActive == null)} Buffer: ${buf}</span>
       ${r.saving ? '<span class="r-busy">Saving…</span>' : ''}`;
-    $('tab-replay-dot').className = `tab-dot ${r.playing ? 'live' : r.replayObs.connected && r.bufferActive ? 'ok' : 'bad'}`;
 
     // why buttons are disabled
     const saveBlocked = r.saving ? null : r.saveBlocked;
@@ -241,8 +228,8 @@ export function initReplays({ sock, toast, promptSheet }) {
     $('r-blocked').hidden = !reasons.length;
     $('r-blocked').innerHTML = reasons.map(esc).join('<br>');
     const nowDisabled = !!(saveBlocked || (r.playBlocked && !r.playing));
-    document.querySelectorAll('#replays-app [data-replay="now"]').forEach(b => { b.disabled = nowDisabled; b.classList.toggle('busy', r.saving); });
-    document.querySelectorAll('#replays-app [data-replay="mark"]').forEach(b => { b.disabled = !!saveBlocked; b.classList.toggle('busy', r.saving); });
+    document.querySelectorAll('.r-actions [data-replay="now"]').forEach(b => { b.disabled = nowDisabled; b.classList.toggle('busy', r.saving); });
+    document.querySelectorAll('.r-actions [data-replay="mark"]').forEach(b => { b.disabled = !!saveBlocked; b.classList.toggle('busy', r.saving); });
     $('r-abort').disabled = !(r.playing || r.saving);
     document.querySelectorAll('[data-replay="playAll"]').forEach(b => { b.disabled = !!(r.playBlocked || r.playing || !r.queue.length); });
     $('r-slow-label').textContent = `${s.slowSpeed}%`;

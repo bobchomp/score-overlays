@@ -9,10 +9,6 @@
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
 }
 .dock-tab.active { background: var(--ui-card2); color: var(--ui-text); border-color: #47525e; }
-.tab-dot { width: 9px; height: 9px; border-radius: 50%; background: #3a4450; }
-.tab-dot.ok { background: var(--ui-ok); }
-.tab-dot.bad { background: var(--ui-bad); }
-.tab-dot.live { background: var(--ui-bad); box-shadow: 0 0 8px var(--ui-bad); animation: pulse 1s infinite; }
 
 /* ---- "replay on air" bar: always visible, both tabs ---- */
 .replay-onair {
@@ -23,20 +19,8 @@
 .onair-text { flex: 1; font-weight: 800; letter-spacing: .06em; font-size: 14px; color: #ffd6d3; }
 .replay-onair .btn { min-height: 44px; font-size: 15px; font-weight: 800; }
 
-/* ---- layout ---- */
-#replays-app { display: flex; flex-direction: column; gap: 10px; padding: 10px; max-width: 640px; margin: 0 auto; }
-.rcol { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-@media (min-width: 760px) {
-  #replays-app { max-width: none; display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
-  .rcol-c { grid-column: 1 / -1; }
-}
-@media (min-width: 1100px) {
-  #replays-app { flex: 1; min-height: 0; width: 100%; max-width: 1800px; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); align-items: stretch; }
-  .rcol { overflow-y: auto; overscroll-behavior: contain; }
-  .rcol-c { grid-column: auto; }
-  .r-queue-card { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
-  .r-queue { flex: 1 1 auto; overflow-y: auto; min-height: 0; }
-}
+/* ---- layout: see dock.css (Live tab column r, Settings tab) ---- */
+.r-actions h2 { margin-bottom: 2px; }
 
 /* ---- big live buttons ---- */
 .r-actions { display: flex; flex-direction: column; gap: 8px; }
@@ -45,7 +29,7 @@
 .r-busy { margin-left: auto; color: #f2cc60; font-weight: 800; animation: pulse 1s infinite; }
 .r-blocked { background: #3d2e05; border: 1px solid #6b5212; color: #f2cc60; border-radius: 8px; padding: 8px 10px; font-size: 13px; font-weight: 600; }
 .r-big { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.r-btn { width: 100%; font-size: 22px; font-weight: 900; letter-spacing: .04em; min-height: 76px; flex-direction: column; gap: 2px; }
+.r-btn { width: 100%; font-size: 22px; font-weight: 900; letter-spacing: .04em; min-height: 70px; flex-direction: column; gap: 2px; }
 .r-btn small { font-size: 14px; font-weight: 700; opacity: .85; }
 .r-now { background: #1d4f9c; border-color: #3f7fe0; color: #fff; }
 .r-slow { background: #3d2a73; border-color: #7a5cd6; color: #fff; }

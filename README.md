@@ -8,7 +8,7 @@ Browser Source and you run the match from a control dock inside OBS, or from you
   full-screen lineups; free-text lower thirds.
 - **Control dock**: big buttons, squad pickers (no typing names mid-match), multi-level undo, keyboard shortcuts,
   live preview, event export.
-- **Replays** (optional): a *Replays* tab in the dock does instant replays from a second OBS: replay at 100% or slow-mo, mark clips, and keep a queue for half-time packages. See **[REPLAYS.md](REPLAYS.md)** for the OBS setup.
+- **Replays** (optional): a *Replays* section on the dock's Live tab does instant replays from a second OBS: replay at 100% or slow-mo, mark clips, and keep a queue for half-time packages. See **[REPLAYS.md](REPLAYS.md)** for the OBS setup.
 - **Setup screen**: pick teams and lineups, and edit squads, kit colours, badges, theme colours, fonts and every on-screen title.
 - **Reliable**: the server owns all state and saves it to `data/state.json` on every change. Refresh any page, or
   restart the server, and everything comes back, clock included. The clock is timestamp-based, so it never drifts.
@@ -83,7 +83,7 @@ Firewall → *Allow an app* → Node.js → Private.
 
 ## 3. Before each match
 
-1. Open **Match setup** (from the dock: *Options → Match setup*, or `http://localhost:3000/setup`).
+1. Open **Match setup** (from the dock: *Settings → Match setup*, or `http://localhost:3000/setup`).
 2. **Match tab**: enter the competition name (and optionally upload its badge), pick the home and away teams, and adjust kit
    colours if there's a clash. Mark each player **XI** or **SUB** and choose the captain (**C**).
    For a **two-legged tie**, tick *Two-legged tie* and enter how many goals each of today's teams scored in the
@@ -116,12 +116,16 @@ Firewall → *Allow an app* → Node.js → Private.
 Lower thirds for goals, cards and subs hide themselves after 8 seconds (change this in *Theme → Timings*). Text lower thirds stay
 until you hide them. Each type can be set not to show automatically in *Options*.
 
+### Dock tabs
+- **Live**: everything used during a match. On a wide window it's four columns: score & clock · graphics, cards & subs, text lower third · replays · match events. On a narrower window it stacks, with the score, clock and replay buttons first.
+- **Settings**: overlay preview, options (auto-show, stings), match setup link, exports, demo, lock, **Reset game**, and replay settings.
+
 ### Keyboard shortcuts (when the dock has focus)
 `G` home goal · `H` away goal · `Space` start/pause clock · `Esc` hide all graphics (or close a picker) · `Ctrl+Z` undo
 
 ## 5. Demo mode
 
-Check every graphic without a real game: **Options → Run demo match** in the dock, or start the server with `npm run demo`.
+Check every graphic without a real game: **Settings → Run demo match** in the dock, or start the server with `npm run demo`.
 It plays a simulated match (lineups, goals including a penalty and an own goal, cards including a second yellow,
 subs, added time, HT/FT boards) over about 3 minutes. Your real match state is backed up first and restored when you
 press **Stop demo**, or the next time the server starts.
@@ -171,7 +175,7 @@ In Companion, use the *Generic HTTP* module → POST, e.g. `http://192.168.1.20:
 
 ## 8. After the match
 
-**Options → Export JSON / Export CSV** in the dock (or `GET /api/export.csv?pin=…`) gives a minute-by-minute event log for
+**Settings → Export JSON / Export CSV** in the dock (or `GET /api/export.csv?pin=…`) gives a minute-by-minute event log for
 highlights and match reports.
 
 ## Troubleshooting

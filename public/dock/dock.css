@@ -97,41 +97,53 @@ body { padding-bottom: 40px; }
 .pending-note { margin: 0 0 8px; padding: 8px 10px; border-radius: 8px; background: #102a19; border: 1px solid var(--ui-ok); color: #b6f0c6; font-weight: 600; font-size: 14px; }
 
 /* ===================== Layout =====================
-   Narrow (OBS dock / phone): one column. Columns are "display: contents" so every card is
-   a direct item of #app; "order" keeps the familiar top-to-bottom order.
-   Medium: two columns, with preview/events/options below.
-   Wide: three columns that each fit the screen height. */
+   LIVE tab (#app) has four column groups:
+     a = score, clock, penalties     b = graphics, cards & subs, text lower third
+     r = replays (buttons + queue)   e = match events
+   Narrow (OBS dock / phone): one column; groups are "display: contents" and "order" puts the
+   most-used controls first. 760px+: two columns. 1100px+: three columns that fit the screen
+   (replays above events on the right). 1400px+: four columns side by side.
+   SETTINGS tab (#settings-app): preview, options, reset | replay settings. */
 .col { display: contents; }
-#preview-card { order: -1; }
-.options-card { order: 2; }
-.reset-card { order: 3; }
+.score-card { order: 1; } .clock-card { order: 2; } .pens-card { order: 3; }
+.r-actions { order: 4; } .r-notice-card { order: 5; }
+.graphics-card { order: 6; } .cards-card { order: 7; } .text-card { order: 8; }
+.events-card { order: 9; } .r-queue-card { order: 10; }
 .reset-btn { width: 100%; min-height: 48px; font-size: 17px; }
 
+#settings-app { display: flex; flex-direction: column; gap: 10px; padding: 10px; max-width: 640px; margin: 0 auto; }
+.scol { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
 @media (min-width: 760px) {
-  #app { max-width: none; display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 10px; }
+  #app { max-width: none; display: grid; grid-template-columns: 1fr 1fr; grid-template-areas: "a b" "r e"; align-items: start; gap: 10px; }
   .col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-  .col-c { grid-column: 1 / -1; display: block; column-count: 2; column-gap: 10px; }
-  .col-c > .card { break-inside: avoid; margin-bottom: 10px; }
-  #preview-card { order: 0; }
+  .col-a { grid-area: a; } .col-b { grid-area: b; } .col-r { grid-area: r; } .col-e { grid-area: e; }
+  #settings-app { max-width: 1200px; display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
 }
 
 @media (min-width: 1100px) {
   body { height: 100vh; display: flex; flex-direction: column; padding-bottom: 0; overflow: hidden; }
-  #app { flex: 1; min-height: 0; width: 100%; max-width: 1800px; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); align-items: stretch; }
+  #app {
+    flex: 1; min-height: 0; width: 100%; max-width: 2200px;
+    grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: minmax(0, 1.25fr) minmax(0, 1fr);
+    grid-template-areas: "a b r" "a b e"; align-items: stretch;
+  }
   .col { overflow-y: auto; overscroll-behavior: contain; }
-  .col-c { grid-column: auto; display: flex; column-count: auto; }
-  .col-c > .card { margin-bottom: 0; }
-  /* events take all spare height in the right column and scroll inside their card */
-  .events-card { flex: 1 1 auto; min-height: 220px; display: flex; flex-direction: column; }
-  .events-card .events { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  #settings-app { flex: 1; min-height: 0; overflow-y: auto; width: 100%; }
+  /* lists take the spare height in their column and scroll inside their card */
+  .events-card, .r-queue-card { flex: 1 1 auto; min-height: 160px; display: flex; flex-direction: column; }
+  .events-card .events, .r-queue-card .r-queue { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
   .options-card { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; }
   .options-card h2, .options-card .row, .options-card .hint { grid-column: 1 / -1; }
   .options-card .check { font-size: 13.5px; padding: 4px 0; }
+  .options-card .hint { margin-top: 6px; }
   .clock { font-size: 54px; }
   .score { font-size: 60px; }
   .btn.goal { min-height: 66px; font-size: 22px; }
-  .reset-card .hint { display: none; }
-  .options-card .hint { margin-top: 6px; }
+}
+
+@media (min-width: 1400px) {
+  #app { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); grid-template-areas: "a b r e"; }
 }
 
 /* penalty shootout tile */
