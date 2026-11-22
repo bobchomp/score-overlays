@@ -27,7 +27,9 @@ export const DEFAULT_SETTINGS = {
   //  'overlay': the graphics overlay plays a full-screen wipe in the home team's colours and OBS
   //             cuts underneath it (no video file needed; works between every Play-all clip too)
   //  'obs':     an OBS Stinger transition (your own video), named in names.transition
-  stinger: { mode: 'overlay', cutTransition: 'Cut', durationMs: 1300 }, // durationMs: length of the graphics wipe
+  // durationMs: length of the graphics wipe. between: what happens between clips in Play all:
+  //   'fade' = quick dip to black by the overlay (default), 'stinger' = full wipe/stinger, 'cut'
+  stinger: { mode: 'overlay', cutTransition: 'Cut', durationMs: 1300, between: 'fade' },
   autoGoalClip: true,    // pressing + GOAL saves a replay into the queue as "<team> <goal number>"
   lengthSec: 8,          // play the last N seconds of each clip
   slowSpeed: 50,         // speed of the slow-motion button, in %
@@ -46,6 +48,7 @@ export function wipeTiming(durationMs = 1300) {
   return { totalMs, switchAtMs: Math.round(totalMs * WIPE_COVERED_AT) };
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+export const DIP_MS = 300; // fade-to-black / fade-up time between Play-all clips (overlay uses the same)
 const ABORTED = Symbol('aborted');
 
 function mergeSettings(base, over) {
@@ -89,7 +92,7 @@ export class Replays extends EventEmitter {
     this.queue = Array.isArray(saved.queue) ? saved.queue.filter(c => c && c.id && c.path) : [];
     this.bus = new EventEmitter(); // internal: 'saved', 'ended', 'transitionEnded', 'abort'
     this.bus.setMaxListeners(50);
-    this.status = { saving: false, playing: null, bug: { visible: false, speed: 100 }, wipe: null, bufferActive: null, bufferWarning: null };
+    this.status = { saving: false, playing: null, bug: { visible: false, speed: 100 }, wipe: null, dip: null, bufferActive: null, bufferWarning: null };
     this.notice = null; // { id, level, text } — latest message for the dock
     this.session = null;
     this.lastSavedPath = null;
@@ -190,6 +193,7 @@ export class Replays extends EventEmitter {
       playing: this.status.playing,
       bug: this.status.bug,
       wipe: this.status.wipe,
+      dip: this.status.dip,
       saveBlocked: this.saveBlockedReason(),
       playBlocked: this.playBlockedReason(),
       notice: this.notice,
@@ -354,7 +358,16 @@ export class Replays extends EventEmitter {
     }
   }
 
-  useB() { const n = this.settings.names; return this.settings.stinger.mode !== 'overlay' && !!(n.sceneB && n.playerB); }
+  useB() {
+    const n = this.settings.names;
+    return this.settings.stinger.mode !== 'overlay' && this.settings.stinger.between === 'stinger' && !!(n.sceneB && n.playerB);
+  }
+
+  /** Overlay dip to black between Play-all clips: 'out' fades to black, 'in' fades back up. */
+  dip(phase) {
+    this.status.dip = { id: crypto.randomBytes(4).toString('hex'), phase, at: Date.now(), ms: DIP_MS };
+    this.changed();
+  }
 
   /**
    * Graphics stinger: start the overlay wipe, and once it covers the screen run `whileCovered`
@@ -432,22 +445,34 @@ export class Replays extends EventEmitter {
           wentToReplay = true;
           session.onReplay = true;
         };
-        if (overlayStinger) {
-          if (current !== scene) {
-            await loadClip();
+        const between = this.settings.stinger.between || 'fade';
+        let leftMs;
+        if (current !== scene) {
+          // Into the replay (or, OBS-stinger mode with a second scene, the next clip): full stinger.
+          await loadClip();
+          if (overlayStinger) {
             await this.mainObs.call('SetCurrentSceneTransition', { transitionName: this.settings.stinger.cutTransition });
             await this.wipe(enterScene, session);      // wipe in, cut to REPLAY under it
           } else {
-            await this.wipe(loadClip, session);        // between Play-all clips: swap the clip under the wipe
-          }
-        } else {
-          await loadClip();
-          if (scene !== current) {
             await this.mainObs.call('SetCurrentSceneTransition', { transitionName: n.transition });
             await enterScene();
           }
+          leftMs = await this.seekToTail(player);
+        } else if (between === 'fade') {
+          // Next clip in Play all: dip to black, swap and seek while black, fade back up.
+          this.dip('out');
+          await sleep(DIP_MS + 20);
+          if (session.aborted) break;
+          await loadClip();
+          leftMs = await this.seekToTail(player);
+          this.dip('in');
+        } else if (between === 'stinger' && overlayStinger) {
+          await this.wipe(loadClip, session);          // swap the clip under a full wipe
+          leftMs = await this.seekToTail(player);
+        } else {
+          await loadClip();                            // straight cut to the next clip
+          leftMs = await this.seekToTail(player);
         }
-        const leftMs = await this.seekToTail(player);
         if (!this.status.bug.visible) { this.status.bug = { visible: true, speed }; this.changed(); }
         if (session.aborted) break;
         const wallMs = leftMs == null ? 120000 : (leftMs * 100) / speed + 5000;
@@ -466,6 +491,7 @@ export class Replays extends EventEmitter {
     this.status.bug = { visible: false, speed: this.status.bug.speed };
     this.changed();
     session.switchingBack = true;
+    if (this.status.dip?.phase === 'out') this.dip('in'); // never leave the picture black
     try {
       if (session.manual) {
         // Operator already switched away in OBS: just tidy up.
@@ -551,6 +577,7 @@ export class Replays extends EventEmitter {
     if (p.stinger) {
       if (p.stinger.mode !== undefined) s.stinger.mode = p.stinger.mode === 'obs' ? 'obs' : 'overlay';
       if (p.stinger.cutTransition !== undefined) s.stinger.cutTransition = str(p.stinger.cutTransition, 100) || 'Cut';
+      if (p.stinger.between !== undefined) s.stinger.between = ['fade', 'stinger', 'cut'].includes(p.stinger.between) ? p.stinger.between : 'fade';
       if (p.stinger.durationMs !== undefined) s.stinger.durationMs = wipeTiming(p.stinger.durationMs).totalMs;
     }
     if (p.autoGoalClip !== undefined) s.autoGoalClip = !!p.autoGoalClip;

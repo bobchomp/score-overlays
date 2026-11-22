@@ -107,6 +107,11 @@ export function initReplays({ sock, toast, promptSheet }) {
       <div class="r-sec">Stinger</div>
       <label class="check"><input type="radio" name="stinger.mode" value="overlay" ${s.stinger.mode !== 'obs' ? 'checked' : ''}> Graphics wipe in the home team's colours (no video needed)</label>
       <label class="check"><input type="radio" name="stinger.mode" value="obs" ${s.stinger.mode === 'obs' ? 'checked' : ''}> OBS Stinger transition (your own video)</label>
+      <div class="field">Between clips in "Play all"
+        <span class="r-seg">
+          ${[['fade', 'Fade'], ['stinger', 'Full stinger'], ['cut', 'Cut']].map(([v, l]) => `<label><input type="radio" name="stinger.between" value="${v}" ${(s.stinger.between || 'fade') === v ? 'checked' : ''}><span>${l}</span></label>`).join('')}
+        </span>
+      </div>
       <div class="r-mode r-mode-overlay" ${s.stinger.mode === 'obs' ? 'hidden' : ''}>
         <label class="field">Wipe speed: <strong class="r-wipe-val">${((s.stinger.durationMs || 1300) / 1000).toFixed(1)} s</strong>
           <span class="r-range"><span>Fast</span><input type="range" name="stinger.durationMs" min="600" max="3000" step="100" value="${esc(s.stinger.durationMs || 1300)}"><span>Slow</span></span></label>
@@ -115,8 +120,8 @@ export function initReplays({ sock, toast, promptSheet }) {
       </div>
       <div class="r-mode r-mode-obs" ${s.stinger.mode === 'obs' ? '' : 'hidden'}>
       ${field('Stinger transition', 'names.transition', n.transition)}
-      <details class="r-details"${n.sceneB || n.playerB ? ' open' : ''}><summary>Stinger between clips in "Play all" (optional)</summary>
-        <p class="hint">OBS can't transition a scene to itself, so for a stinger between every queued clip, add a second scene with its own media source. Leave blank to cut between clips.</p>
+      <details class="r-details"${n.sceneB || n.playerB ? ' open' : ''}><summary>"Full stinger" between clips with an OBS video (optional)</summary>
+        <p class="hint">OBS can't transition a scene to itself, so for a stinger between every queued clip, add a second scene with its own media source. Without it, "Full stinger" cuts between clips.</p>
         ${field('Second replay scene', 'names.sceneB', n.sceneB, 'placeholder="e.g. REPLAY 2"')}
         ${field('Its media source', 'names.playerB', n.playerB, 'placeholder="e.g. Replay Player 2"')}
       </details>
@@ -190,7 +195,12 @@ export function initReplays({ sock, toast, promptSheet }) {
         scene: v('names.scene'), player: v('names.player'), transition: v('names.transition'),
         sceneB: v('names.sceneB'), playerB: v('names.playerB'),
       },
-      stinger: { mode: form.querySelector('[name="stinger.mode"]:checked')?.value || 'overlay', cutTransition: v('stinger.cutTransition'), durationMs: Number(v('stinger.durationMs')) || 1300 },
+      stinger: {
+        mode: form.querySelector('[name="stinger.mode"]:checked')?.value || 'overlay',
+        between: form.querySelector('[name="stinger.between"]:checked')?.value || 'fade',
+        cutTransition: v('stinger.cutTransition'),
+        durationMs: Number(v('stinger.durationMs')) || 1300,
+      },
       autoGoalClip: !!form.elements.autoGoalClip?.checked,
       lengthSec: Number(v('lengthSec')),
       slowSpeed: Number(v('slowSpeed')),

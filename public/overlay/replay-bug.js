@@ -11,6 +11,8 @@ let bugEl = null;
 let wipeEl = null;
 let shownSpeed = null;
 let wipeId = null;
+let dipEl = null;
+let dipTimer = null;
 
 function ensureEls() {
   const stage = document.getElementById('stage');
@@ -19,6 +21,13 @@ function ensureEls() {
     bugEl.id = 'replay-bug';
     bugEl.className = 'gfx';
     stage.appendChild(bugEl);
+  }
+  if (!dipEl) {
+    // Dip to black between Play-all clips. First in the stage, so every graphic stays on top of it.
+    dipEl = document.createElement('div');
+    dipEl.id = 'replay-dip';
+    dipEl.setAttribute('aria-hidden', 'true');
+    stage.insertBefore(dipEl, stage.firstChild);
   }
   if (!wipeEl) {
     wipeEl = document.createElement('div');
@@ -44,6 +53,14 @@ export function updateReplayBug(snap, now = Date.now()) {
   }
   bugEl.classList.toggle('show', visible);
   if (!visible) shownSpeed = null;
+
+  // ---- dip to black between Play-all clips (never stays black for more than 5s)
+  const d = snap?.replay?.dip;
+  const black = !!d && d.phase === 'out' && now - d.at < 5000;
+  if (d) dipEl.style.setProperty('--dip-ms', `${d.ms || 300}ms`);
+  dipEl.classList.toggle('on', black);
+  clearTimeout(dipTimer);
+  if (black) dipTimer = setTimeout(() => dipEl.classList.remove('on'), 5000 - (now - d.at));
 
   // ---- wipe (plays once per id; joins mid-way if the overlay was refreshed during it)
   const w = snap?.replay?.wipe;

@@ -314,3 +314,7 @@ body.has-full #scorebug { opacity: 0; transform: translateY(-24px); }
 }
 .rw-mark img { height: 190px; width: auto; filter: drop-shadow(0 8px 20px rgba(0,0,0,.4)); }
 @keyframes rw-mark { 0%, 30% { opacity: 0; transform: scale(1.25); } 40% { opacity: 1; transform: scale(1); } 52% { opacity: 1; transform: scale(1.03); } 60%, 100% { opacity: 0; transform: scale(.92) translateX(-120px); } }
+
+/* Dip to black between Play-all clips (sits underneath all other graphics) */
+#replay-dip { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity var(--dip-ms, 300ms) ease; }
+#replay-dip.on { opacity: 1; }

@@ -52,15 +52,15 @@ The **REPLAY bug** is part of the graphics overlay, so make sure the overlay Bro
 ### The stinger: graphics wipe (default) or your own video
 **Graphics wipe (default, no video needed).** The graphics overlay plays a full-screen wipe in the **home
 team's colours** with their badge and "REPLAY". The server *cuts* OBS to the replay scene at the exact moment
-the wipe covers the screen, so viewers never see the cut. Set how fast it plays with the **Wipe speed** slider (0.6–3 s, default 1.3 s) under *Settings → Stinger*. The same happens on the way back, and between every
-clip in **Play all**. You don't need the *Replay Stinger* transition at all. It uses OBS's built-in **Cut**
+the wipe covers the screen, so viewers never see the cut. Set how fast it plays with the **Wipe speed** slider (0.6–3 s, default 1.3 s) under *Settings → Stinger*. The same happens on the way back. Between clips in **Play all** it fades through black by default
+(*Between clips* setting: *Fade* / *Full stinger* / *Cut*). You don't need the *Replay Stinger* transition at all. It uses OBS's built-in **Cut**
 transition, and the name can be changed under *Settings → Stinger* if your OBS is in another language.
 For this to work, the overlay Browser Source must be in **both** your live scene(s) and the REPLAY scene
 (*Paste (Reference)*), at the **top** of the source list in each.
 
 **OBS Stinger transition (your own video).** Choose it under *Settings → Stinger* and enter the transition name
-(default **Replay Stinger**). OBS can't transition a scene into itself, so to get the stinger *between* queued
-clips, also create a scene called **REPLAY 2** with a second media source **Replay Player 2** (plus the overlay),
+(default **Replay Stinger**). OBS can't transition a scene into itself, so to get the *full* stinger *between* queued
+clips (Between clips: *Full stinger*), also create a scene called **REPLAY 2** with a second media source **Replay Player 2** (plus the overlay),
 and enter both names under *Stinger between clips*. Without them, Play all cuts between clips.
 
 ## 3. Connect the dock
@@ -88,7 +88,7 @@ text, so keep that folder private. It's never committed to git.
 | **+ GOAL** (match controls) | Also saves a replay **the moment you press it**, so the goal is still in the buffer. Once the goal is logged, the clip is named after the team and goal number, e.g. **Ross County 2**, and tagged *Goal*. Closing the goal popup without logging a goal removes the clip. Goals from the Stream Deck (`/api/goal/home`) get a clip too. Turn it off under *Settings → Replay settings → Goals*. |
 | Queue: **▶ 100 / ▶ 50** | Play one clip. |
 | Queue: **✎ ↑ ↓ ✕**, tag menu | Rename, reorder, remove from the queue (the file stays on disk), or change the tag. |
-| **▶ Play all** | Plays the whole queue in order (half-time / full-time packages), then returns to live. |
+| **▶ Play all** | Plays the whole queue in order (half-time / full-time packages), then returns to live. The stinger plays on the way in and out; **between clips it fades** (a quick dip to black, with the next clip loaded while the screen is black). Choose *Fade*, *Full stinger* or *Cut* under *Settings → Replay settings → Stinger → Between clips*. |
 
 Safety rules:
 - **There are no confirmation dialogs on live actions.**

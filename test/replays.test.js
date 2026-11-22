@@ -45,7 +45,7 @@ async function teardown() {
   await main?.close(); await rep?.close();
 }
 
-const idle = () => until(() => !replays.status.playing && !replays.status.saving, 8000, 'replay to finish');
+const idle = (ms = 8000) => until(() => !replays.status.playing && !replays.status.saving, ms, 'replay to finish');
 
 test('replay flow', async t => {
   await setup({ replay: { bufferActive: false } });
@@ -220,6 +220,7 @@ test('replay flow', async t => {
     replays.queue = replays.queue.slice(0, 3);
     replays.settings.names.sceneB = 'REPLAY B';
     replays.settings.names.playerB = 'Replay Player B';
+    replays.settings.stinger.between = 'stinger';
     main.st.program = 'Main';
     const mark = main.st.log.length;
     await replays.handle('playAll', { speed: 100 });
@@ -229,6 +230,7 @@ test('replay flow', async t => {
     const scenes = main.st.log.slice(mark).filter(l => l.requestType === 'SetCurrentProgramScene').map(l => [l.requestData.sceneName, l.transition]);
     assert.deepEqual(scenes, [['REPLAY', 'Replay Stinger'], ['REPLAY B', 'Replay Stinger'], ['REPLAY', 'Replay Stinger'], ['Main', 'Replay Stinger']]);
     assert.equal(main.st.transition, 'Fade');
+    replays.settings.stinger.between = 'fade';
   });
 
   await t.test('missing replay scene: clear error, program untouched', async () => {
@@ -273,6 +275,7 @@ test('replay flow', async t => {
 
   await t.test('graphics wipe: overlay wipes, OBS cuts underneath at the switch point, then restores the transition', async () => {
     replays.settings.stinger.mode = 'overlay';
+    replays.settings.stinger.between = 'stinger';
     replays.settings.names.sceneB = ''; replays.settings.names.playerB = '';
     main.st.program = 'Main';
     main.st.transition = 'Fade';
@@ -298,6 +301,35 @@ test('replay flow', async t => {
     assert.equal(main.st.program, 'Main');
     assert.equal(main.st.transition, 'Fade', 'operator transition restored');
     assert.equal(replays.publicStatus().wipe.id, wipes[2].id, 'overlay gets the wipe in the status');
+    replays.settings.stinger.mode = 'obs';
+    replays.settings.stinger.between = 'fade';
+  });
+
+  await t.test('Play all fades (dip to black) between clips by default: wipe in, fade, fade, wipe out', async () => {
+    replays.settings.stinger.mode = 'overlay';
+    assert.equal(replays.settings.stinger.between, 'fade');
+    main.st.program = 'Main';
+    while (replays.queue.length < 3) replays.addClip(replays.queue[0].path);
+    replays.queue = replays.queue.slice(0, 3);
+    const earlierWipe = replays.status.wipe?.id;
+    const earlierDip = replays.status.dip?.id;
+    const wipes = []; const dips = [];
+    const onChange = () => {
+      const w = replays.status.wipe; if (w && w.id !== earlierWipe && w.id !== wipes.at(-1)?.id) wipes.push(w);
+      const d = replays.status.dip; if (d && d.id !== earlierDip && d.id !== dips.at(-1)?.id) dips.push(d);
+    };
+    replays.on('change', onChange);
+    const mark = main.st.log.length;
+    await replays.handle('playAll', { speed: 100 });
+    await idle(15000);
+    replays.off('change', onChange);
+    assert.equal(wipes.length, 2, 'full wipe only in and out');
+    assert.deepEqual(dips.map(d => d.phase), ['out', 'in', 'out', 'in'], 'a fade between each pair of clips');
+    const loads = main.st.log.slice(mark).filter(l => l.requestType === 'SetInputSettings');
+    assert.equal(loads.length, 3);
+    assert.ok(loads[1].at - dips[0].at >= 300, 'next clip loads only once the picture is black');
+    assert.ok(dips[1].at >= loads[1].at, 'fades back up after the swap');
+    assert.deepEqual(main.st.log.slice(mark).filter(l => l.requestType === 'SetCurrentProgramScene').map(l => l.requestData.sceneName), ['REPLAY', 'Main']);
     replays.settings.stinger.mode = 'obs';
   });
 
