@@ -254,6 +254,25 @@ test('replay flow', async t => {
     replays.settings.stinger.mode = 'obs';
   });
 
+  await t.test('wipe speed setting scales the wipe and the hidden cut', async () => {
+    const { wipeTiming } = await import('../server/replays.js');
+    assert.deepEqual(wipeTiming(2000), { totalMs: 2000, switchAtMs: 920 });
+    assert.deepEqual(wipeTiming(100), { totalMs: 600, switchAtMs: 276 }, 'clamped to the minimum');
+    replays.updateSettings({ stinger: { durationMs: 2000 } });
+    replays.settings.stinger.mode = 'overlay';
+    main.st.program = 'Main';
+    const mark = main.st.log.length;
+    await replays.handle('play', { id: replays.queue[0].id, speed: 100 });
+    await until(() => replays.status.wipe?.totalMs === 2000, 2000, 'slow wipe');
+    const w = { ...replays.status.wipe };
+    await until(() => main.st.program === 'REPLAY', 3000, 'cut to REPLAY');
+    const cut = main.st.log.slice(mark).find(l => l.requestType === 'SetCurrentProgramScene');
+    assert.ok(cut.at - w.at >= 900, 'cut waits for the longer wipe to cover the screen');
+    await idle();
+    replays.updateSettings({ stinger: { durationMs: 1300 } });
+    replays.settings.stinger.mode = 'obs';
+  });
+
   await t.test('Replay OBS closed: replay buttons blocked with a reason; nothing else affected', async () => {
     await rep.close();
     await until(() => !replays.replayObs.status.connected, 3000, 'disconnect');

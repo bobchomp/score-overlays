@@ -52,7 +52,7 @@ The **REPLAY bug** is part of the graphics overlay, so make sure the overlay Bro
 ### The stinger: graphics wipe (default) or your own video
 **Graphics wipe (default, no video needed).** The graphics overlay plays a full-screen wipe in the **home
 team's colours** with their badge and "REPLAY". The server *cuts* OBS to the replay scene at the exact moment
-the wipe covers the screen, so viewers never see the cut. The same happens on the way back, and between every
+the wipe covers the screen, so viewers never see the cut. Set how fast it plays with the **Wipe speed** slider (0.6–3 s, default 1.3 s) under *Settings → Stinger*. The same happens on the way back, and between every
 clip in **Play all**. You don't need the *Replay Stinger* transition at all. It uses OBS's built-in **Cut**
 transition, and the name can be changed under *Settings → Stinger* if your OBS is in another language.
 For this to work, the overlay Browser Source must be in **both** your live scene(s) and the REPLAY scene

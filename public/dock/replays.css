@@ -83,3 +83,7 @@
 .r-key:focus { outline: 2px solid #f2cc60; }
 .r-details summary { cursor: pointer; font-size: 13px; color: var(--ui-muted); font-weight: 600; }
 .r-details[open] { display: flex; flex-direction: column; gap: 8px; }
+
+.r-range { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.r-range input { flex: 1; accent-color: #f2cc60; height: 28px; }
+.r-wipe-val { color: var(--ui-text); }

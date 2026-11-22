@@ -27,7 +27,7 @@ export const DEFAULT_SETTINGS = {
   //  'overlay': the graphics overlay plays a full-screen wipe in the home team's colours and OBS
   //             cuts underneath it (no video file needed; works between every Play-all clip too)
   //  'obs':     an OBS Stinger transition (your own video), named in names.transition
-  stinger: { mode: 'overlay', cutTransition: 'Cut' },
+  stinger: { mode: 'overlay', cutTransition: 'Cut', durationMs: 1300 }, // durationMs: length of the graphics wipe
   lengthSec: 8,          // play the last N seconds of each clip
   slowSpeed: 50,         // speed of the slow-motion button, in %
   saveTimeoutMs: 5000,   // wait this long for ReplayBufferSaved before falling back
@@ -36,8 +36,14 @@ export const DEFAULT_SETTINGS = {
 export const TAGS = ['Goal', 'Chance', 'Save', 'Foul', 'Other'];
 
 const MEDIA_STOP = 'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_STOP';
-// Graphics stinger timing (the overlay animation in public/overlay/replay-bug.js uses the same numbers).
-export const WIPE = { totalMs: 1300, switchAtMs: 600 };
+// Graphics stinger timing. The overlay animation (public/overlay/replay-bug.js + overlay.css) is
+// keyframed in percentages of totalMs and is fully covering from ~38% to ~56%; we cut at 46%.
+export const WIPE_COVERED_AT = 0.46;
+export const WIPE_LIMITS = { min: 600, max: 3000 };
+export function wipeTiming(durationMs = 1300) {
+  const totalMs = Math.max(WIPE_LIMITS.min, Math.min(WIPE_LIMITS.max, Math.round(Number(durationMs) || 1300)));
+  return { totalMs, switchAtMs: Math.round(totalMs * WIPE_COVERED_AT) };
+}
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const ABORTED = Symbol('aborted');
 
@@ -348,9 +354,10 @@ export class Replays extends EventEmitter {
    * (cut to a scene and/or load the next clip). Resolves at the switch point.
    */
   async wipe(whileCovered) {
-    this.status.wipe = { id: crypto.randomBytes(4).toString('hex'), at: Date.now(), ...WIPE };
+    const t = wipeTiming(this.settings.stinger.durationMs);
+    this.status.wipe = { id: crypto.randomBytes(4).toString('hex'), at: Date.now(), ...t };
     this.changed();
-    await sleep(WIPE.switchAtMs);
+    await sleep(t.switchAtMs);
     await whileCovered();
   }
 
@@ -466,7 +473,8 @@ export class Replays extends EventEmitter {
         } else if (this.settings.stinger.mode === 'overlay') {
           await this.mainObs.call('SetCurrentSceneTransition', { transitionName: this.settings.stinger.cutTransition });
           await this.wipe(() => this.mainObs.call('SetCurrentProgramScene', { sceneName: prevScene }));
-          await sleep(WIPE.totalMs - WIPE.switchAtMs);
+          const t = wipeTiming(this.settings.stinger.durationMs);
+          await sleep(t.totalMs - t.switchAtMs);
           if (prevTransition) await this.mainObs.call('SetCurrentSceneTransition', { transitionName: prevTransition });
         } else {
           await this.mainObs.call('SetCurrentSceneTransition', { transitionName: n.transition });
@@ -532,6 +540,7 @@ export class Replays extends EventEmitter {
     if (p.stinger) {
       if (p.stinger.mode !== undefined) s.stinger.mode = p.stinger.mode === 'obs' ? 'obs' : 'overlay';
       if (p.stinger.cutTransition !== undefined) s.stinger.cutTransition = str(p.stinger.cutTransition, 100) || 'Cut';
+      if (p.stinger.durationMs !== undefined) s.stinger.durationMs = wipeTiming(p.stinger.durationMs).totalMs;
     }
     if (p.lengthSec !== undefined) s.lengthSec = clampInt(p.lengthSec, 2, 60, s.lengthSec);
     if (p.slowSpeed !== undefined) s.slowSpeed = clampInt(p.slowSpeed, 10, 99, s.slowSpeed);

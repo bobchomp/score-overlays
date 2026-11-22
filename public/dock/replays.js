@@ -120,6 +120,8 @@ export function initReplays({ sock, toast, promptSheet }) {
       <label class="check"><input type="radio" name="stinger.mode" value="overlay" ${s.stinger.mode !== 'obs' ? 'checked' : ''}> Graphics wipe in the home team's colours (no video needed)</label>
       <label class="check"><input type="radio" name="stinger.mode" value="obs" ${s.stinger.mode === 'obs' ? 'checked' : ''}> OBS Stinger transition (your own video)</label>
       <div class="r-mode r-mode-overlay" ${s.stinger.mode === 'obs' ? 'hidden' : ''}>
+        <label class="field">Wipe speed: <strong class="r-wipe-val">${((s.stinger.durationMs || 1300) / 1000).toFixed(1)} s</strong>
+          <span class="r-range"><span>Fast</span><input type="range" name="stinger.durationMs" min="600" max="3000" step="100" value="${esc(s.stinger.durationMs || 1300)}"><span>Slow</span></span></label>
         ${field('Cut transition to use under the wipe', 'stinger.cutTransition', s.stinger.cutTransition, 'placeholder="Cut"')}
         <p class="hint">The wipe is part of the graphics overlay, so the overlay Browser Source must be in both your live scene and the replay scene (Paste (Reference)), at the top of each.</p>
       </div>
@@ -158,7 +160,10 @@ export function initReplays({ sock, toast, promptSheet }) {
   }
 
   const form = $('r-settings');
-  form.addEventListener('input', () => { settingsDirty = true; });
+  form.addEventListener('input', e => {
+    settingsDirty = true;
+    if (e.target.name === 'stinger.durationMs') form.querySelector('.r-wipe-val').textContent = `${(Number(e.target.value) / 1000).toFixed(1)} s`;
+  });
   form.addEventListener('change', e => {
     if (e.target.name !== 'stinger.mode') return;
     const obs = e.target.value === 'obs';
@@ -195,7 +200,7 @@ export function initReplays({ sock, toast, promptSheet }) {
         scene: v('names.scene'), player: v('names.player'), transition: v('names.transition'),
         sceneB: v('names.sceneB'), playerB: v('names.playerB'),
       },
-      stinger: { mode: form.querySelector('[name="stinger.mode"]:checked')?.value || 'overlay', cutTransition: v('stinger.cutTransition') },
+      stinger: { mode: form.querySelector('[name="stinger.mode"]:checked')?.value || 'overlay', cutTransition: v('stinger.cutTransition'), durationMs: Number(v('stinger.durationMs')) || 1300 },
       lengthSec: Number(v('lengthSec')),
       slowSpeed: Number(v('slowSpeed')),
       shortcuts: Object.fromEntries(['replay', 'replaySlow', 'mark', 'abort'].map(k => [k, form.elements[`shortcuts.${k}`]?.dataset.key || ''])),
