@@ -353,11 +353,13 @@ export class Replays extends EventEmitter {
    * Graphics stinger: start the overlay wipe, and once it covers the screen run `whileCovered`
    * (cut to a scene and/or load the next clip). Resolves at the switch point.
    */
-  async wipe(whileCovered) {
+  async wipe(whileCovered, session = null) {
     const t = wipeTiming(this.settings.stinger.durationMs);
     this.status.wipe = { id: crypto.randomBytes(4).toString('hex'), at: Date.now(), ...t };
     this.changed();
     await sleep(t.switchAtMs);
+    // ABORT pressed while the wipe was coming in: do nothing, the wipe just reveals live again.
+    if (session?.aborted) return;
     await whileCovered();
   }
 
@@ -427,9 +429,9 @@ export class Replays extends EventEmitter {
           if (current !== scene) {
             await loadClip();
             await this.mainObs.call('SetCurrentSceneTransition', { transitionName: this.settings.stinger.cutTransition });
-            await this.wipe(enterScene);               // wipe in, cut to REPLAY under it
+            await this.wipe(enterScene, session);      // wipe in, cut to REPLAY under it
           } else {
-            await this.wipe(loadClip);                 // between Play-all clips: swap the clip under the wipe
+            await this.wipe(loadClip, session);        // between Play-all clips: swap the clip under the wipe
           }
         } else {
           await loadClip();
@@ -463,16 +465,17 @@ export class Replays extends EventEmitter {
         if (prevTransition) await this.mainObs.call('SetCurrentSceneTransition', { transitionName: prevTransition });
         this.say('info', `Replay ended: you switched to "${session.manual}" in OBS`);
       } else if (wentToReplay && prevScene) {
-        if (session.aborted) {
-          // Straight back with the operator's normal transition, and stop the clip.
+        // Normal end and ABORT both go back through the stinger. On ABORT the wipe starts at once
+        // and the clip is stopped as soon as we're back on the live scene.
+        const stopClip = () => {
+          if (!session.aborted) return;
           for (const p of [n.player, this.useB() ? n.playerB : null].filter(Boolean)) {
             this.mainObs.call('TriggerMediaInputAction', { inputName: p, mediaAction: MEDIA_STOP }).catch(() => {});
           }
-          if (prevTransition) await this.mainObs.call('SetCurrentSceneTransition', { transitionName: prevTransition });
-          await this.mainObs.call('SetCurrentProgramScene', { sceneName: prevScene });
-        } else if (this.settings.stinger.mode === 'overlay') {
+        };
+        if (this.settings.stinger.mode === 'overlay') {
           await this.mainObs.call('SetCurrentSceneTransition', { transitionName: this.settings.stinger.cutTransition });
-          await this.wipe(() => this.mainObs.call('SetCurrentProgramScene', { sceneName: prevScene }));
+          await this.wipe(async () => { await this.mainObs.call('SetCurrentProgramScene', { sceneName: prevScene }); stopClip(); });
           const t = wipeTiming(this.settings.stinger.durationMs);
           await sleep(t.totalMs - t.switchAtMs);
           if (prevTransition) await this.mainObs.call('SetCurrentSceneTransition', { transitionName: prevTransition });
@@ -481,6 +484,7 @@ export class Replays extends EventEmitter {
           const ended = this.waitFor('transitionEnded', 6000).catch(() => null);
           await this.mainObs.call('SetCurrentProgramScene', { sceneName: prevScene });
           await ended;
+          stopClip();
           if (prevTransition) await this.mainObs.call('SetCurrentSceneTransition', { transitionName: prevTransition });
         }
       } else if (prevTransition) {

@@ -84,7 +84,7 @@ text, so keep that folder private. It's never committed to git.
 |---|---|
 | **REPLAY 100%** / **REPLAY 50%** | One tap: saves the buffer → wipes (or stingers) into the last N seconds with the REPLAY bug → wipes back to whatever scene was live and restores your normal transition. The clip is also added to the queue (unlabelled). |
 | **● MARK** | Saves the clip to the queue **without** changing the program. It's labelled with the time and match minute, e.g. `14:32:05 · 23'`. Use the **Mark as: Goal / Chance / Save / Foul / Other** buttons to mark and tag in one tap. |
-| **■ ABORT / BACK TO LIVE** | Stops the replay and cuts back to the previous scene immediately, using your normal transition. While a replay is on air it's also in a red bar at the top of the dock on **both** tabs. |
+| **■ ABORT / BACK TO LIVE** | Goes straight back to the previous scene through the stinger (the wipe starts the moment you press it) and stops the clip. Pressed while the wipe into a replay is still playing, it never cuts to the replay; the wipe just reveals live again. While a replay is on air it's also in a red bar at the top of the dock on **both** tabs. |
 | Queue: **▶ 100 / ▶ 50** | Play one clip. |
 | Queue: **✎ ↑ ↓ ✕**, tag menu | Rename, reorder, remove from the queue (the file stays on disk), or change the tag. |
 | **▶ Play all** | Plays the whole queue in order (half-time / full-time packages), then returns to live. |
@@ -126,7 +126,7 @@ POST with the PIN (`X-Pin` header or `?pin=`):
 - [ ] Stinger and REPLAY bug fire on the way in and out
 - [ ] MARK saves without changing program
 - [ ] Queue persists after a dock reload (and a server restart); Play all runs in order
-- [ ] ABORT works at any point during a replay (including while saving)
+- [ ] ABORT works at any point during a replay (including while saving), with the stinger
 - [ ] Rapid double-tapping REPLAY doesn't break anything
 - [ ] Replay OBS closed: buttons disabled with a clear message, and the stream and graphics are unaffected
 

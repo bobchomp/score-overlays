@@ -117,17 +117,52 @@ test('replay flow', async t => {
     await idle();
   });
 
-  await t.test('ABORT returns to the previous scene immediately', async () => {
+  await t.test('ABORT goes back to the previous scene through the stinger and stops the clip', async () => {
     main.st.program = 'Main';
     await replays.handle('now', { speed: 50 });
     await until(() => replays.status.bug.visible, 2000, 'bug');
+    const mark = main.st.log.length;
     const t0 = Date.now();
     replays.handle('abort');
     await idle();
-    assert.ok(Date.now() - t0 < 1000, 'quick');
+    assert.ok(Date.now() - t0 < 1500, 'quick');
+    const log = main.st.log.slice(mark);
+    const back = log.find(l => l.requestType === 'SetCurrentProgramScene');
+    assert.equal(back.requestData.sceneName, 'Main');
+    assert.equal(back.transition, 'Replay Stinger', 'stinger used on abort');
+    assert.ok(log.some(l => l.requestType === 'TriggerMediaInputAction'), 'clip stopped');
     assert.equal(main.st.program, 'Main');
-    assert.equal(main.st.transition, 'Fade', 'aborted with the normal transition');
+    assert.equal(main.st.transition, 'Fade', 'normal transition restored');
     assert.equal(replays.status.bug.visible, false);
+  });
+
+  await t.test('ABORT with the graphics wipe: wipes back, and pressed during the wipe-in it never cuts to REPLAY', async () => {
+    replays.settings.stinger.mode = 'overlay';
+    main.st.program = 'Main';
+    // abort while on air
+    await replays.handle('now', { speed: 50 });
+    await until(() => replays.status.bug.visible, 3000, 'bug');
+    const before = replays.status.wipe.id;
+    const mark = main.st.log.length;
+    replays.handle('abort');
+    await until(() => replays.status.wipe.id !== before, 500, 'wipe starts at once');
+    const wipeAt = replays.status.wipe.at;
+    await idle();
+    const back = main.st.log.slice(mark).find(l => l.requestType === 'SetCurrentProgramScene');
+    assert.equal(back.requestData.sceneName, 'Main');
+    assert.equal(back.transition, 'Cut');
+    assert.ok(back.at - wipeAt >= 550, 'cut hidden under the wipe');
+    // abort during the wipe-in
+    const mark2 = main.st.log.length;
+    await replays.handle('now', { speed: 100 });
+    await until(() => replays.status.wipe && Date.now() - replays.status.wipe.at < 300 && replays.status.playing, 3000, 'wipe-in');
+    replays.handle('abort');
+    await idle();
+    assert.equal(main.st.log.slice(mark2).filter(l => l.requestType === 'SetCurrentProgramScene').length, 0, 'never left the live scene');
+    assert.equal(main.st.program, 'Main');
+    assert.equal(main.st.transition, 'Fade');
+    assert.equal(replays.status.bug.visible, false);
+    replays.settings.stinger.mode = 'obs';
   });
 
   await t.test('switching scenes manually in OBS mid-replay ends it without switching back', async () => {
@@ -231,7 +266,8 @@ test('replay flow', async t => {
     main.st.program = 'Main';
     main.st.transition = 'Fade';
     const wipes = [];
-    const onChange = () => { const w = replays.status.wipe; if (w && w.id !== wipes.at(-1)?.id) wipes.push({ ...w }); };
+    const earlier = replays.status.wipe?.id; // left over from previous tests
+    const onChange = () => { const w = replays.status.wipe; if (w && w.id !== earlier && w.id !== wipes.at(-1)?.id) wipes.push({ ...w }); };
     replays.on('change', onChange);
     const mark = main.st.log.length;
     while (replays.queue.length < 2) replays.addClip(replays.queue[0].path);
