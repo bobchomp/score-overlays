@@ -46,6 +46,12 @@ When the server is running, the console shows the addresses:
  From your phone:               http://192.168.1.20:3000/dock
 ```
 
+### Updating
+Double-click **`update.bat`**. It stops the server, pulls the latest version, installs anything new and starts the
+server again. If you've edited files that came with the app (for example `config/theme.json` or an example team), it
+backs them up to `data\update-backup\<date>\` first, and your theme keeps working. The overlay in OBS and the dock
+reload themselves once the server is back. If anything goes wrong, it stops and says why, without changing anything else.
+
 ## 2. Set up OBS (once)
 
 You need OBS Studio 28 or newer, which has obs-websocket built in.
