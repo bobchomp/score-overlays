@@ -1,5 +1,7 @@
 # Replays
 
+*Setting up replays. For running a match, see [MATCHDAY.md](MATCHDAY.md).*
+
 The **Replays** section of the control dock (on the **Live** tab, next to the match controls) does instant replays using a second OBS. It saves the last few seconds
 of the clean camera, plays them in the main OBS behind a stinger with a **REPLAY** bug on screen, and then
 returns to live on its own.
@@ -44,7 +46,7 @@ Create these yourself. The names can be changed in the dock under **Settings →
 | What | Default name | Notes |
 |---|---|---|
 | Scene | **REPLAY** | Contains the media source below, plus your graphics overlay Browser Source (as a *reference* copy) so the REPLAY bug and scorebug show. |
-| Media Source | **Replay Player** | *Local file*, with any file to start. The dock sets the file, speed, *Restart playback when source becomes active* and *Close file when inactive* on every replay. |
+| Media Source | **Replay Player** | *Local file*, with any file to start. The dock sets the file, speed, volume and playback options on every replay (it also holds the last frame, so there's no blank picture at the end). |
 | Transition | **Replay Stinger** | *Only if you choose the OBS Stinger option* (see below). A *Stinger* transition with your replay wipe video; set its *Transition Point* to when the wipe fully covers the screen. Not needed with the default graphics wipe. |
 
 The **REPLAY bug** is part of the graphics overlay, so make sure the overlay Browser Source is in the REPLAY scene.
@@ -52,13 +54,13 @@ The **REPLAY bug** is part of the graphics overlay, so make sure the overlay Bro
 ### The stinger: graphics wipe (default) or your own video
 **Graphics wipe (default, no video needed).** The graphics overlay plays a full-screen wipe in the **home
 team's colours** with their badge and "REPLAY". The server *cuts* OBS to the replay scene at the exact moment
-the wipe covers the screen, so viewers never see the cut. Set how fast it plays with the **Wipe speed** slider (0.6–3 s, default 1.3 s) under *Settings → Stinger*. The same happens on the way back. Between clips in **Play all** it fades through black by default
+the wipe covers the screen, so viewers never see the cut. Set how fast it plays with the **Wipe speed** slider (0.6–3 s, default 1.3 s) under *Settings → Replay settings → Stinger*. The same happens on the way back. Between clips in **Play all** it fades through black by default
 (*Between clips* setting: *Fade* / *Full stinger* / *Cut*). You don't need the *Replay Stinger* transition at all. It uses OBS's built-in **Cut**
-transition, and the name can be changed under *Settings → Stinger* if your OBS is in another language.
+transition, and the name can be changed under *Settings → Replay settings → Stinger* if your OBS is in another language.
 For this to work, the overlay Browser Source must be in **both** your live scene(s) and the REPLAY scene
 (*Paste (Reference)*), at the **top** of the source list in each.
 
-**OBS Stinger transition (your own video).** Choose it under *Settings → Stinger* and enter the transition name
+**OBS Stinger transition (your own video).** Choose it under *Settings → Replay settings → Stinger* and enter the transition name
 (default **Replay Stinger**). OBS can't transition a scene into itself, so to get the *full* stinger *between* queued
 clips (Between clips: *Full stinger*), also create a scene called **REPLAY 2** with a second media source **Replay Player 2** (plus the overlay),
 and enter both names under *Stinger between clips*. Without them, Play all cuts between clips.
@@ -103,7 +105,7 @@ Safety rules:
   being disconnected.
 
 ### Keyboard shortcuts (dock focused, either tab)
-Defaults: **R** replay 100 % · **T** replay slow-mo · **M** mark · **B** abort. Change them under Settings: click
+Defaults: **R** replay 100 % · **T** replay slow-mo · **M** mark · **B** abort. Change them under *Settings → Replay settings*: click
 the box and press a key (Backspace clears it). G, H, Space, Esc and Z are reserved for the match controls.
 
 ### Stream Deck / Companion
@@ -121,6 +123,7 @@ POST with the PIN (`X-Pin` header or `?pin=`):
 | *Scene "REPLAY" not found* (or source / transition) | Create it in the main OBS, or fix the name in Replay settings. Names are case-sensitive. |
 | *Replay file is missing* | The file was moved or deleted. Remove it from the queue. |
 | Replay plays but there's no REPLAY bug | Add the graphics overlay Browser Source to the REPLAY scene. |
+| Not sure what's wrong | **Settings → Pre-match check** checks the Replay OBS, Replay Buffer, scene/source names, overlay position, live sound and disk space, and says how to fix each one. |
 | Stuck on the REPLAY scene | Press **ABORT / BACK TO LIVE**, or switch scenes in OBS. Nothing in the dock fights a manual switch. |
 
 ## Testing checklist

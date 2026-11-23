@@ -62,3 +62,4 @@ New-Item -ItemType Directory "$work\zip-copy" | Out-Null
 Check ($LASTEXITCODE -eq 1) 'non-git folder stops with an error instead of breaking'
 
 Write-Host 'Updater dry run passed.' -ForegroundColor Green
+exit 0
