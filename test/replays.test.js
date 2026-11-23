@@ -391,6 +391,27 @@ test('replay flow', async t => {
     replays.settings.stinger.mode = 'obs';
   });
 
+  await t.test('no blank frame at the end: the wipe back starts before the clip ends, last frame is held', async () => {
+    replays.settings.stinger.mode = 'overlay';
+    main.st.program = 'Main';
+    const mark = main.st.log.length;
+    const earlier = replays.status.wipe?.id;
+    const wipes = [];
+    const onChange = () => { const w = replays.status.wipe; if (w && w.id !== earlier && w.id !== wipes.at(-1)?.id) wipes.push(w); };
+    replays.on('change', onChange);
+    await replays.handle('play', { id: replays.queue[0].id, speed: 100 });
+    await idle();
+    replays.off('change', onChange);
+    const log = main.st.log.slice(mark);
+    assert.equal(log.find(l => l.requestType === 'SetInputSettings').requestData.inputSettings.clear_on_media_end, false);
+    const seek = log.find(l => l.requestType === 'SetMediaInputCursor');
+    const clipEnds = seek.at + 2000; // 2s left at 100%
+    const out = wipes[1];
+    assert.ok(out.at <= clipEnds - 400, `wipe back started ${clipEnds - out.at}ms before the clip ended`);
+    assert.ok(out.at + out.switchAtMs >= clipEnds - 250, 'and covers the screen around the moment the clip ends');
+    replays.settings.stinger.mode = 'obs';
+  });
+
   await t.test('wipe speed setting scales the wipe and the hidden cut', async () => {
     const { wipeTiming } = await import('../server/replays.js');
     assert.deepEqual(wipeTiming(2000), { totalMs: 2000, switchAtMs: 920 });

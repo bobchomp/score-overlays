@@ -485,6 +485,7 @@ export class Replays extends EventEmitter {
       await this.preflight();
 
       let current = null; // scene currently on program
+      let loadedAt = 0;
       for (let i = 0; i < clips.length; i++) {
         if (session.aborted) break;
         const clip = clips[i];
@@ -499,11 +500,12 @@ export class Replays extends EventEmitter {
         const alt = this.useB() && current === n.scene; // OBS stinger: alternate scenes so it can play between clips
         const scene = alt ? n.sceneB : n.scene;
         const player = alt ? n.playerB : n.player;
-        const loadClip = () => this.mainObs.call('SetInputSettings', {
+        const loadClip = () => { loadedAt = Date.now(); return this.mainObs.call('SetInputSettings', {
           inputName: player,
-          inputSettings: { is_local_file: true, local_file: clip.path, speed_percent: speed, restart_on_activate: true, close_when_inactive: true },
+          // clear_on_media_end: false holds the last frame instead of going blank while we transition away
+          inputSettings: { is_local_file: true, local_file: clip.path, speed_percent: speed, restart_on_activate: true, close_when_inactive: true, clear_on_media_end: false },
           overlay: true,
-        });
+        }); };
         const enterScene = async () => {
           await this.mainObs.call('SetCurrentProgramScene', { sceneName: scene });
           current = scene;
@@ -540,8 +542,19 @@ export class Replays extends EventEmitter {
         }
         if (!this.status.bug.visible) { this.status.bug = { visible: true, speed }; this.changed(); }
         if (session.aborted) break;
-        const wallMs = leftMs == null ? 120000 : (leftMs * 100) / speed + 5000;
-        const r = await this.waitFor('ended', wallMs, name => name === player).catch(() => null);
+        // Start what comes next a little before the clip ends, so the wipe / fade has covered the
+        // picture by the time the clip runs out (no blank frame). Lead = time until fully covered.
+        const isLast = i === clips.length - 1;
+        const t = wipeTiming(this.settings.stinger.durationMs);
+        const lead = isLast
+          ? (overlayStinger ? t.switchAtMs : 0)
+          : between === 'fade' ? DIP_MS : (between === 'stinger' && overlayStinger ? t.switchAtMs : 0);
+        const wallLeft = leftMs == null ? null : (leftMs * 100) / speed;
+        const ended = this.waitFor('ended', wallLeft == null ? 120000 : wallLeft + 5000,
+          name => name === player && Date.now() - loadedAt > 500).catch(() => null);
+        const r = wallLeft != null && lead > 0
+          ? await Promise.race([ended, sleep(Math.max(0, wallLeft - lead)).then(() => 'early')])
+          : await ended;
         if (r === ABORTED) break;
       }
     } catch (err) {
