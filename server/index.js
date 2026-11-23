@@ -13,8 +13,13 @@ import { createAuth } from './auth.js';
 import { createApi } from './api.js';
 import { score, eventMinute, timerMinute, PLAYING_PERIODS } from '../public/shared/match.js';
 import { Replays, disabledReplays } from './replays.js';
+import { computeBuild, gitCommit } from './build.js';
+import { runHealth, refreshOverlayInObs } from './health.js';
 
 const env = loadEnv();
+const BUILD = computeBuild();   // fingerprint of the page files; pages reload when it changes
+const COMMIT = gitCommit();
+const STARTED_AT = Date.now();
 let theme = loadTheme();
 let themeRev = Date.now();
 
@@ -37,6 +42,15 @@ try {
   replays = disabledReplays(err.message);
 }
 
+function connectedPages() {
+  return [...wss.clients].filter(c => c.hello && c.readyState === c.OPEN)
+    .map(c => ({ role: c.role, page: c.info?.page || null, build: c.info?.build || null, width: c.info?.width || 0, height: c.info?.height || 0 }));
+}
+
+function health() {
+  return runHealth({ env, obs, replays, clients: connectedPages, build: BUILD, commit: COMMIT, startedAt: STARTED_AT });
+}
+
 function replayStatus() {
   try { return replays.publicStatus(); } catch (err) { return { disabled: err.message, queue: [], bug: { visible: false } }; }
 }
@@ -48,6 +62,7 @@ function snapshot() {
     undo: store.undoInfo(),
     obs: obs.publicStatus(),
     demo: demo.status(),
+    build: BUILD,
     replay: replayStatus(),
     theme,
     themeRev,
@@ -69,7 +84,7 @@ app.get('/theme.css', (req, res) => {
 });
 
 app.use('/api', createApi({
-  store, obs, auth, demo, snapshot, replays,
+  store, obs, auth, demo, snapshot, replays, health,
   onThemeChange() { theme = loadTheme(); themeRev = Date.now(); broadcastState(); },
 }));
 
@@ -134,6 +149,28 @@ wss.on('connection', (ws, req) => {
       case 'scene': {
         if (!ws.authed) { send(ws, { type: 'ack', id: msg.id, ok: false, error: 'PIN required', auth: false }); break; }
         try { await obs.setScene(msg.scene); send(ws, { type: 'ack', id: msg.id, ok: true }); } catch (err) { send(ws, { type: 'ack', id: msg.id, ok: false, error: err.message }); }
+        break;
+      }
+      case 'info': {
+        // What kind of page this is and which version it loaded (for the health check).
+        ws.info = {
+          page: String(msg.page || '').slice(0, 30), build: String(msg.build || '').slice(0, 20),
+          width: Number(msg.width) || 0, height: Number(msg.height) || 0,
+        };
+        break;
+      }
+      case 'health': {
+        if (!ws.authed) { send(ws, { type: 'ack', id: msg.id, ok: false, error: 'PIN required', auth: false }); break; }
+        try {
+          if (msg.fix === 'refreshOverlay') {
+            const n = await refreshOverlayInObs(obs);
+            send(ws, { type: 'ack', id: msg.id, ok: true, refreshed: n });
+          } else {
+            send(ws, { type: 'ack', id: msg.id, ok: true, report: await health() });
+          }
+        } catch (err) {
+          send(ws, { type: 'ack', id: msg.id, ok: false, error: err.message });
+        }
         break;
       }
       case 'replay': {

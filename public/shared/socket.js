@@ -3,8 +3,10 @@
 // match clock is identical on every screen even if a phone's clock is wrong.
 
 export class MatchSocket {
-  constructor({ role = 'overlay', pin = '', onState, onStatus, onAuth } = {}) {
+  constructor({ role = 'overlay', page = 'page', pin = '', onState, onStatus, onAuth } = {}) {
     this.role = role;
+    this.page = page;     // 'overlay', 'overlay-preview', 'dock', 'setup' (shown in the health check)
+    this.build = null;    // version of the page files this page was loaded with
     this.pin = pin;
     this.onState = onState || (() => {});
     this.onStatus = onStatus || (() => {});
@@ -40,7 +42,19 @@ export class MatchSocket {
       let msg;
       try { msg = JSON.parse(ev.data); } catch { return; }
       if (msg.type === 'state') {
-        if (!this.connected) { this.connected = true; this.onStatus(true); }
+        // After an update the server comes back with new page files: reload to pick them up.
+        if (msg.build && this.build && msg.build !== this.build && !this.reloading) {
+          this.reloading = true;
+          console.log('[socket] page files updated on the server, reloading');
+          setTimeout(() => location.reload(), 300);
+          return;
+        }
+        if (msg.build && !this.build) this.build = msg.build;
+        if (!this.connected) {
+          this.connected = true;
+          this.onStatus(true);
+          this.sendInfo();
+        }
         if (this.bestRtt === Infinity && msg.serverTime) this.offset = msg.serverTime - Date.now();
         // Messages on one socket arrive in order, so the latest is always the truth.
         this.onState(msg);
@@ -67,6 +81,12 @@ export class MatchSocket {
       this.backoff = Math.min(this.backoff * 2, 4000);
     };
     ws.onerror = () => {};
+  }
+
+  /** Tell the server what this page is (for the health check). */
+  sendInfo() {
+    if (this.ws?.readyState !== WebSocket.OPEN) return;
+    this.ws.send(JSON.stringify({ type: 'info', page: this.page, build: this.build, width: window.innerWidth, height: window.innerHeight }));
   }
 
   ping() {

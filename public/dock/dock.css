@@ -169,3 +169,24 @@ body { padding-bottom: 40px; }
 /* two-legged tie */
 .agg-line { margin-top: 10px; text-align: center; font-size: 15px; padding: 6px; border-radius: 6px; background: var(--ui-bg); border: 1px solid var(--ui-line); }
 .agg-line strong { font-size: 18px; margin: 0 4px; }
+
+/* pre-match check */
+.health-chip { appearance: none; border: 1px solid; border-radius: 999px; padding: 6px 12px; font: 800 13px system-ui, sans-serif; cursor: pointer; white-space: nowrap; }
+.health-chip.warn { background: #3d2e05; border-color: #c99a14; color: #f2cc60; }
+.health-chip.bad { background: #4a1416; border-color: var(--ui-bad); color: #ffb3ae; animation: pulse 1.4s infinite; }
+.health-summary { font-weight: 700; padding: 8px 10px; border-radius: 8px; margin-bottom: 8px; background: var(--ui-bg); border: 1px solid var(--ui-line); }
+.health-summary.ok { color: #7ee2a0; border-color: var(--ui-ok); }
+.health-summary.warn { color: #f2cc60; border-color: #c99a14; }
+.health-summary.bad { color: #ffb3ae; border-color: var(--ui-bad); }
+.health-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.health-list li { display: flex; gap: 10px; padding: 6px 8px; border-radius: 6px; background: var(--ui-bg); border: 1px solid var(--ui-line); }
+.health-list .h-icon { flex: 0 0 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 13px; color: #fff; background: #3a4450; }
+.health-list li.ok .h-icon { background: var(--ui-ok); }
+.health-list li.warn .h-icon { background: #c99a14; color: #111; }
+.health-list li.bad .h-icon { background: var(--ui-bad); }
+.health-list li.bad { border-color: #6b2020; }
+.health-list .h-body { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.health-list .h-label { font-weight: 700; font-size: 14px; }
+.health-list .h-detail { font-size: 12.5px; color: var(--ui-muted); overflow-wrap: anywhere; }
+.health-list .h-fix { font-size: 12.5px; color: var(--ui-text); }
+.health-list .btn { align-self: flex-start; margin-top: 4px; }

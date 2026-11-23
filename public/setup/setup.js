@@ -408,6 +408,7 @@ function renderTheme() {
 // ================================================================== boot
 new MatchSocket({
   role: 'overlay',
+  page: 'setup',
   onState(msg) {
     snap = msg;
     syncThemeCss(msg.themeRev);

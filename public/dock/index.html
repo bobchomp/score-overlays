@@ -25,6 +25,7 @@
     <span class="dot" id="dot-server" title="Graphics server"></span>
     <span class="dot" id="dot-obs" title="OBS"></span>
     <span class="top-title" id="top-title">Match Control</span>
+    <button class="health-chip warn" id="health-chip" hidden title="Pre-match check found something"></button>
     <button class="btn undo" id="btn-undo" data-act="undo" title="Undo (Ctrl+Z)" disabled>⟲ Undo</button>
     <nav class="dock-tabs" role="tablist">
       <button class="dock-tab active" data-dock-tab="live" role="tab">Live</button>
@@ -200,6 +201,12 @@
   <!-- ================= SETTINGS TAB: set once / rarely ================= -->
   <main id="settings-app" hidden>
     <div class="scol">
+      <section class="card health-card" id="health-card">
+        <h2>Pre-match check <span class="muted" id="health-when"></span></h2>
+        <div class="health-summary" id="health-summary">Not checked yet.</div>
+        <ul class="health-list" id="health-list"></ul>
+        <div class="row"><button class="btn primary grow" id="health-run">Run check now</button></div>
+      </section>
       <section class="card" id="preview-card" hidden>
         <div class="preview-wrap" id="preview-wrap"><iframe id="preview" title="Overlay preview" tabindex="-1"></iframe></div>
       </section>

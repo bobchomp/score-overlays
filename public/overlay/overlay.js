@@ -506,6 +506,7 @@ function render() {
 
 const sock = new MatchSocket({
   role: 'overlay',
+  page: params.has('preview') ? 'overlay-preview' : 'overlay',
   onState(msg) {
     snap = msg;
     syncThemeCss(msg.themeRev);

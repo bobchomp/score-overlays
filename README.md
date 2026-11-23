@@ -116,6 +116,16 @@ Firewall → *Allow an app* → Node.js → Private.
 Lower thirds for goals, cards and subs hide themselves after 8 seconds (change this in *Theme → Timings*). Text lower thirds stay
 until you hide them. Each type can be set not to show automatically in *Options*.
 
+### Pre-match check
+**Settings → Pre-match check** (and a yellow/red chip in the top bar when something's wrong) checks everything before
+kick-off: overlay loaded in OBS and up to date, its size and Browser Source settings (URL/port, 1920×1080, "Shutdown
+source when not visible"), overlay on top in the live and REPLAY scenes, both OBS connections, the Replay Buffer,
+replay scene/source/transition names, replay folder disk space and the PIN. Each problem comes with the fix, and an
+out-of-date overlay can be refreshed in OBS with one button. It re-checks every 30 seconds while the dock is open.
+
+After an update, the overlay and dock **reload themselves** as soon as the server restarts, so you no longer need
+"Refresh cache of current page".
+
 ### Dock tabs
 - **Live**: everything used during a match. On a wide window it's four columns: score & clock · graphics, cards & subs, text lower third · replays · match events. On a narrower window it stacks, with the score, clock and replay buttons first.
 - **Settings**: overlay preview, options (auto-show, stings), match setup link, exports, demo, lock, **Reset game**, and replay settings.

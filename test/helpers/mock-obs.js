@@ -17,6 +17,9 @@ export function startMockObs({
   emitSaved = true,        // false: never send ReplayBufferSaved (tests the fallback)
   mediaDurationMs = 3000,
   stingerMs = 120,
+  // Browser Sources (for the health check): name -> { url, width, height, shutdown, scenes: { scene: 'top'|'below' } }
+  browserSources = {},
+  recordDirectory = null,
 } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mockobs-'));
   const st = {
@@ -71,6 +74,10 @@ export function startMockObs({
       st.transition = transitionName; return {};
     },
     GetInputSettings: ({ inputName }) => {
+      if (inputName in browserSources) {
+        const { scenes: _s, ...settings } = browserSources[inputName];
+        return { inputSettings: settings, inputKind: 'browser_source' };
+      }
       if (!(inputName in inputs)) throw Object.assign(new Error(`No source was found by the name of \`${inputName}\`.`), { code: 600 });
       return { inputSettings: st.inputSettings[inputName] || {}, inputKind: 'ffmpeg_source' };
     },
@@ -104,6 +111,28 @@ export function startMockObs({
       return {};
     },
     GetLastReplayBufferReplay: () => ({ savedReplayPath: st.lastReplay }),
+    GetRecordDirectory: () => ({ recordDirectory: recordDirectory || dir }),
+    GetInputList: ({ inputKind }) => ({
+      inputs: inputKind === 'browser_source'
+        ? Object.keys(browserSources).map(n => ({ inputName: n, inputKind: 'browser_source' }))
+        : Object.keys(inputs).map(n => ({ inputName: n, inputKind: 'ffmpeg_source' })),
+    }),
+    GetInputDefaultSettings: () => ({ defaultInputSettings: { width: 800, height: 600, shutdown: false, restart_when_active: false, url: 'https://obsproject.com/browser-source' } }),
+    GetSceneItemList: ({ sceneName }) => {
+      if (!scenes.includes(sceneName)) throw Object.assign(new Error('No scene'), { code: 600 });
+      const items = Object.entries(inputs).filter(([, sc]) => sc === sceneName).map(([n]) => ({ sourceName: n, sceneItemIndex: 1 }));
+      items.push({ sourceName: 'Camera', sceneItemIndex: 0 });
+      for (const [n, b] of Object.entries(browserSources)) {
+        const where = b.scenes?.[sceneName];
+        if (where) items.push({ sourceName: n, sceneItemIndex: where === 'top' ? 10 : -1 });
+      }
+      return { sceneItems: items };
+    },
+    PressInputPropertiesButton: ({ inputName, propertyName }) => {
+      if (!(inputName in browserSources)) throw Object.assign(new Error('No source'), { code: 600 });
+      st.pressed = [...(st.pressed || []), [inputName, propertyName]];
+      return {};
+    },
   };
 
   wss.on('connection', ws => {

@@ -6,7 +6,7 @@ import {
 import { pinFromRequest } from './auth.js';
 import { exportJson, exportCsv } from './export.js';
 
-export function createApi({ store, obs, auth, demo, onThemeChange, snapshot, replays }) {
+export function createApi({ store, obs, auth, demo, onThemeChange, snapshot, replays, health }) {
   const api = express.Router();
   api.use(express.json({ limit: '1mb' }));
 
@@ -35,6 +35,11 @@ export function createApi({ store, obs, auth, demo, onThemeChange, snapshot, rep
 
   // Everything below needs the PIN.
   api.use(requirePin);
+
+  // ---------- pre-match health check ----------
+  api.get('/health', async (req, res) => {
+    try { res.json(await health()); } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
+  });
 
   // ---------- generic action ----------
   api.post('/action', (req, res) => run(res, req.body?.action, req.body?.payload));

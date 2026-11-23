@@ -4,6 +4,7 @@ import {
 } from '/shared/match.js';
 import { getPin, setPin, clearPin } from '/shared/pin.js';
 import { initReplays } from '/dock/replays.js';
+import { initHealth } from '/dock/health.js';
 
 const $ = id => document.getElementById(id);
 let snap = null;
@@ -12,6 +13,7 @@ let replaysUi = null; // Replays tab (isolated: errors there never stop match co
 // ------------------------------------------------------------------ socket + PIN
 const sock = new MatchSocket({
   role: 'control',
+  page: 'dock',
   pin: getPin(),
   onState(msg) {
     snap = msg;
@@ -45,6 +47,7 @@ function setTab(tab) {
 }
 document.querySelectorAll('[data-dock-tab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.dockTab)));
 try { setTab(localStorage.getItem('dock-tab') || 'live'); } catch { setTab('live'); }
+try { initHealth({ sock, toast, setTab }); } catch (err) { console.warn('health check failed to start:', err); }
 $('pin-form').addEventListener('submit', e => {
   e.preventDefault();
   const pin = $('pin-input').value.trim();
