@@ -17,7 +17,7 @@ function clipTitle(c) {
   return c.label || `${time}${c.minute ? ` · ${c.minute}'` : ''}`;
 }
 
-export function initReplays({ sock, toast, promptSheet }) {
+export function initReplays({ sock, toast, promptSheet, openSheet, closeSheet, getSnap }) {
   let snap = null;
   let lastNoticeId = null;
   let settingsKey = '';
@@ -41,7 +41,13 @@ export function initReplays({ sock, toast, promptSheet }) {
     if (d.replay) {
       const speed = d.speed === 'slow' ? 'slow' : Number(d.speed) || 100;
       if (d.replay === 'now') return cmd('now', { speed });
-      if (d.replay === 'mark') return cmd('mark', { tag: d.tag || '' });
+      if (d.replay === 'mark') {
+        if (!d.tag) return cmd('mark', {});
+        // Tagged mark: save straight away, then ask which team it was for.
+        const r = await cmd('mark', { tag: d.tag, silent: true }); // the popup says it was saved
+        if (r.ok && r.clip) askTeam(r.clip, d.tag);
+        return;
+      }
       if (d.replay === 'abort') return cmd('abort');
       if (d.replay === 'playAll') return cmd('playAll', { speed });
       if (d.replay === 'clearQueue') {
@@ -73,6 +79,27 @@ export function initReplays({ sock, toast, promptSheet }) {
     const sel = e.target.closest('select[data-rq-tag]');
     if (sel) cmd('tag', { id: sel.dataset.rqTag, tag: sel.value });
   });
+
+  // ---------------------------------------------------------------- "which team?" popup after a tagged mark
+  function askTeam(clip, tag) {
+    const st = getSnap()?.state;
+    if (!st || !openSheet) return;
+    const teamBtn = side => {
+      const t = st.teams[side];
+      return `<button class="btn r-team-btn" data-team-side="${side}" style="--tp:${esc(t.colors?.primary || '#333')}">
+        <span class="r-team-chip"></span>${esc(t.name || side)}</button>`;
+    };
+    openSheet(`${tag}: which team?`, `<p class="hint" style="margin-top:0">Clip saved as <strong>${esc(clip.label)}</strong>. Pick the team to add it to the name.</p>
+      <div class="r-team-pick">${teamBtn('home')}${teamBtn('away')}</div>
+      <div class="row"><button class="btn grow ghost" data-sheet-close>No team</button></div>`);
+    document.querySelectorAll('#sheet-body [data-team-side]').forEach(b => {
+      b.onclick = () => {
+        const t = st.teams[b.dataset.teamSide];
+        closeSheet();
+        cmd('rename', { id: clip.id, label: `${t.name} ${clip.label}` });
+      };
+    });
+  }
 
   // ---------------------------------------------------------------- keyboard shortcuts (work on both tabs)
   document.addEventListener('keydown', e => {
@@ -285,7 +312,7 @@ export function initReplays({ sock, toast, promptSheet }) {
         const time = new Date(c.createdAt).toLocaleTimeString('en-GB', { hour12: false });
         const title = clipTitle(c);
         // Subtitle: only what the title doesn't already say.
-        const meta = [time, c.minute ? `${c.minute}'` : ''].filter(x => x && !title.includes(x)).concat(c.file || []).join(' · ');
+        const meta = [time, c.minute && !/minute/.test(title) ? `${c.minute}'` : ''].filter(x => x && !title.includes(x)).concat(c.file || []).join(' · ');
         return `<li class="${r.playing?.clipId === c.id ? 'live' : ''}">
           <div class="rq-main">
             <span class="rq-title">${esc(title)}</span>

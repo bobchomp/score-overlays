@@ -11,7 +11,7 @@ import { ObsLink } from './obs.js';
 import { Demo } from './demo.js';
 import { createAuth } from './auth.js';
 import { createApi } from './api.js';
-import { score, eventMinute, PLAYING_PERIODS } from '../public/shared/match.js';
+import { score, eventMinute, timerMinute, PLAYING_PERIODS } from '../public/shared/match.js';
 import { Replays, disabledReplays } from './replays.js';
 
 const env = loadEnv();
@@ -30,6 +30,7 @@ try {
     mainObs: obs,
     mainDefault: { url: `ws://${env.obs.host}:${env.obs.port}`, password: env.obs.password },
     getMinute: () => (PLAYING_PERIODS.includes(store.state.clock.period) ? eventMinute(store.state.clock, store.state.match, Date.now()) : null),
+    getTimerMinute: () => timerMinute(store.state.clock, store.state.match, Date.now()),
   });
 } catch (err) {
   console.error('[replays] disabled:', err);

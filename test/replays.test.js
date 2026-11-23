@@ -29,6 +29,7 @@ async function setup(mockOpts = {}) {
     mainObs,
     mainDefault: { url: `ws://127.0.0.1:${MAIN_PORT}` },
     getMinute: () => '23',
+    getTimerMinute: () => replays?._testTimer ?? '22',
     file: path.join(dir, 'replays.json'),
   });
   replays.settings.replay.url = `ws://127.0.0.1:${REPLAY_PORT}`;
@@ -90,13 +91,28 @@ test('replay flow', async t => {
     await idle();
   });
 
-  await t.test('MARK saves without changing program, labels with time and minute, and can tag', async () => {
+  await t.test('MARK saves without changing program; plain MARK is labelled with time and minute', async () => {
     const before = main.calls('SetCurrentProgramScene').length;
-    const r = await replays.handle('mark', { tag: 'Goal' });
+    const r = await replays.handle('mark', {});
     assert.equal(r.ok, true);
     assert.match(r.clip.label, /^\d\d:\d\d:\d\d · 23'$/);
-    assert.equal(r.clip.tag, 'Goal');
     assert.equal(main.calls('SetCurrentProgramScene').length, before, 'program untouched');
+  });
+
+  await t.test('tagged MARK is named "<Tag> - <timer> minutes" (stoppage as 45+n, singular for 1)', async () => {
+    let r = await replays.handle('mark', { tag: 'Chance' });
+    assert.equal(r.clip.label, 'Chance - 22 minutes');
+    assert.equal(r.clip.tag, 'Chance');
+    replays._testTimer = '45+2';
+    r = await replays.handle('mark', { tag: 'Foul' });
+    assert.equal(r.clip.label, 'Foul - 45+2 minutes');
+    replays._testTimer = '1';
+    r = await replays.handle('mark', { tag: 'Save' });
+    assert.equal(r.clip.label, 'Save - 1 minute');
+    replays._testTimer = undefined;
+    // the dock then adds the team in front
+    await replays.handle('rename', { id: r.clip.id, label: `Riverside FC ${r.clip.label}` });
+    assert.equal(replays.queue.find(c => c.id === r.clip.id).label, 'Riverside FC Save - 1 minute');
   });
 
   await t.test('rapid double tap: second press is ignored while saving', async () => {

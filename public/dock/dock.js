@@ -32,7 +32,7 @@ const sock = new MatchSocket({
 });
 
 if (!getPin()) $('pin-screen').hidden = false;
-try { replaysUi = initReplays({ sock, toast, promptSheet }); } catch (err) { console.warn('replays tab failed to start:', err); }
+try { replaysUi = initReplays({ sock, toast, promptSheet, openSheet, closeSheet, getSnap: () => snap }); } catch (err) { console.warn('replays tab failed to start:', err); }
 
 // ------------------------------------------------------------------ tabs: Live (match + replays) / Settings
 function setTab(tab) {

@@ -52,3 +52,14 @@ test('on-pitch set follows subs and red cards', () => {
   ], 'home');
   assert.deepEqual([...set].sort(), ['c', 'd']);
 });
+
+test('timer minute for replay clip names: clock minutes, stoppage as 45+n', async () => {
+  const { timerMinute } = await import('../public/shared/match.js');
+  assert.equal(timerMinute(clock('1H', 23 * 60000 + 41000), match, 0), '23');
+  assert.equal(timerMinute(clock('1H', 45 * 60000 + 30000), match, 0), '45');
+  assert.equal(timerMinute(clock('1H', 47 * 60000 + 5000), match, 0), '45+2');
+  assert.equal(timerMinute(clock('2H', 10 * 60000), match, 0), '55');
+  assert.equal(timerMinute(clock('2H', 48 * 60000), match, 0), '90+3');
+  assert.equal(timerMinute(clock('HT', 0), match, 0), '45');
+  assert.equal(timerMinute(clock('PRE', 0), match, 0), '0');
+});

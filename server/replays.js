@@ -81,12 +81,13 @@ export class Replays extends EventEmitter {
    * @param {() => string|null} o.getMinute  current match minute ("23", "45+2") or null
    * @param {string} [o.file]
    */
-  constructor({ mainObs, mainDefault, getMinute = () => null, file = REPLAYS_FILE }) {
+  constructor({ mainObs, mainDefault, getMinute = () => null, getTimerMinute = () => null, file = REPLAYS_FILE }) {
     super();
     this.file = file;
     this.mainObs = mainObs;
     this.mainDefault = mainDefault;
     this.getMinute = getMinute;
+    this.getTimerMinute = getTimerMinute;
     const saved = readJson(file, {}) || {};
     this.settings = mergeSettings(DEFAULT_SETTINGS, saved.settings);
     this.queue = Array.isArray(saved.queue) ? saved.queue.filter(c => c && c.id && c.path) : [];
@@ -294,7 +295,14 @@ export class Replays extends EventEmitter {
     const file = await this.saveBuffer();
     const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
     const minute = this.safeMinute();
-    const clip = this.addClip(file, { label: label || `${time}${minute ? ` · ${minute}'` : ''}`, tag });
+    // Tagged marks are named "<Tag> - <timer minutes> minutes"; the dock then adds the team in front.
+    let auto = `${time}${minute ? ` · ${minute}'` : ''}`;
+    if (tag) {
+      let tm = null;
+      try { tm = this.getTimerMinute(); } catch {}
+      if (tm != null) auto = `${tag} - ${tm} ${tm === '1' ? 'minute' : 'minutes'}`;
+    }
+    const clip = this.addClip(file, { label: label || auto, tag });
     if (!silent) this.say('info', `Marked: ${clip.label}${clip.tag ? ` (${clip.tag})` : ''}`);
     return { ok: true, clip };
   }

@@ -179,3 +179,15 @@ export function aggregate(state) {
   const away = (fl.away || 0) + now.away;
   return { home, away, firstLeg: { home: fl.home || 0, away: fl.away || 0 }, leader: home === away ? null : home > away ? 'home' : 'away' };
 }
+
+/**
+ * The minutes showing on the match clock, for naming replay clips: 23:41 -> "23".
+ * In stoppage time it's written as "45+2" (the clock showing 47:xx in the first half).
+ * Outside play (HT, FT, PEN) it's the end of the previous period ("45", "90", "120"); before kick-off "0".
+ */
+export function timerMinute(clock, match, now) {
+  if (!PLAYING_PERIODS.includes(clock.period)) return eventMinute(clock, match, now);
+  const mins = Math.floor(displayMs(clock, match, now) / 60000);
+  const end = periodBaseMinutes(clock.period, match) + periodLengthMinutes(clock.period, match);
+  return mins > end ? `${end}+${mins - end}` : String(mins);
+}
