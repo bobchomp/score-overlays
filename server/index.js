@@ -14,7 +14,7 @@ import { createApi } from './api.js';
 import { score, eventMinute, timerMinute, PLAYING_PERIODS } from '../public/shared/match.js';
 import { Replays, disabledReplays } from './replays.js';
 import { computeBuild, gitCommit } from './build.js';
-import { runHealth, refreshOverlayInObs } from './health.js';
+import { runHealth, refreshOverlayInObs, addLiveAudioToReplay } from './health.js';
 
 const env = loadEnv();
 const BUILD = computeBuild();   // fingerprint of the page files; pages reload when it changes
@@ -165,7 +165,10 @@ wss.on('connection', (ws, req) => {
         try {
           if (msg.fix === 'refreshOverlay') {
             const n = await refreshOverlayInObs(obs);
-            send(ws, { type: 'ack', id: msg.id, ok: true, refreshed: n });
+            send(ws, { type: 'ack', id: msg.id, ok: true, refreshed: n, message: `Overlay refreshed in OBS (${n})` });
+          } else if (msg.fix === 'addLiveAudio') {
+            const n = await addLiveAudioToReplay(obs, replays);
+            send(ws, { type: 'ack', id: msg.id, ok: true, message: n ? `Added ${n} live sound source${n > 1 ? 's' : ''} to the replay scene` : 'Nothing needed adding' });
           } else {
             send(ws, { type: 'ack', id: msg.id, ok: true, report: await health() });
           }

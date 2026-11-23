@@ -80,6 +80,15 @@ export function initReplays({ sock, toast, promptSheet, openSheet, closeSheet, g
     if (sel) cmd('tag', { id: sel.dataset.rqTag, tag: sel.value });
   });
 
+  // ---------------------------------------------------------------- replay sound slider
+  const vol = $('r-volume');
+  let volTimer = null;
+  vol.addEventListener('input', () => {
+    $('r-volume-val').textContent = `${vol.value}%`;
+    clearTimeout(volTimer);
+    volTimer = setTimeout(() => sock.request({ type: 'replay', op: 'volume', args: { volume: Number(vol.value) } }), 120);
+  });
+
   // ---------------------------------------------------------------- highlights reel
   function reelOptions() {
     const q = getSnap()?.replay?.queue || [];
@@ -404,6 +413,10 @@ export function initReplays({ sock, toast, promptSheet, openSheet, closeSheet, g
     }
 
     renderReel(r);
+    if (document.activeElement !== vol && s.volume != null) {
+      vol.value = s.volume;
+      $('r-volume-val').textContent = `${s.volume}%`;
+    }
     renderSettings();
   }
 

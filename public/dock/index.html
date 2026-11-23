@@ -176,6 +176,11 @@
         </div>
         <button class="btn r-btn r-mark" data-replay="mark">● MARK</button>
         <div class="r-tags" id="r-tags"></div>
+        <label class="r-vol" title="Replay sound level (the live sound keeps playing underneath)">
+          <span>🔊 Replay sound</span>
+          <input type="range" id="r-volume" min="0" max="100" step="5" value="50">
+          <strong id="r-volume-val">50%</strong>
+        </label>
         <button class="btn r-btn r-abort" data-replay="abort" id="r-abort">■ ABORT / BACK TO LIVE</button>
         <p class="hint" id="r-keys"></p>
       </section>

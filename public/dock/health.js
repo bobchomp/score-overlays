@@ -5,6 +5,7 @@ import { esc } from '/shared/socket.js';
 const $ = id => document.getElementById(id);
 const ICON = { ok: '✓', warn: '!', bad: '✕', skip: '–' };
 const POLL_MS = 30000;
+const FIX_LABEL = { refreshOverlay: '↻ Refresh overlay in OBS', addLiveAudio: '🔊 Add live sound to REPLAY scene' };
 
 export function initHealth({ sock, toast, setTab }) {
   let running = false;
@@ -38,7 +39,7 @@ export function initHealth({ sock, toast, setTab }) {
       <div class="h-body"><div class="h-label">${esc(i.label)}</div>
         ${i.detail ? `<div class="h-detail">${esc(i.detail)}</div>` : ''}
         ${i.fix && i.status !== 'ok' ? `<div class="h-fix">→ ${esc(i.fix)}</div>` : ''}
-        ${i.action === 'refreshOverlay' ? '<button class="btn small" data-health-fix="refreshOverlay">↻ Refresh overlay in OBS</button>' : ''}
+        ${i.action && FIX_LABEL[i.action] ? `<button class="btn small" data-health-fix="${i.action}">${FIX_LABEL[i.action]}</button>` : ''}
       </div></li>`).join('');
     const chip = $('health-chip');
     const n = counts.bad + counts.warn;
@@ -58,7 +59,7 @@ export function initHealth({ sock, toast, setTab }) {
     if (!b) return;
     b.disabled = true;
     const r = await sock.request({ type: 'health', fix: b.dataset.healthFix });
-    if (r.ok) { toast(`Overlay refreshed in OBS (${r.refreshed})`); setTimeout(() => run(), 2500); }
+    if (r.ok) { toast(r.message || 'Done'); setTimeout(() => run(), 1500); }
     else { toast(r.error || 'Could not refresh', true); b.disabled = false; }
   });
   document.querySelector('[data-dock-tab="settings"]')?.addEventListener('click', () => run());

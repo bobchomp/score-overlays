@@ -22,10 +22,12 @@ export function startMockObs({
   recordDirectory = null,
   replayFile = null,   // copy this real video for each saved replay (default: a tiny fake file)
   streaming = false,
+  // Extra scene items: { 'Main': [{ name: 'ATEM', kind: 'dshow_input', muted: false, audio: true }] }
+  sceneExtras = {},
 } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mockobs-'));
   const st = {
-    program, transition, bufferActive, emitSaved, streaming, lastReplay: null, savedCount: 0,
+    program, transition, bufferActive, emitSaved, streaming, volumes: {}, mutes: {}, lastReplay: null, savedCount: 0,
     log: [], inputSettings: {}, media: {}, clients: new Set(), wss: null, dir,
   };
   const wss = new WebSocketServer({ port, handleProtocols: p => [...p][0] });
@@ -123,13 +125,33 @@ export function startMockObs({
     GetInputDefaultSettings: () => ({ defaultInputSettings: { width: 800, height: 600, shutdown: false, restart_when_active: false, url: 'https://obsproject.com/browser-source' } }),
     GetSceneItemList: ({ sceneName }) => {
       if (!scenes.includes(sceneName)) throw Object.assign(new Error('No scene'), { code: 600 });
-      const items = Object.entries(inputs).filter(([, sc]) => sc === sceneName).map(([n]) => ({ sourceName: n, sceneItemIndex: 1 }));
-      items.push({ sourceName: 'Camera', sceneItemIndex: 0 });
+      const items = Object.entries(inputs).filter(([, sc]) => sc === sceneName).map(([n]) => ({ sourceName: n, sceneItemIndex: 1, inputKind: 'ffmpeg_source' }));
+      items.push({ sourceName: 'Camera', sceneItemIndex: 0, inputKind: 'dshow_input' });
+      for (const x of sceneExtras[sceneName] || []) items.push({ sourceName: x.name, sceneItemIndex: x.index ?? 2, inputKind: x.kind });
       for (const [n, b] of Object.entries(browserSources)) {
         const where = b.scenes?.[sceneName];
-        if (where) items.push({ sourceName: n, sceneItemIndex: where === 'top' ? 10 : -1 });
+        if (where) items.push({ sourceName: n, sceneItemIndex: where === 'top' ? 10 : -1, inputKind: 'browser_source' });
       }
       return { sceneItems: items };
+    },
+    GetInputVolume: ({ inputName }) => {
+      const x = Object.values(sceneExtras).flat().find(e => e.name === inputName);
+      if (x && x.audio === false) throw Object.assign(new Error('no audio'), { code: 604 });
+      return { inputVolumeMul: st.volumes[inputName] ?? 1, inputVolumeDb: 0 };
+    },
+    GetInputMute: ({ inputName }) => ({ inputMuted: st.mutes[inputName] ?? !!Object.values(sceneExtras).flat().find(e => e.name === inputName)?.muted }),
+    SetInputVolume: ({ inputName, inputVolumeMul }) => { st.volumes[inputName] = inputVolumeMul; return {}; },
+    SetInputMute: ({ inputName, inputMuted }) => { st.mutes[inputName] = inputMuted; return {}; },
+    CreateSceneItem: ({ sceneName, sourceName }) => {
+      const x = Object.values(sceneExtras).flat().find(e => e.name === sourceName);
+      (sceneExtras[sceneName] ||= []).push({ ...x, name: sourceName, index: 5 });
+      st.created = [...(st.created || []), [sceneName, sourceName]];
+      return { sceneItemId: st.created.length + 100 };
+    },
+    SetSceneItemIndex: ({ sceneName, sceneItemId, sceneItemIndex }) => {
+      const list = sceneExtras[sceneName]; list[list.length - 1].index = sceneItemIndex;
+      st.reordered = [...(st.reordered || []), [sceneName, sceneItemId, sceneItemIndex]];
+      return {};
     },
     PressInputPropertiesButton: ({ inputName, propertyName }) => {
       if (!(inputName in browserSources)) throw Object.assign(new Error('No source'), { code: 600 });

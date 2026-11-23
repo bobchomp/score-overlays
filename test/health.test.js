@@ -13,8 +13,8 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 async function until(fn, ms = 4000) { const t = Date.now(); while (Date.now() - t < ms) { if (await fn()) return; await wait(25); } throw new Error('timeout'); }
 const byId = (rep, id) => rep.items.find(i => i.id === id);
 
-async function rig(browserSources, { replayUp = true } = {}) {
-  const main = startMockObs({ port: 48455, browserSources });
+async function rig(browserSources, { replayUp = true, sceneExtras = {} } = {}) {
+  const main = startMockObs({ port: 48455, browserSources, sceneExtras });
   const rep = replayUp ? startMockObs({ port: 48456 }) : null;
   await main.ready; if (rep) await rep.ready;
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'health-'));
@@ -82,4 +82,29 @@ test('refresh overlay fix presses "Refresh cache of current page" in OBS', async
   const r = await rig(good); t.after(r.close);
   assert.equal(await refreshOverlayInObs(r.obs), 1);
   assert.deepEqual(r.main.st.pressed, [['Match Graphics', 'refreshnocache']]);
+});
+
+test('live sound: warns when a live audio source would go silent during replays, and the fix adds it under the replay', async t => {
+  const r = await rig(good, { sceneExtras: {
+    Main: [
+      { name: 'ATEM USB', kind: 'dshow_input' },                 // live picture + sound: only in Main
+      { name: 'Commentary mic', kind: 'wasapi_input_capture' },  // audio input in the scene
+      { name: 'Muted thing', kind: 'wasapi_input_capture', muted: true },
+      { name: 'Sponsor video', kind: 'ffmpeg_source' },          // a clip, not live sound
+    ],
+  } });
+  t.after(r.close);
+  const run = () => runHealth({ env, obs: r.obs, replays: r.replays, clients: () => overlayPage(), build: 'B1', startedAt: Date.now() });
+  let rep = await run();
+  const it = byId(rep, 'live-audio');
+  assert.equal(it.status, 'warn');
+  assert.match(it.detail, /"ATEM USB", "Commentary mic" are only in "Main"/);
+  assert.equal(it.action, 'addLiveAudio');
+  const { addLiveAudioToReplay } = await import('../server/health.js');
+  assert.equal(await addLiveAudioToReplay(r.obs, r.replays), 2);
+  assert.deepEqual(r.main.st.created, [['REPLAY', 'ATEM USB'], ['REPLAY', 'Commentary mic']]);
+  assert.ok(r.main.st.reordered.every(([, , idx]) => idx === 0), 'put at the bottom, hidden behind the replay');
+  rep = await run();
+  assert.equal(byId(rep, 'live-audio').status, 'ok');
+  assert.match(byId(rep, 'live-audio').detail, /replay sound at 50%/);
 });

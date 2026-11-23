@@ -94,3 +94,8 @@
 .r-progress i { display: block; height: 100%; background: linear-gradient(90deg, #2f81f7, #3fdc6a); transition: width .4s ease; }
 .r-reel-done { font-size: 13px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .r-seg input:disabled + span { opacity: .4; cursor: not-allowed; }
+
+/* replay sound slider */
+.r-vol { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--ui-muted); padding: 2px 2px 0; }
+.r-vol input { flex: 1; accent-color: #3fdc6a; height: 28px; }
+.r-vol strong { color: var(--ui-text); min-width: 40px; text-align: right; }

@@ -33,6 +33,7 @@ export const DEFAULT_SETTINGS = {
   //   'fade' = quick dip to black by the overlay (default), 'stinger' = full wipe/stinger, 'cut'
   stinger: { mode: 'overlay', cutTransition: 'Cut', durationMs: 1300, between: 'fade' },
   autoGoalClip: true,    // pressing + GOAL saves a replay into the queue as "<team> <goal number>"
+  volume: 50,            // replay sound level in % (the live sound keeps playing underneath)
   lengthSec: 8,          // play the last N seconds of each clip
   slowSpeed: 50,         // speed of the slow-motion button, in %
   saveTimeoutMs: 5000,   // wait this long for ReplayBufferSaved before falling back
@@ -505,6 +506,7 @@ export class Replays extends EventEmitter {
         const alt = this.useB() && current === n.scene; // OBS stinger: alternate scenes so it can play between clips
         const scene = alt ? n.sceneB : n.scene;
         const player = alt ? n.playerB : n.player;
+        if (i === 0) await this.applyVolume();
         const loadClip = () => { loadedAt = Date.now(); return this.mainObs.call('SetInputSettings', {
           inputName: player,
           // clear_on_media_end: false holds the last frame instead of going blank while we transition away
@@ -618,6 +620,30 @@ export class Replays extends EventEmitter {
     }
   }
 
+  // ------------------------------------------------------------------ replay sound
+  /** Set the Replay Player(s) to the replay volume (and unmuted). Never throws. */
+  async applyVolume() {
+    if (!this.mainObs.status.connected) return;
+    const n = this.settings.names;
+    const v = Math.max(0, Math.min(100, Number(this.settings.volume ?? 50))) / 100;
+    for (const p of [n.player, n.playerB].filter(Boolean)) {
+      try {
+        await this.mainObs.call('SetInputVolume', { inputName: p, inputVolumeMul: v });
+        await this.mainObs.call('SetInputMute', { inputName: p, inputMuted: v === 0 });
+      } catch {}
+    }
+  }
+
+  /** Volume slider: remembered, and applied straight away (also mid-replay). */
+  async setVolume(volume) {
+    this.settings.volume = clampInt(volume, 0, 100, this.settings.volume ?? 50);
+    clearTimeout(this.volumeSaveTimer);
+    this.volumeSaveTimer = setTimeout(() => this.persist(), 500);
+    this.changed();
+    await this.applyVolume();
+    return { ok: true, volume: this.settings.volume };
+  }
+
   // ------------------------------------------------------------------ highlights reel
   /**
    * Stitch queued clips into one MP4 (server/highlights.js). Runs in the background at low priority.
@@ -725,6 +751,7 @@ export class Replays extends EventEmitter {
       if (p.stinger.durationMs !== undefined) s.stinger.durationMs = wipeTiming(p.stinger.durationMs).totalMs;
     }
     if (p.autoGoalClip !== undefined) s.autoGoalClip = !!p.autoGoalClip;
+    if (p.volume !== undefined) s.volume = clampInt(p.volume, 0, 100, s.volume);
     if (p.lengthSec !== undefined) s.lengthSec = clampInt(p.lengthSec, 2, 60, s.lengthSec);
     if (p.slowSpeed !== undefined) s.slowSpeed = clampInt(p.slowSpeed, 10, 99, s.slowSpeed);
     if (p.shortcuts) {
@@ -762,6 +789,7 @@ export class Replays extends EventEmitter {
       case 'highlights': return this.makeHighlights(args);
       case 'cancelHighlights': return this.cancelHighlights();
       case 'reveal': return this.reveal(args.file);
+      case 'volume': return this.setVolume(args.volume);
       default: throw new Error(`Unknown replay command "${op}"`);
     }
   }

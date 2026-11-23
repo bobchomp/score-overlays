@@ -82,6 +82,17 @@ test('replay flow', async t => {
     assert.equal(back.transition, 'Replay Stinger', 'stinger used on the way out');
   });
 
+  await t.test('replay sound: 50% by default, slider applies straight away', async () => {
+    assert.equal(main.st.volumes['Replay Player'], 0.5, 'set when the replay started');
+    assert.equal(main.st.mutes['Replay Player'], false);
+    const r = await replays.handle('volume', { volume: 80 });
+    assert.equal(r.volume, 80);
+    assert.equal(main.st.volumes['Replay Player'], 0.8);
+    await replays.handle('volume', { volume: 0 });
+    assert.equal(main.st.mutes['Replay Player'], true, '0% mutes it');
+    await replays.handle('volume', { volume: 50 });
+  });
+
   await t.test('REPLAY 50% plays at half speed', async () => {
     replays.settings.slowSpeed = 50;
     await replays.handle('now', { speed: 'slow' });
