@@ -27,6 +27,7 @@ export function defaultState() {
     shootout: { kicks: [] },
     graphics: {
       scorebug: { visible: true, clock: true },
+      added: { visible: true },  // the "+3" added-time badge (Hide keeps the number)
       lowerThird: { visible: false, kind: null, eventId: null, title: '', subtitle: '', team: null, sting: false, shownAt: 0, hideAt: 0, id: null },
       board: { visible: false, kind: 'KO' },
       shootout: { visible: false },

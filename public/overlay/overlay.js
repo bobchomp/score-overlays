@@ -110,7 +110,7 @@ function updateScorebugLive() {
   // No tag for normal halves; only extra time (ET) gets one. It slides like the added-time badge.
   const pl = ['ET1', 'ET2'].includes(c.period) ? periodLabel(c.period, theme) : '';
   slideBadge($('sb-period'), pl);
-  const added = c.addedTime > 0 && PLAYING_PERIODS.includes(c.period) ? `+${c.addedTime}` : '';
+  const added = c.addedTime > 0 && PLAYING_PERIODS.includes(c.period) && state.graphics.added?.visible !== false ? `+${c.addedTime}` : '';
   slideBadge($('sb-added'), added);
   for (const side of ['home', 'away']) {
     const el = $(`sb-${side}`);

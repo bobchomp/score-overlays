@@ -59,6 +59,8 @@ export function createApi({ store, obs, auth, demo, onThemeChange, snapshot, rep
     run(res, map[req.params.op]);
   });
   api.post('/period/:period', (req, res) => run(res, 'clock.period', { period: req.params.period.toUpperCase() }));
+  api.post('/added-time/show', (req, res) => run(res, 'added.show', { visible: true }));
+  api.post('/added-time/hide', (req, res) => run(res, 'added.show', { visible: false }));
   api.post('/added-time/:minutes', (req, res) => run(res, 'clock.addedTime', { minutes: req.params.minutes }));
   api.post('/board/:kind', (req, res) => run(res, 'board.show', { kind: req.params.kind.toUpperCase(), toggle: true }));
   api.post('/lineup/:team', (req, res) => run(res, 'lineup.show', { team: req.params.team, toggle: true }));

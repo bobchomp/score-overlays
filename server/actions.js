@@ -327,8 +327,13 @@ export const actions = {
       c.period = p.period;
       c.accumulatedMs = 0;
       c.addedTime = 0;
+      state.graphics.added.visible = true; // a new period starts with the badge ready to show
       if (p.start && PLAYING_PERIODS.includes(p.period)) { c.running = true; c.startedAt = ctx.now; }
     },
+  },
+  /** Show/hide the "+3" badge without changing the number. */
+  'added.show': {
+    run(state, p) { state.graphics.added.visible = p.visible ?? !state.graphics.added.visible; },
   },
   'clock.addedTime': {
     undo: 'Added time',

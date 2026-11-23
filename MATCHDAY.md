@@ -26,7 +26,7 @@ A short checklist for running a match. Setup and reference are in [README.md](RE
 | Card / sub | **Cards & subs** → team → player. A second yellow becomes a red by itself. |
 | Something worth a replay | **REPLAY 100%** / **REPLAY 50%** to show it now, or **Mark as: Chance / Save / Foul…** to save it for later (you'll be asked which team). |
 | Replay going wrong | **■ ABORT / BACK TO LIVE** (red bar at the top), or press **B**. |
-| Added time | Type the minutes in **Added time** and press Enter. |
+| Added time | Type the minutes in **Added time** and press Enter. **Hide** / **Show** take it off and back on the scorebug. |
 | Mistake | **⟲ Undo** (top right) or **Ctrl+Z**. Wrong scorer or minute: **Edit** in *Match events*. |
 | Half time | **HT** (period buttons) → **Half-time board**. Package of chances: **▶ Play all** in the replay queue. |
 | Second half | Hide the board → **▶ START 2ND HALF** (the clock jumps to 45:00). |

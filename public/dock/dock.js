@@ -391,6 +391,8 @@ document.addEventListener('click', async e => {
     }
     case 'added': return act('clock.addedTime', { minutes: (st.clock.addedTime || 0) + Number(d.delta) });
     case 'added-clear': return act('clock.addedTime', { minutes: 0 });
+    case 'added-show': return act('added.show', { visible: true });
+    case 'added-hide': return act('added.show', { visible: false });
     case 'tog-scorebug': return act('scorebug.set', { visible: !st.graphics.scorebug.visible });
     case 'tog-clock': return act('scorebug.clock', { visible: st.graphics.scorebug.clock === false });
     case 'tog-lt': {
@@ -588,6 +590,11 @@ function render() {
   const addedInput = $('added-val');
   // Don't overwrite what the operator is typing.
   if (document.activeElement !== addedInput) addedInput.value = c.addedTime ? String(c.addedTime) : '';
+  // Show lights up while the "+N" is actually on screen; with no added time it's just armed.
+  const addedOn = g.added?.visible !== false;
+  setOn('tog-added', addedOn && c.addedTime > 0 && PLAYING_PERIODS.includes(c.period));
+  $('tog-added').classList.toggle('armed', addedOn && !(c.addedTime > 0));
+  $('tog-added').title = addedOn ? (c.addedTime > 0 ? 'Showing on the scorebug' : 'Will show as soon as you set added time') : 'Hidden: press Show to put it on the scorebug';
   updateClock();
 
   // two-legged tie

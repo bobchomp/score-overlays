@@ -82,7 +82,7 @@ match setup, exports, demo, lock, **Reset game**, and replay settings.
 | Goal | **+ GOAL** → pick the scorer (players on the pitch first; *Penalty* / *Own goal* toggles). **⚽ Goal now, scorer later** updates the score and plays GOAL! straight away, then you pick the scorer when you know. *Scorer unknown* can be fixed later with **Edit**. Home goals get the big GOAL! sting; away goals don't, unless you switch that on in Options. A replay of the goal is saved to the queue as e.g. "Ross County 2". |
 | Remove a goal | **− remove**, or **Undo**. |
 | Clock | **▶ KICK OFF** starts 1H. **HT**, then **▶ START 2ND HALF** (jumps to 45:00). Period buttons for FT, ET1, ET2, PEN. Nudge ±1s/10s/1m or **Set time…** to correct it. |
-| Added time | Type minutes in *Added time* and press Enter (or **+ / −**); **Clear** removes the "+3". It clears when the period changes. |
+| Added time | Type minutes in *Added time* and press Enter (or **+ / −**); **Clear** removes the "+3". **Hide** takes it off the scorebug but keeps the number; **Show** puts it back. It clears (and goes back to shown) when the period changes. |
 | Cards | Per team, then pick the player. A second yellow becomes a red. Each red raises a small red card above that team on the scorebug. |
 | Subs | Player **off**, then player **on**. |
 | Boards & lineups | Toggles in *Graphics* (green light = on air). Boards hide the scorebug while shown. |
@@ -123,6 +123,7 @@ All editable in **Match setup** (`/setup`):
 | `/api/clock/toggle` · `/start` · `/pause` · `/reset` | Clock |
 | `/api/period/2H` | Period (`PRE 1H HT 2H FT ET1 ET2 PEN`) |
 | `/api/added-time/3` | Added time |
+| `/api/added-time/show`, `/api/added-time/hide` | Show or hide the added-time badge |
 | `/api/board/HT` · `/api/lineup/home` | Toggle a board (`KO HT FT`) / lineup |
 | `/api/scorebug/toggle` · `/api/scorebug/clock/toggle` · `/api/hide-all` · `/api/undo` | |
 | `/api/pens/home/scored` · `/api/pens/away/missed` · `/api/pens/toggle` | Penalty shootout |

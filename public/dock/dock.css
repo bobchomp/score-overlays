@@ -190,3 +190,10 @@ body { padding-bottom: 40px; }
 .health-list .h-detail { font-size: 12.5px; color: var(--ui-muted); overflow-wrap: anywhere; }
 .health-list .h-fix { font-size: 12.5px; color: var(--ui-text); }
 .health-list .btn { align-self: flex-start; margin-top: 4px; }
+
+/* added time: show / hide */
+.added-vis { justify-content: space-between; margin-top: 0; }
+.added-vis .label { font-size: 13px; color: var(--ui-muted); flex: 1; }
+.tog.small-tog { min-height: 36px; padding: 6px 12px 6px 28px; font-size: 13px; }
+.tog.small-tog::before { left: 10px; }
+.tog.small-tog.armed::before { background: #2f6b45; }

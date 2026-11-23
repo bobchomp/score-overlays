@@ -169,3 +169,21 @@ test('starting a new match also clears the penalty shootout', () => {
   ok(s.dispatch('match.setup', { newMatch: true, home: { teamId: 'riverside' }, away: { teamId: 'hillcrest' } }));
   assert.equal(s.state.shootout.kicks.length, 0);
 });
+
+test('added time badge: hide keeps the number, show brings it back, a new period re-arms it', () => {
+  const { s, ok } = fresh();
+  ok(s.dispatch('clock.period', { period: '1H', start: true }));
+  ok(s.dispatch('clock.addedTime', { minutes: 3 }));
+  assert.equal(s.state.graphics.added.visible, true);
+  ok(s.dispatch('added.show', { visible: false }));
+  assert.equal(s.state.clock.addedTime, 3, 'number kept');
+  assert.equal(s.state.graphics.added.visible, false);
+  ok(s.dispatch('clock.addedTime', { minutes: 4 }));
+  assert.equal(s.state.graphics.added.visible, false, 'typing a new number while hidden keeps it hidden');
+  ok(s.dispatch('added.show', { visible: true }));
+  assert.equal(s.state.graphics.added.visible, true);
+  ok(s.dispatch('added.show', { visible: false }));
+  ok(s.dispatch('clock.period', { period: 'HT' }));
+  assert.equal(s.state.graphics.added.visible, true, 're-armed for the next period');
+  clearTimeout(s.timer);
+});
