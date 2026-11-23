@@ -79,7 +79,7 @@ match setup, exports, demo, lock, **Reset game**, and replay settings.
 
 | Action | How |
 | --- | --- |
-| Goal | **+ GOAL** → pick the scorer (players on the pitch first; *Penalty* / *Own goal* toggles). **⚽ Goal now, scorer later** updates the score and plays GOAL! straight away, then you pick the scorer when you know. *Scorer unknown* can be fixed later with **Edit**. Home goals get the big GOAL! sting; away goals don't, unless you switch that on in Options. A replay of the goal is saved to the queue as e.g. "Ross County 2". |
+| Goal | **+ GOAL** updates the score and plays GOAL! straight away, then asks for the scorer (players on the pitch first; *Penalty* / *Own goal* toggles). Picking a scorer shows their name; close the popup if you don't know yet. *Scorer unknown* can be fixed later with **Edit**. Home goals get the big GOAL! sting; away goals don't, unless you switch that on in Options. A replay of the goal is saved to the queue as e.g. "Ross County 2". |
 | Remove a goal | **− remove**, or **Undo**. |
 | Clock | **▶ KICK OFF** starts 1H. **HT**, then **▶ START 2ND HALF** (jumps to 45:00). Period buttons for FT, ET1, ET2, PEN. Nudge ±1s/10s/1m or **Set time…** to correct it. |
 | Added time | Type minutes in *Added time* and press Enter (or **+ / −**); **Clear** removes the "+3". **Hide** takes it off the scorebug but keeps the number; **Show** puts it back. It clears (and goes back to shown) when the period changes. |

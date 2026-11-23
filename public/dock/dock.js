@@ -198,27 +198,33 @@ async function goalFlow(side, existing = null) {
     if (id) sock.request({ type: 'replay', op: 'delete', args: { id } });
   };
 
+  // A new goal goes on the scorebug straight away; the popup then asks for the scorer.
+  if (!existing) {
+    const r = await act('goal.add', { team: side, playerId: null, penalty, ownGoal, pending: true });
+    if (!r.ok) { dropClip(); return; }
+    pending = r.result.event;
+    nameClip(r.result.teamGoals);
+    toast(`Goal ${short(side)} ${pending.minute}'`);
+  }
+
   for (;;) {
     const squadSide = ownGoal ? otherSide(side) : side;
-    const top = `${pending ? `<p class="pending-note">✓ Goal ${esc(short(side))} ${esc(pending.minute)}' is on the scorebug. Pick the scorer when you know it to show their name.</p>` : ''}
+    const top = `${pending ? `<p class="pending-note">✓ Goal ${esc(short(side))} ${esc(pending.minute)}' is on the scorebug. Pick the scorer to show their name, or close this and add them later with Edit.</p>` : ''}
       <div class="opts">
       <button class="tog ${penalty ? 'on' : ''}" id="opt-pen">Penalty</button>
       <button class="tog ${ownGoal ? 'on' : ''}" id="opt-og">Own goal</button></div>
       ${ownGoal ? `<p class="hint">Own goal: pick the ${esc(short(squadSide))} player who scored it.</p>` : ''}`;
     const bottom = `<div class="row"><button class="btn grow" data-pick-none>${
       pending ? 'Close: scorer unknown (add later with Edit)' : existing ? 'No scorer' : 'Scorer unknown / add later'}</button></div>`;
-    const actions = !existing && !pending
-      ? '<button class="btn small ok" id="goal-now" title="Update the score and play GOAL! now; pick the scorer when you know">⚽ Goal now, scorer later</button>' : '';
     let toggled = null;
     const pid = await pickPlayer({
       title: pending ? `Who scored? ${short(side)} ${pending.minute}'` : `${existing ? 'Edit goal' : 'Goal'}: ${short(side)}`,
       side: squadSide,
       sections: sideSections(squadSide),
-      top, bottom, actions,
+      top, bottom,
       onReady() {
         $('opt-pen').onclick = () => { toggled = 'pen'; closeSheet(); };
         $('opt-og').onclick = () => { toggled = 'og'; closeSheet(); };
-        if ($('goal-now')) $('goal-now').onclick = () => { toggled = 'now'; closeSheet(); };
       },
     });
     if (toggled === 'pen' || toggled === 'og') {
@@ -227,24 +233,13 @@ async function goalFlow(side, existing = null) {
       if (pending) await act('event.update', { id: pending.id, penalty, ownGoal });
       continue;
     }
-    if (toggled === 'now') {
-      const r = await act('goal.add', { team: side, playerId: null, penalty, ownGoal, pending: true });
-      if (!r.ok) { dropClip(); return; }
-      pending = r.result.event;
-      nameClip(r.result.teamGoals);
-      toast(`Goal ${short(side)} ${pending.minute}': pick the scorer when you know`);
-      continue;
-    }
-    if (pid === undefined) { if (!pending) dropClip(); return; } // closed with ✕ / Esc (a pending goal stays, scorer unknown)
+    if (pid === undefined) return; // closed with ✕ / Esc: the goal stays, scorer unknown
     if (pending) {
       if (pid === null) return;
       const r = await act('event.update', { id: pending.id, playerId: pid, penalty, ownGoal });
       if (r.ok && snap.state.settings.autoShow.goal) await act('lowerThird.event', { id: pending.id });
     } else if (existing) {
       await act('event.update', { id: existing.id, playerId: pid, penalty, ownGoal });
-    } else {
-      const r = await act('goal.add', { team: side, playerId: pid, penalty, ownGoal });
-      if (r.ok) { toast(`Goal ${short(side)} ${r.result.event.minute}'`); nameClip(r.result.teamGoals); } else dropClip();
     }
     return;
   }
