@@ -80,4 +80,9 @@ test('replay module: makes the reel from the queue into a Highlights folder, ask
   assert.equal(path.basename(path.dirname(replays.reel.file)), 'Highlights');
   assert.ok(Math.abs((await probe(replays.reel.file)).duration - 4) < 0.2, 'two goal clips x 2s');
   assert.equal(replays.publicStatus().reel.percent, 100);
+
+  // deleting the reel in Explorer clears it from the dock
+  fs.rmSync(replays.reel.file);
+  replays.checkReelFile();
+  assert.equal(replays.publicStatus().reel.file, null);
 });

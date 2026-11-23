@@ -135,9 +135,20 @@ export class Replays extends EventEmitter {
   start() {
     this.applyMainSettings();
     this.replayObs.start();
+    // If the saved highlights reel is deleted/moved in Explorer, stop showing it in the dock.
+    this.reelWatch = setInterval(() => this.checkReelFile(), 3000);
+    this.reelWatch.unref?.();
   }
 
-  stop() { clearTimeout(this.renameTimer); this.renameTimer = null; this.replayObs.stop(); }
+  checkReelFile() {
+    if (this.reel.running || !this.reel.file) return;
+    if (!fs.existsSync(this.reel.file)) {
+      this.reel = { running: false, percent: 0, file: null, error: null, clips: 0 };
+      this.changed();
+    }
+  }
+
+  stop() { clearTimeout(this.renameTimer); this.renameTimer = null; clearInterval(this.reelWatch); this.replayObs.stop(); }
 
   changed() { this.emit('change'); }
 

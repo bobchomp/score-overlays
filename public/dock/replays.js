@@ -140,11 +140,11 @@ export function initReplays({ sock, toast, promptSheet, openSheet, closeSheet, g
     el.dataset.key = key;
     const name = f => esc(String(f || '').split(/[\\/]/).pop());
     if (reel.running) {
-      el.innerHTML = `<div class="r-reel-head">🎬 Making highlights reel… ${reel.percent || 0}% <span class="muted">(${reel.clips} clips)</span></div>
+      el.innerHTML = `<div class="r-reel-head">🎬 Making highlights reel… ${reel.percent || 0}% <span class="muted">(${reel.clips} clip${reel.clips === 1 ? '' : 's'})</span></div>
         <div class="r-progress"><i style="width:${reel.percent || 0}%"></i></div>
         <button class="btn small danger-ghost" data-reel="cancel">Cancel</button>`;
     } else {
-      el.innerHTML = `${reel.file ? `<div class="r-reel-done">✓ Saved <strong>${name(reel.file)}</strong> <span class="muted">(${reel.clips} clips, ${Math.round(reel.seconds || 0)} s${reel.skipped ? `, ${reel.skipped} unreadable skipped` : ''})</span>
+      el.innerHTML = `${reel.file ? `<div class="r-reel-done">✓ Saved <strong>${name(reel.file)}</strong> <span class="muted">(${reel.clips} clip${reel.clips === 1 ? '' : 's'}, ${Math.round(reel.seconds || 0)} s${reel.skipped ? `, ${reel.skipped} unreadable skipped` : ''})</span>
           <button class="btn small" data-reel="reveal">Show in folder</button></div>` : ''}
         ${reel.error && reel.error !== 'Cancelled' ? `<div class="r-err">Reel failed: ${esc(reel.error)}</div>` : ''}
         <button class="btn grow r-reel-btn" data-reel="make" ${r.queue.length ? '' : 'disabled'}>🎬 Make highlights reel</button>`;
