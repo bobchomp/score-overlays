@@ -50,7 +50,7 @@ export function createApi({ store, obs, auth, demo, onThemeChange, snapshot, rep
     const r = store.dispatch('goal.add', { team: req.params.team, playerId: req.body?.playerId }, { source: 'http' });
     res.status(r.ok ? 200 : 400).json(r);
     // Save a replay of the goal into the queue (replay problems never affect the goal itself).
-    if (r.ok && replays?.goalClip) replays.goalClip(`${store.state.teams[r.result.event.team].name} ${r.result.teamGoals}`).catch(() => {});
+    if (r.ok && replays?.goalClip) replays.goalClip(`${store.state.teams[r.result.event.team].name} ${r.result.teamGoals}`, r.result.event.id).catch(() => {});
   });
   api.post('/goal/:team/remove', (req, res) => run(res, 'goal.removeLast', { team: req.params.team }));
   api.post('/clock/:op', (req, res) => {

@@ -207,6 +207,17 @@ const heartbeat = setInterval(() => {
 wss.on('close', () => clearInterval(heartbeat));
 
 store.on('change', broadcastState);
+
+// A goal taken off (− remove, ✕ in the events list, or Undo) renames its replay "<team> <n> - Disallowed";
+// undoing that removal puts the name back. Match resets are left alone.
+const GOAL_EDITS = new Set(['goal.removeLast', 'event.delete', 'undo']);
+store.on('action', ({ type, before, after }) => {
+  if (!GOAL_EDITS.has(type)) return;
+  const ids = s => new Set(s.events.filter(e => e.type === 'goal').map(e => e.id));
+  const was = ids(before), now = ids(after);
+  for (const id of was) if (!now.has(id)) replays.goalDisallowed(id, true);
+  if (type === 'undo') for (const id of now) if (!was.has(id)) replays.goalDisallowed(id, false);
+});
 obs.on('status', broadcastState);
 demo.on('change', broadcastState);
 replays.on('change', broadcastState);

@@ -85,7 +85,9 @@ export class Store extends EventEmitter {
       this.undoStack.push({ label, snapshot: structuredClone(snapshot), at: ctx.now });
       if (this.undoStack.length > UNDO_LIMIT) this.undoStack.shift();
     }
+    const before = this.state;
     this.commit(draft);
+    this.emit('action', { type, before, after: this.state });
     return { ok: true, result };
   }
 
@@ -97,7 +99,9 @@ export class Store extends EventEmitter {
     // Hide any lower third that refers to an event that no longer exists.
     const lt = draft.graphics.lowerThird;
     if (lt.visible && lt.eventId && !draft.events.some(e => e.id === lt.eventId)) lt.visible = false;
+    const before = this.state;
     this.commit(draft);
+    this.emit('action', { type: 'undo', before, after: this.state });
     return { ok: true, result: { undone: entry.label } };
   }
 

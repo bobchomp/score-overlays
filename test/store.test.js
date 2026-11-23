@@ -187,3 +187,15 @@ test('added time badge: hide keeps the number, show brings it back, a new period
   assert.equal(s.state.graphics.added.visible, true, 're-armed for the next period');
   clearTimeout(s.timer);
 });
+
+test('store reports goal edits so the replay of a disallowed goal can be renamed', () => {
+  const { s, ok } = fresh();
+  const seen = [];
+  s.on('action', a => seen.push([a.type, a.before.events.length, a.after.events.length]));
+  ok(s.dispatch('clock.period', { period: '1H', start: true }));
+  ok(s.dispatch('goal.add', { team: 'home' }));
+  ok(s.dispatch('goal.removeLast', { team: 'home' }));
+  ok(s.dispatch('undo'));
+  assert.deepEqual(seen.slice(1), [['goal.add', 0, 1], ['goal.removeLast', 1, 0], ['undo', 0, 1]]);
+  clearTimeout(s.timer);
+});

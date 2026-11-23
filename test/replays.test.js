@@ -217,6 +217,23 @@ test('replay flow', async t => {
     replays.settings.autoGoalClip = true;
   });
 
+  await t.test('a goal taken off renames its clip "<team> <n> - Disallowed" (file too); Undo puts it back', async () => {
+    const c = await replays.goalClip('Riverside FC 2', 'ev-dis');
+    replays.goalDisallowed('ev-dis', true);
+    assert.equal(c.label, 'Riverside FC 2 - Disallowed');
+    await until(() => path.basename(c.path).startsWith('Riverside FC 2 - Disallowed'), 4000, 'file renamed');
+    replays.goalDisallowed('ev-dis', true);
+    assert.equal(c.label, 'Riverside FC 2 - Disallowed', 'not doubled up');
+    replays.goalDisallowed('ev-dis', false);
+    assert.equal(c.label, 'Riverside FC 2');
+    replays.goalDisallowed('no-such-goal', true); // no clip: nothing happens, no throw
+    // the dock links its clip by passing eventId with the rename
+    const m = await replays.handle('mark', { tag: 'Goal', silent: true });
+    await replays.handle('rename', { id: m.clip.id, label: 'Hillcrest 1', eventId: 'ev-dock' });
+    replays.goalDisallowed('ev-dock');
+    assert.equal(m.clip.label, 'Hillcrest 1 - Disallowed');
+  });
+
   await t.test('clip files on disk are renamed to the clip name', async () => {
     let r = await replays.handle('mark', { tag: 'Chance' });
     assert.match(path.basename(r.clip.path), /^Chance - 22 minutes( \(\d+\))?\.mkv$/, 'named after the clip (an earlier test made one already)');

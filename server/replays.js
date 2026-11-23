@@ -382,9 +382,27 @@ export class Replays extends EventEmitter {
   }
 
   /** Goal logged from the Stream Deck / HTTP: save a clip named "<team> <n>". Never throws. */
-  async goalClip(label) {
+  async goalClip(label, eventId) {
     if (!this.settings.autoGoalClip || this.saveBlockedReason()) return null;
-    try { return (await this.mark('Goal', { label, silent: true })).clip || null; } catch { return null; }
+    try {
+      const clip = (await this.mark('Goal', { label, silent: true })).clip || null;
+      if (clip && eventId) { clip.goalEventId = eventId; this.persist(); }
+      return clip;
+    } catch { return null; }
+  }
+
+  /**
+   * A goal was chopped off (VAR, offside...) or put back with Undo: its clip becomes
+   * "<team> <n> - Disallowed", or loses that ending again. Never throws.
+   */
+  goalDisallowed(eventId, disallowed = true) {
+    try {
+      const c = this.queue.find(x => x.goalEventId === eventId);
+      if (!c) return;
+      const base = c.label.replace(/ - Disallowed$/, '');
+      const label = disallowed ? `${base} - Disallowed` : base;
+      if (label !== c.label) this.rename(c.id, label);
+    } catch (err) { console.error('[replays] could not rename disallowed goal clip:', err.message); }
   }
 
   playClip(id, speed = 100) {
@@ -716,7 +734,9 @@ export class Replays extends EventEmitter {
   }
 
   // ------------------------------------------------------------------ queue + settings
-  rename(id, label) { this.editClip(id, c => { c.label = String(label || '').trim().slice(0, 80); this.syncFileName(c); }); }
+  rename(id, label, eventId) {
+    this.editClip(id, c => { c.label = String(label || '').trim().slice(0, 80); if (eventId) c.goalEventId = String(eventId); this.syncFileName(c); });
+  }
   tag(id, tag) { this.editClip(id, c => { c.tag = TAGS.includes(tag) ? tag : ''; }); }
   editClip(id, fn) {
     const c = this.queue.find(x => x.id === id);
@@ -790,7 +810,7 @@ export class Replays extends EventEmitter {
       case 'abort': return this.abort();
       case 'play': return this.playClip(args.id, args.speed === 'slow' ? this.settings.slowSpeed : args.speed);
       case 'playAll': return this.playAll(args.speed === 'slow' ? this.settings.slowSpeed : args.speed);
-      case 'rename': return this.rename(args.id, args.label);
+      case 'rename': return this.rename(args.id, args.label, args.eventId);
       case 'tag': return this.tag(args.id, args.tag);
       case 'delete': return this.remove(args.id);
       case 'move': return this.move(args.id, args.dir);
@@ -811,7 +831,7 @@ export function disabledReplays(reason) {
   const e = new EventEmitter();
   const status = { disabled: reason, queue: [], bug: { visible: false, speed: 100 }, saveBlocked: `Replays unavailable: ${reason}`, playBlocked: `Replays unavailable: ${reason}` };
   return Object.assign(e, {
-    start() {}, stop() {},
+    start() {}, stop() {}, goalDisallowed() {},
     publicStatus: () => status,
     handle: async () => { throw new Error(`Replays unavailable: ${reason}`); },
   });

@@ -187,10 +187,10 @@ async function goalFlow(side, existing = null) {
     clip = sock.request({ type: 'replay', op: 'mark', args: { tag: 'Goal', label: `${snap.state.teams[side].name || short(side)} goal`, silent: true } })
       .then(r => (r.ok && r.clip ? r.clip.id : null)).catch(() => null);
   }
-  const nameClip = async teamGoals => {
+  const nameClip = async (teamGoals, eventId) => {
     if (!clip) return;
     const id = await clip; clip = null;
-    if (id) sock.request({ type: 'replay', op: 'rename', args: { id, label: `${snap.state.teams[side].name || short(side)} ${teamGoals}` } });
+    if (id) sock.request({ type: 'replay', op: 'rename', args: { id, label: `${snap.state.teams[side].name || short(side)} ${teamGoals}`, eventId } });
   };
   const dropClip = async () => {
     if (!clip) return;
@@ -203,7 +203,7 @@ async function goalFlow(side, existing = null) {
     const r = await act('goal.add', { team: side, playerId: null, penalty, ownGoal, pending: true });
     if (!r.ok) { dropClip(); return; }
     pending = r.result.event;
-    nameClip(r.result.teamGoals);
+    nameClip(r.result.teamGoals, pending.id);
     toast(`Goal ${short(side)} ${pending.minute}'`);
   }
 
