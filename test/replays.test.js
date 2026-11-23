@@ -206,6 +206,47 @@ test('replay flow', async t => {
     replays.settings.autoGoalClip = true;
   });
 
+  await t.test('clip files on disk are renamed to the clip name', async () => {
+    let r = await replays.handle('mark', { tag: 'Chance' });
+    assert.match(path.basename(r.clip.path), /^Chance - 22 minutes( \(\d+\))?\.mkv$/, 'named after the clip (an earlier test made one already)');
+    assert.ok(fs.existsSync(r.clip.path));
+    await replays.handle('rename', { id: r.clip.id, label: `Riverside FC ${r.clip.label}` });
+    const c = replays.queue.find(x => x.id === r.clip.id);
+    assert.equal(c.file, 'Riverside FC Chance - 22 minutes.mkv');
+    assert.ok(fs.existsSync(c.path));
+    // same name again gets " (2)"; unsafe characters are replaced
+    r = await replays.handle('mark', { tag: 'Chance' });
+    await replays.handle('rename', { id: r.clip.id, label: 'Riverside FC Chance - 22 minutes' });
+    assert.equal(replays.queue.find(x => x.id === r.clip.id).file, 'Riverside FC Chance - 22 minutes (2).mkv');
+    r = await replays.handle('mark', {});
+    await replays.handle('rename', { id: r.clip.id, label: 'What? A <save>: wow' });
+    assert.equal(replays.queue.find(x => x.id === r.clip.id).file, 'What- A -save- wow.mkv');
+    // unnamed REPLAY clips keep OBS's file name
+    const plain = replays.addClip(r.clip.path.replace(/[^/\\]+$/, 'Replay 99.mkv'));
+    assert.equal(plain.file, 'Replay 99.mkv');
+    replays.remove(plain.id);
+  });
+
+  await t.test('a busy file (e.g. playing in OBS) is renamed later', async () => {
+    const r = await replays.handle('mark', {});
+    const realRename = fs.renameSync;
+    fs.renameSync = () => { throw Object.assign(new Error('EBUSY: resource busy or locked'), { code: 'EBUSY' }); };
+    try {
+      await replays.handle('rename', { id: r.clip.id, label: 'Busy clip' });
+      const c = replays.queue.find(x => x.id === r.clip.id);
+      assert.equal(c.renamePending, true);
+      assert.ok(fs.existsSync(c.path), 'queue still points at the real file');
+    } finally { fs.renameSync = realRename; }
+    clearTimeout(replays.renameTimer); replays.renameTimer = null;
+    replays.scheduleRenameRetry();
+    clearTimeout(replays.renameTimer); replays.renameTimer = null;
+    // run the retry now instead of waiting 10s
+    const c = replays.queue.find(x => x.id === r.clip.id);
+    replays.syncFileName(c);
+    assert.equal(c.file, 'Busy clip.mkv');
+    assert.equal(c.renamePending, undefined);
+  });
+
   await t.test('queue: rename, tag, reorder, delete, and it persists to disk', async () => {
     const [c1, c2] = replays.queue;
     await replays.handle('rename', { id: c1.id, label: 'Great save' });
@@ -273,7 +314,8 @@ test('replay flow', async t => {
     const r = await replays.handle('mark', {});
     assert.equal(r.ok, true);
     assert.ok(rep.calls('GetLastReplayBufferReplay').length >= 1);
-    assert.equal(r.clip.path, rep.st.lastReplay);
+    assert.ok(fs.existsSync(r.clip.path), 'clip file exists (renamed to its label)');
+    assert.equal(path.dirname(r.clip.path), path.dirname(rep.st.lastReplay));
   });
 
   await t.test('save timeout with no new file reports an error', async () => {

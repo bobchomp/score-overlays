@@ -132,7 +132,7 @@ export class Replays extends EventEmitter {
     this.replayObs.start();
   }
 
-  stop() { this.replayObs.stop(); }
+  stop() { clearTimeout(this.renameTimer); this.renameTimer = null; this.replayObs.stop(); }
 
   changed() { this.emit('change'); }
 
@@ -236,7 +236,7 @@ export class Replays extends EventEmitter {
         // Event never arrived: ask OBS for the last replay, but only trust it if it's a new file.
         let last = null;
         try { last = (await this.replayObs.call('GetLastReplayBufferReplay')).savedReplayPath; } catch {}
-        if (!last || last === this.lastSavedPath || this.queue.some(c => c.path === last)) {
+        if (!last || last === this.lastSavedPath || this.queue.some(c => c.path === last) || !fs.existsSync(last)) {
           throw new Error(`Saving the replay timed out: the Replay OBS didn't report a new file within ${Math.round(this.settings.saveTimeoutMs / 1000)}s`);
         }
         file = last;
@@ -262,9 +262,66 @@ export class Replays extends EventEmitter {
       createdAt: Date.now(),
     };
     this.queue.push(clip);
+    this.syncFileName(clip);
     this.persist();
     this.changed();
     return clip;
+  }
+
+  // ------------------------------------------------------------------ file names follow clip names
+  /** A clip's label as a safe Windows file name (no extension). */
+  static fileBase(label) {
+    let b = String(label || '')
+      .replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '-')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/[. ]+$/, '')
+      .slice(0, 120)
+      .trim();
+    if (/^(con|prn|aux|nul|com\d|lpt\d)$/i.test(b)) b = `_${b}`;
+    return b;
+  }
+
+  /**
+   * Rename the clip's file on disk to match its label ("Ross County Chance - 23 minutes.mkv").
+   * Unnamed clips keep OBS's name. If the file is busy (e.g. playing in OBS) it's retried later.
+   */
+  syncFileName(clip) {
+    if (!clip?.label || clip.fileLabel === clip.label) return;
+    const base = Replays.fileBase(clip.label);
+    if (!base) return;
+    const dir = path.dirname(clip.path);
+    const ext = path.extname(clip.path) || '.mkv';
+    let target = path.join(dir, base + ext);
+    for (let n = 2; fs.existsSync(target) && target !== clip.path; n++) target = path.join(dir, `${base} (${n})${ext}`);
+    try {
+      if (target !== clip.path) fs.renameSync(clip.path, target);
+      clip.path = target;
+      clip.file = path.basename(target);
+      clip.fileLabel = clip.label;
+      delete clip.renamePending;
+    } catch (err) {
+      if (err.code === 'ENOENT') { clip.fileLabel = clip.label; delete clip.renamePending; return; } // file gone: nothing to rename
+      clip.renamePending = true; // busy (e.g. open in OBS): try again shortly
+      this.scheduleRenameRetry();
+    }
+  }
+
+  scheduleRenameRetry() {
+    if (this.renameTimer) return;
+    this.renameTimer = setTimeout(() => {
+      this.renameTimer = null;
+      let changed = false;
+      for (const c of this.queue) {
+        if (!c.renamePending) continue;
+        if (this.status.playing && this.session && this.status.playing.clipId === c.id) { this.scheduleRenameRetry(); continue; }
+        const before = c.path;
+        this.syncFileName(c);
+        if (c.path !== before) changed = true;
+      }
+      if (changed) { this.persist(); this.changed(); }
+    }, 10000);
+    this.renameTimer.unref?.();
   }
 
   safeMinute() { try { return this.getMinute() || null; } catch { return null; } }
@@ -539,11 +596,12 @@ export class Replays extends EventEmitter {
       if (this.session === session) this.session = null;
       this.status.playing = null;
       this.changed();
+      if (this.queue.some(c => c.renamePending)) this.scheduleRenameRetry(); // files OBS was playing are free now
     }
   }
 
   // ------------------------------------------------------------------ queue + settings
-  rename(id, label) { this.editClip(id, c => { c.label = String(label || '').trim().slice(0, 80); }); }
+  rename(id, label) { this.editClip(id, c => { c.label = String(label || '').trim().slice(0, 80); this.syncFileName(c); }); }
   tag(id, tag) { this.editClip(id, c => { c.tag = TAGS.includes(tag) ? tag : ''; }); }
   editClip(id, fn) {
     const c = this.queue.find(x => x.id === id);
