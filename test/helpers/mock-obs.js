@@ -22,8 +22,10 @@ export function startMockObs({
   recordDirectory = null,
   replayFile = null,   // copy this real video for each saved replay (default: a tiny fake file)
   streaming = false,
-  // Extra scene items: { 'Main': [{ name: 'ATEM', kind: 'dshow_input', muted: false, audio: true }] }
+  // Extra scene items: { 'Main': [{ name: 'ATEM', kind: 'dshow_input', muted: false, audio: true, enabled: true }] }
+  //   { name: 'Cams', group: [ ...items ] }  -> a group;  { name: 'Sub', scene: true } -> nested scene (items in sceneExtras.Sub)
   sceneExtras = {},
+  specialInputs = {},  // e.g. { desktop1: 'Desktop Audio', mic1: 'Mic/Aux' }
 } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mockobs-'));
   const st = {
@@ -33,6 +35,7 @@ export function startMockObs({
   const wss = new WebSocketServer({ port, handleProtocols: p => [...p][0] });
   st.wss = wss;
 
+  const allExtras = () => Object.values(sceneExtras).flat().flatMap(e => (e.group ? [e, ...e.group] : [e]));
   const sendAll = o => { for (const c of st.clients) c.send(encode(o)); };
   const event = (eventType, eventData) => sendAll({ op: 5, d: { eventType, eventIntent: 1, eventData } });
 
@@ -124,26 +127,41 @@ export function startMockObs({
     }),
     GetInputDefaultSettings: () => ({ defaultInputSettings: { width: 800, height: 600, shutdown: false, restart_when_active: false, url: 'https://obsproject.com/browser-source' } }),
     GetSceneItemList: ({ sceneName }) => {
-      if (!scenes.includes(sceneName)) throw Object.assign(new Error('No scene'), { code: 600 });
-      const items = Object.entries(inputs).filter(([, sc]) => sc === sceneName).map(([n]) => ({ sourceName: n, sceneItemIndex: 1, inputKind: 'ffmpeg_source' }));
-      items.push({ sourceName: 'Camera', sceneItemIndex: 0, inputKind: 'dshow_input' });
-      for (const x of sceneExtras[sceneName] || []) items.push({ sourceName: x.name, sceneItemIndex: x.index ?? 2, inputKind: x.kind });
+      if (!scenes.includes(sceneName) && !(sceneName in sceneExtras)) throw Object.assign(new Error('No scene'), { code: 600 });
+      const items = scenes.includes(sceneName)
+        ? [
+          ...Object.entries(inputs).filter(([, sc]) => sc === sceneName).map(([n]) => ({ sourceName: n, sceneItemIndex: 1, inputKind: 'ffmpeg_source' })),
+          { sourceName: 'Camera', sceneItemIndex: 0, inputKind: 'dshow_input' },
+        ]
+        : [];
+      for (const x of sceneExtras[sceneName] || []) {
+        items.push({
+          sourceName: x.name, sceneItemIndex: x.index ?? 2, inputKind: x.group || x.scene ? null : x.kind,
+          isGroup: !!x.group, sourceType: x.scene ? 'OBS_SOURCE_TYPE_SCENE' : 'OBS_SOURCE_TYPE_INPUT', sceneItemEnabled: x.enabled !== false,
+        });
+      }
       for (const [n, b] of Object.entries(browserSources)) {
         const where = b.scenes?.[sceneName];
         if (where) items.push({ sourceName: n, sceneItemIndex: where === 'top' ? 10 : -1, inputKind: 'browser_source' });
       }
-      return { sceneItems: items };
+      return { sceneItems: items.map(i => ({ isGroup: false, sourceType: 'OBS_SOURCE_TYPE_INPUT', sceneItemEnabled: true, ...i })) };
     },
+    GetGroupSceneItemList: ({ sceneName }) => {
+      const g = Object.values(sceneExtras).flat().find(e => e.name === sceneName && e.group);
+      if (!g) throw Object.assign(new Error('No group'), { code: 600 });
+      return { sceneItems: g.group.map((x, i) => ({ sourceName: x.name, sceneItemIndex: i, inputKind: x.kind, isGroup: false, sourceType: 'OBS_SOURCE_TYPE_INPUT', sceneItemEnabled: x.enabled !== false })) };
+    },
+    GetSpecialInputs: () => ({ desktop1: null, desktop2: null, mic1: null, mic2: null, mic3: null, mic4: null, ...specialInputs }),
     GetInputVolume: ({ inputName }) => {
-      const x = Object.values(sceneExtras).flat().find(e => e.name === inputName);
+      const x = allExtras().find(e => e.name === inputName);
       if (x && x.audio === false) throw Object.assign(new Error('no audio'), { code: 604 });
       return { inputVolumeMul: st.volumes[inputName] ?? 1, inputVolumeDb: 0 };
     },
-    GetInputMute: ({ inputName }) => ({ inputMuted: st.mutes[inputName] ?? !!Object.values(sceneExtras).flat().find(e => e.name === inputName)?.muted }),
+    GetInputMute: ({ inputName }) => ({ inputMuted: st.mutes[inputName] ?? !!allExtras().find(e => e.name === inputName)?.muted }),
     SetInputVolume: ({ inputName, inputVolumeMul }) => { st.volumes[inputName] = inputVolumeMul; return {}; },
     SetInputMute: ({ inputName, inputMuted }) => { st.mutes[inputName] = inputMuted; return {}; },
     CreateSceneItem: ({ sceneName, sourceName }) => {
-      const x = Object.values(sceneExtras).flat().find(e => e.name === sourceName);
+      const x = allExtras().find(e => e.name === sourceName);
       (sceneExtras[sceneName] ||= []).push({ ...x, name: sourceName, index: 5 });
       st.created = [...(st.created || []), [sceneName, sourceName]];
       return { sceneItemId: st.created.length + 100 };

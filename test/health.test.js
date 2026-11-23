@@ -13,8 +13,8 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 async function until(fn, ms = 4000) { const t = Date.now(); while (Date.now() - t < ms) { if (await fn()) return; await wait(25); } throw new Error('timeout'); }
 const byId = (rep, id) => rep.items.find(i => i.id === id);
 
-async function rig(browserSources, { replayUp = true, sceneExtras = {} } = {}) {
-  const main = startMockObs({ port: 48455, browserSources, sceneExtras });
+async function rig(browserSources, { replayUp = true, sceneExtras = {}, specialInputs = {} } = {}) {
+  const main = startMockObs({ port: 48455, browserSources, sceneExtras, specialInputs });
   const rep = replayUp ? startMockObs({ port: 48456 }) : null;
   await main.ready; if (rep) await rep.ready;
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'health-'));
@@ -98,7 +98,8 @@ test('live sound: warns when a live audio source would go silent during replays,
   let rep = await run();
   const it = byId(rep, 'live-audio');
   assert.equal(it.status, 'warn');
-  assert.match(it.detail, /"ATEM USB", "Commentary mic" are only in "Main"/);
+  assert.match(it.detail, /Stops during replays: "ATEM USB", "Commentary mic"\./);
+  assert.match(it.detail, /Video files in "Main" also go quiet \(usually fine\): "Sponsor video"/);
   assert.equal(it.action, 'addLiveAudio');
   const { addLiveAudioToReplay } = await import('../server/health.js');
   assert.equal(await addLiveAudioToReplay(r.obs, r.replays), 2);
@@ -106,5 +107,43 @@ test('live sound: warns when a live audio source would go silent during replays,
   assert.ok(r.main.st.reordered.every(([, , idx]) => idx === 0), 'put at the bottom, hidden behind the replay');
   rep = await run();
   assert.equal(byId(rep, 'live-audio').status, 'ok');
-  assert.match(byId(rep, 'live-audio').detail, /replay sound at 50%/);
+  assert.match(byId(rep, 'live-audio').detail, /Heard during replays: .*"ATEM USB".*plus the replay at 50%/);
+  assert.match(byId(rep, 'live-audio').detail, /Stops during replays: none/);
+});
+
+test('live sound: global devices, groups, nested scenes, browser sources with OBS audio', async t => {
+  const r = await rig({
+    ...good,
+    'time.is': { url: 'https://time.is', width: 1920, height: 1080, scenes: { Main: 'below' } },          // no OBS audio: ignored
+    'Web stream': { url: 'https://example.com/stream', reroute_audio: true, width: 1920, height: 1080 },   // OBS audio: counts
+  }, {
+    specialInputs: { desktop1: 'Desktop Audio', mic1: 'Mic/Aux' },
+    sceneExtras: {
+      Main: [
+        { name: 'Cameras', group: [{ name: 'ATEM USB', kind: 'dshow_input' }, { name: 'Still', kind: 'image_source' }] },
+        { name: 'Audio scene', scene: true },
+        { name: 'Web stream', kind: 'browser_source' },
+        { name: 'Hidden cam', kind: 'dshow_input', enabled: false },
+      ],
+      'Audio scene': [{ name: 'Crowd mic', kind: 'wasapi_input_capture' }],
+    },
+  });
+  t.after(r.close);
+  const rep = await runHealth({ env, obs: r.obs, replays: r.replays, clients: () => overlayPage(), build: 'B1', startedAt: Date.now() });
+  const it = byId(rep, 'live-audio');
+  assert.equal(it.status, 'warn');
+  assert.match(it.detail, /Heard during replays: Desktop Audio \(global\), Mic\/Aux \(global\)/);
+  assert.match(it.detail, /"ATEM USB" \(in group "Cameras"\)/, 'looks inside groups');
+  assert.match(it.detail, /"Crowd mic" \(in scene "Audio scene"\)/, 'looks inside nested scenes');
+  assert.match(it.detail, /"Web stream"/, 'browser source with OBS audio counts');
+  assert.doesNotMatch(it.detail, /time\.is|Match Graphics|Hidden cam|Still/, 'silent browser sources, the overlay, hidden items and pictures are ignored');
+});
+
+test('live sound: only global audio -> green with the reason', async t => {
+  const r = await rig(good, { specialInputs: { mic1: 'Mic/Aux' } });
+  t.after(r.close);
+  const rep = await runHealth({ env, obs: r.obs, replays: r.replays, clients: () => overlayPage(), build: 'B1', startedAt: Date.now() });
+  const it = byId(rep, 'live-audio');
+  assert.equal(it.status, 'ok');
+  assert.match(it.detail, /Heard during replays: Mic\/Aux \(global\)/);
 });

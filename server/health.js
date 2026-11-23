@@ -28,25 +28,78 @@ async function overlaySources(obs) {
 }
 
 // Inputs that never carry the live sound (graphics, clips, text...).
-const NOT_LIVE_AUDIO = /^(browser_source|ffmpeg_source|vlc_source|image_source|slideshow|color_source|text_|monitor_capture|window_capture|game_capture|scene)/;
+// Inputs that never carry live sound: still pictures, text, screen captures.
+const NO_SOUND = /^(image_source|slideshow|color_source|text_|monitor_capture|window_capture|game_capture|xcomposite|xshm|display_capture|screen_capture)/;
+// Video/audio files: their sound stopping during a replay is usually fine (adverts, clips).
+const MEDIA_FILE = /^(ffmpeg_source|vlc_source)/;
 
-/**
- * Sound sources in the live scene that are NOT in the replay scene, so they'd go silent during a
- * replay. Global audio devices (Settings > Audio) aren't scene items and always keep playing.
- */
-export async function liveAudioMissingFromReplay(obs, liveScene, replayScene) {
-  const live = (await obs.call('GetSceneItemList', { sceneName: liveScene })).sceneItems || [];
-  const inReplay = new Set(((await obs.call('GetSceneItemList', { sceneName: replayScene })).sceneItems || []).map(i => i.sourceName));
+/** Every source shown in a scene, looking inside groups and nested scenes. via = where it was found. */
+async function sceneSources(obs, sceneName, via = [], seen = new Set()) {
+  if (seen.has(sceneName)) return [];
+  seen.add(sceneName);
   const out = [];
-  for (const it of live) {
-    if (!it.inputKind || NOT_LIVE_AUDIO.test(it.inputKind) || inReplay.has(it.sourceName)) continue;
-    try {
-      await obs.call('GetInputVolume', { inputName: it.sourceName });          // fails if it has no audio
-      const { inputMuted } = await obs.call('GetInputMute', { inputName: it.sourceName });
-      if (!inputMuted) out.push(it.sourceName);
-    } catch {}
+  let items = [];
+  try { items = (await obs.call('GetSceneItemList', { sceneName })).sceneItems || []; } catch { return out; }
+  for (const it of items) {
+    if (it.sceneItemEnabled === false) continue; // hidden in this scene
+    if (it.isGroup) {
+      let kids = [];
+      try { kids = (await obs.call('GetGroupSceneItemList', { sceneName: it.sourceName })).sceneItems || []; } catch {}
+      for (const k of kids) if (k.sceneItemEnabled !== false) out.push({ name: k.sourceName, kind: k.inputKind, via: [...via, `group "${it.sourceName}"`] });
+    } else if (it.sourceType === 'OBS_SOURCE_TYPE_SCENE') {
+      out.push(...await sceneSources(obs, it.sourceName, [...via, `scene "${it.sourceName}"`], seen));
+    } else {
+      out.push({ name: it.sourceName, kind: it.inputKind, via });
+    }
   }
   return out;
+}
+
+async function hasAudibleSound(obs, name) {
+  try {
+    await obs.call('GetInputVolume', { inputName: name }); // fails if the source has no audio at all
+    return !(await obs.call('GetInputMute', { inputName: name })).inputMuted;
+  } catch { return false; }
+}
+
+/**
+ * What viewers hear during a replay vs. what goes silent.
+ *  global:  Desktop Audio / Mic/Aux devices from Settings > Audio (play in every scene)
+ *  heard:   live-scene sound sources that are also in the replay scene
+ *  missing: live sound sources only in the live scene -> stop during replays (fixable)
+ *  media:   video/audio files only in the live scene -> stop during replays (info only)
+ */
+export async function analyzeLiveAudio(obs, liveScene, replayScene, ignore = []) {
+  const res = { global: [], heard: [], missing: [], media: [] };
+  try {
+    const special = await obs.call('GetSpecialInputs');
+    for (const name of Object.values(special || {})) if (name && await hasAudibleSound(obs, name)) res.global.push(name);
+  } catch {}
+  const live = await sceneSources(obs, liveScene);
+  const inReplay = new Set((await sceneSources(obs, replayScene)).map(s => s.name));
+  const done = new Set(res.global);
+  for (const src of live) {
+    if (done.has(src.name) || ignore.includes(src.name) || !src.kind || NO_SOUND.test(src.kind)) continue;
+    done.add(src.name);
+    if (src.kind === 'browser_source') {
+      // Only counts if its sound goes through OBS ("Control audio via OBS").
+      try {
+        const { inputSettings } = await obs.call('GetInputSettings', { inputName: src.name });
+        if (!inputSettings?.reroute_audio) continue;
+      } catch { continue; }
+    }
+    if (!await hasAudibleSound(obs, src.name)) continue;
+    const entry = { name: src.name, via: src.via };
+    if (inReplay.has(src.name)) res.heard.push(entry);
+    else if (MEDIA_FILE.test(src.kind)) res.media.push(entry);
+    else res.missing.push(entry);
+  }
+  return res;
+}
+
+/** Back-compat helper: names of live sound sources that would go silent during a replay. */
+export async function liveAudioMissingFromReplay(obs, liveScene, replayScene, ignore = []) {
+  return (await analyzeLiveAudio(obs, liveScene, replayScene, ignore)).missing.map(m => m.name);
 }
 
 /** Fix: add those sources to the replay scene(s) at the bottom (hidden behind the replay, sound keeps playing). */
@@ -57,7 +110,7 @@ export async function addLiveAudioToReplay(obs, replays) {
   let added = 0;
   for (const scene of scenes) {
     if (!live || live === scene) continue;
-    for (const sourceName of await liveAudioMissingFromReplay(obs, live, scene)) {
+    for (const sourceName of await liveAudioMissingFromReplay(obs, live, scene, [n.player, n.playerB].filter(Boolean))) {
       const { sceneItemId } = await obs.call('CreateSceneItem', { sceneName: scene, sourceName });
       await obs.call('SetSceneItemIndex', { sceneName: scene, sceneItemId, sceneItemIndex: 0 });
       added++;
@@ -163,12 +216,22 @@ export async function runHealth({ env, obs, replays, clients, build, commit, sta
   const replaySceneName = replays?.settings?.names?.scene;
   if (obs.status.connected && replaySceneName && obs.status.currentScene && obs.status.currentScene !== replaySceneName) {
     await safe(async () => {
-      const missing = await liveAudioMissingFromReplay(obs, obs.status.currentScene, replaySceneName);
-      items.push(missing.length
-        ? item('live-audio', 'Live sound during replays', WARN,
-          `${missing.map(m => `"${m}"`).join(', ')} ${missing.length === 1 ? 'is' : 'are'} only in "${obs.status.currentScene}", so ${missing.length === 1 ? 'its' : 'their'} sound would stop during replays.`,
-          `Press the button to add ${missing.length === 1 ? 'it' : 'them'} to the bottom of "${replaySceneName}" (hidden behind the replay, sound keeps playing).`, 'addLiveAudio')
-        : item('live-audio', 'Live sound during replays', OK, `Keeps playing (replay sound at ${replays.settings.volume ?? 50}%)`));
+      const n = replays.settings.names;
+      const a = await analyzeLiveAudio(obs, obs.status.currentScene, replaySceneName, [n.player, n.playerB].filter(Boolean));
+      const label = e => `"${e.name}"${e.via.length ? ` (in ${e.via.join(' > ')})` : ''}`;
+      const heard = [...a.global.map(g => `${g} (global)`), ...a.heard.map(label)];
+      const parts = [
+        `Heard during replays: ${heard.length ? heard.join(', ') : 'nothing from the live scene'}, plus the replay at ${replays.settings.volume ?? 50}%.`,
+        `Stops during replays: ${a.missing.length ? a.missing.map(label).join(', ') : 'none'}.`,
+      ];
+      if (a.media.length) parts.push(`Video files in "${obs.status.currentScene}" also go quiet (usually fine): ${a.media.map(label).join(', ')}.`);
+      if (!heard.length && !a.missing.length) parts.push('No live sound found at all: is your live audio muted or not added to OBS yet?');
+      const detail = parts.join(' ');
+      items.push(a.missing.length
+        ? item('live-audio', 'Live sound during replays', WARN, detail,
+          `Press the button to add ${a.missing.length === 1 ? 'it' : 'them'} to the bottom of "${replaySceneName}" (hidden behind the replay, sound keeps playing).`, 'addLiveAudio')
+        : item('live-audio', 'Live sound during replays', !heard.length ? WARN : OK, detail,
+          !heard.length ? 'Check the live audio source is in OBS and not muted in the Audio Mixer.' : ''));
     }, 'Live sound during replays');
   }
 
