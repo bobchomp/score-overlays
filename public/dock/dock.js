@@ -562,7 +562,7 @@ function render() {
   $('dot-obs').classList.toggle('warn', !obs.connected);
   $('dot-obs').title = obs.connected ? `OBS connected (${obs.url})` : `OBS: ${obs.error || 'not connected'}`;
   $('banner-obs').hidden = obs.connected;
-  $('banner-obs').textContent = `⚠ OBS not connected: ${obs.error || 'connecting…'}. Graphics still work; scene switching is off.`;
+  $('banner-obs').textContent = `⚠ OBS not connected (${obs.error || 'connecting…'}). Graphics still work, but replays can't play until it's back.`;
   $('banner-demo').hidden = !demo.running;
   $('demo-step').textContent = `DEMO: ${demo.step || 'running'}`;
 

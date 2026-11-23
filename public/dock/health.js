@@ -38,7 +38,7 @@ export function initHealth({ sock, toast, setTab }) {
       <span class="h-icon">${ICON[i.status] || ''}</span>
       <div class="h-body"><div class="h-label">${esc(i.label)}</div>
         ${i.detail ? `<div class="h-detail">${esc(i.detail)}</div>` : ''}
-        ${i.fix && i.status !== 'ok' ? `<div class="h-fix">→ ${esc(i.fix)}</div>` : ''}
+        ${i.fix && i.status !== 'ok' ? `<div class="h-fix">${esc(i.fix)}</div>` : ''}
         ${i.action && FIX_LABEL[i.action] ? `<button class="btn small" data-health-fix="${i.action}">${FIX_LABEL[i.action]}</button>` : ''}
       </div></li>`).join('');
     const chip = $('health-chip');

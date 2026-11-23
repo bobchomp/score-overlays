@@ -85,7 +85,7 @@ if ($changed.Count -gt 0) {
       $userTheme = Join-Path $root 'data\theme.json'
       if (-not (Test-Path $userTheme)) {
         Copy-Item -LiteralPath $src -Destination $userTheme -Force
-        Say '    -> your theme was moved to data\theme.json and stays in use' 'Green'
+        Say '    Your theme was moved to data\theme.json and stays in use.' 'Green'
       }
     }
   }

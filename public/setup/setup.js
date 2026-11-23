@@ -79,7 +79,7 @@ function logoPicker(el, value, onChange, nameHint) {
   const render = v => {
     const opts = ['', ...new Set([...data.logos, ...(v ? [v] : [])])];
     el.innerHTML = `${v ? `<img src="${esc(v)}" alt="">` : '<span class="none"></span>'}
-      <select class="input">${opts.map(o => `<option value="${esc(o)}" ${o === v ? 'selected' : ''}>${o ? esc(o.split('/').pop()) : '— none —'}</option>`).join('')}</select>
+      <select class="input">${opts.map(o => `<option value="${esc(o)}" ${o === v ? 'selected' : ''}>${o ? esc(o.split('/').pop()) : 'No badge'}</option>`).join('')}</select>
       <button type="button" class="btn small">Upload…</button>`;
     el.querySelector('select').onchange = e => { render(e.target.value); onChange(e.target.value); };
     el.querySelector('button').onclick = async () => {
@@ -157,7 +157,7 @@ function renderSide(s) {
   const team = data.teams.find(t => t.id === f.teamId);
   const nXI = f.lineup.starting.length;
   el.innerHTML = `<h2>${s === 'home' ? 'Home' : 'Away'} team <span class="lu-count ${nXI && nXI !== 11 ? 'bad' : ''}">XI: ${nXI}/11 · Subs: ${f.lineup.subs.length}</span></h2>
-    <select class="input team-sel"><option value="">— pick a team —</option>
+    <select class="input team-sel"><option value="">Pick a team…</option>
       ${data.teams.map(t => `<option value="${esc(t.id)}" ${t.id === f.teamId ? 'selected' : ''}>${esc(t.name)} (${esc(t.short)})</option>`).join('')}</select>
     <div class="colors"></div>
     ${team ? `<div class="row wrap">
