@@ -7,9 +7,11 @@
 #   4. pulls the update and shows what changed
 #   5. runs "npm install" only if the dependencies changed
 # Written for Windows PowerShell 5.1 (built into Windows 10/11). ASCII only on purpose.
+# -Folder <path> updates a different copy (used by the automated Windows test).
+param([string]$Folder = '')
 
 $ErrorActionPreference = 'Continue'   # we check every git/npm exit code ourselves
-$root = Split-Path -Parent $PSScriptRoot
+if ($Folder) { $root = (Resolve-Path $Folder).Path } else { $root = Split-Path -Parent $PSScriptRoot }
 Set-Location $root
 
 function Say([string]$msg, [string]$color = 'Gray') { Write-Host $msg -ForegroundColor $color }
