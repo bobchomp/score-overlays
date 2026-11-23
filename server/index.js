@@ -36,6 +36,7 @@ try {
     mainDefault: { url: `ws://${env.obs.host}:${env.obs.port}`, password: env.obs.password },
     getMinute: () => (PLAYING_PERIODS.includes(store.state.clock.period) ? eventMinute(store.state.clock, store.state.match, Date.now()) : null),
     getTimerMinute: () => timerMinute(store.state.clock, store.state.match, Date.now()),
+    getMatch: () => ({ home: store.state.teams.home.name, away: store.state.teams.away.name }),
   });
 } catch (err) {
   console.error('[replays] disabled:', err);

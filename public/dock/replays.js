@@ -80,6 +80,79 @@ export function initReplays({ sock, toast, promptSheet, openSheet, closeSheet, g
     if (sel) cmd('tag', { id: sel.dataset.rqTag, tag: sel.value });
   });
 
+  // ---------------------------------------------------------------- highlights reel
+  function reelOptions() {
+    const q = getSnap()?.replay?.queue || [];
+    const goals = q.filter(c => c.tag === 'Goal').length;
+    const len = getSnap()?.replay?.settings?.lengthSec || 8;
+    openSheet('Make highlights reel', `
+      <p class="hint" style="margin-top:0">Joins the queued clips, in queue order, into one MP4 in a "Highlights" folder next to your replays.</p>
+      <div class="field">Clips
+        <span class="r-seg">
+          <label><input type="radio" name="reel-only" value="all" checked><span>All clips (${q.length})</span></label>
+          <label><input type="radio" name="reel-only" value="goals" ${goals ? '' : 'disabled'}><span>Goals only (${goals})</span></label>
+        </span></div>
+      <div class="field">Length of each clip
+        <span class="r-seg">
+          <label><input type="radio" name="reel-len" value="tail" checked><span>Same as replays (last ${len} s)</span></label>
+          <label><input type="radio" name="reel-len" value="whole"><span>Whole clips</span></label>
+        </span></div>
+      <label class="check"><input type="checkbox" id="reel-fade" checked> Fade between clips</label>
+      <p class="hint">Best done after the match: it runs at low priority, but it does use the CPU.</p>
+      <div class="row"><button class="btn grow" data-sheet-close>Cancel</button><button class="btn primary grow" id="reel-go">🎬 Make reel</button></div>`);
+    $('reel-go').onclick = async () => {
+      const opts = {
+        only: document.querySelector('[name="reel-only"]:checked')?.value || 'all',
+        whole: document.querySelector('[name="reel-len"]:checked')?.value === 'whole',
+        fade: $('reel-fade').checked,
+      };
+      closeSheet();
+      let r = await sock.request({ type: 'replay', op: 'highlights', args: opts });
+      if (r.needsConfirm) {
+        openSheet('OBS is streaming', `<p>${esc(r.error)} Make the reel now anyway?</p>
+          <div class="row"><button class="btn grow" data-sheet-close>Not now</button><button class="btn primary grow" id="reel-force">Make it anyway</button></div>`);
+        $('reel-force').onclick = async () => {
+          closeSheet();
+          r = await sock.request({ type: 'replay', op: 'highlights', args: { ...opts, force: true } });
+          if (!r.ok) toast(r.error || 'Could not start the reel', true);
+        };
+        return;
+      }
+      if (!r.ok) toast(r.error || 'Could not start the reel', true);
+    };
+  }
+
+  function renderReel(r) {
+    const el = $('r-reel');
+    if (!el) return;
+    const reel = r.reel || {};
+    const key = JSON.stringify([reel, r.queue.length]);
+    if (el.dataset.key === key) return;
+    el.dataset.key = key;
+    const name = f => esc(String(f || '').split(/[\\/]/).pop());
+    if (reel.running) {
+      el.innerHTML = `<div class="r-reel-head">🎬 Making highlights reel… ${reel.percent || 0}% <span class="muted">(${reel.clips} clips)</span></div>
+        <div class="r-progress"><i style="width:${reel.percent || 0}%"></i></div>
+        <button class="btn small danger-ghost" data-reel="cancel">Cancel</button>`;
+    } else {
+      el.innerHTML = `${reel.file ? `<div class="r-reel-done">✓ Saved <strong>${name(reel.file)}</strong> <span class="muted">(${reel.clips} clips, ${Math.round(reel.seconds || 0)} s${reel.skipped ? `, ${reel.skipped} unreadable skipped` : ''})</span>
+          <button class="btn small" data-reel="reveal">Show in folder</button></div>` : ''}
+        ${reel.error && reel.error !== 'Cancelled' ? `<div class="r-err">Reel failed: ${esc(reel.error)}</div>` : ''}
+        <button class="btn grow r-reel-btn" data-reel="make" ${r.queue.length ? '' : 'disabled'}>🎬 Make highlights reel</button>`;
+    }
+  }
+
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('[data-reel]');
+    if (!b || b.disabled) return;
+    if (b.dataset.reel === 'make') return reelOptions();
+    if (b.dataset.reel === 'cancel') return cmd('cancelHighlights');
+    if (b.dataset.reel === 'reveal') {
+      const r = await sock.request({ type: 'replay', op: 'reveal', args: {} });
+      if (!r.ok) toast(r.error, !/^Saved at/.test(r.error || ''));
+    }
+  });
+
   // ---------------------------------------------------------------- "which team?" popup after a tagged mark
   function askTeam(clip, tag) {
     const st = getSnap()?.state;
@@ -330,6 +403,7 @@ export function initReplays({ sock, toast, promptSheet, openSheet, closeSheet, g
       }).join('') : '<li class="empty">No clips yet. REPLAY and MARK add clips here.</li>';
     }
 
+    renderReel(r);
     renderSettings();
   }
 

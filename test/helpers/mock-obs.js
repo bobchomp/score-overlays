@@ -20,10 +20,12 @@ export function startMockObs({
   // Browser Sources (for the health check): name -> { url, width, height, shutdown, scenes: { scene: 'top'|'below' } }
   browserSources = {},
   recordDirectory = null,
+  replayFile = null,   // copy this real video for each saved replay (default: a tiny fake file)
+  streaming = false,
 } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mockobs-'));
   const st = {
-    program, transition, bufferActive, emitSaved, lastReplay: null, savedCount: 0,
+    program, transition, bufferActive, emitSaved, streaming, lastReplay: null, savedCount: 0,
     log: [], inputSettings: {}, media: {}, clients: new Set(), wss: null, dir,
   };
   const wss = new WebSocketServer({ port, handleProtocols: p => [...p][0] });
@@ -104,13 +106,14 @@ export function startMockObs({
       if (!st.bufferActive) throw Object.assign(new Error('Replay buffer is not active.'), { code: 501 });
       const file = path.join(dir, `Replay ${++st.savedCount}.mkv`);
       setTimeout(() => {
-        fs.writeFileSync(file, 'fake');
+        if (replayFile) fs.copyFileSync(replayFile, file); else fs.writeFileSync(file, 'fake');
         st.lastReplay = file;
         if (st.emitSaved) event('ReplayBufferSaved', { savedReplayPath: file });
       }, 60);
       return {};
     },
     GetLastReplayBufferReplay: () => ({ savedReplayPath: st.lastReplay }),
+    GetStreamStatus: () => ({ outputActive: st.streaming }),
     GetRecordDirectory: () => ({ recordDirectory: recordDirectory || dir }),
     GetInputList: ({ inputKind }) => ({
       inputs: inputKind === 'browser_source'

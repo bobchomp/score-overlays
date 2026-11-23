@@ -11,6 +11,8 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { DATA_DIR, readJson, writeJsonAtomic } from './config.js';
 import { ObsLink } from './obs.js';
+import { buildReel } from './highlights.js';
+import { spawn } from 'node:child_process';
 
 export const REPLAYS_FILE = path.join(DATA_DIR, 'replays.json');
 
@@ -81,13 +83,15 @@ export class Replays extends EventEmitter {
    * @param {() => string|null} o.getMinute  current match minute ("23", "45+2") or null
    * @param {string} [o.file]
    */
-  constructor({ mainObs, mainDefault, getMinute = () => null, getTimerMinute = () => null, file = REPLAYS_FILE }) {
+  constructor({ mainObs, mainDefault, getMinute = () => null, getTimerMinute = () => null, getMatch = () => ({}), file = REPLAYS_FILE }) {
     super();
     this.file = file;
     this.mainObs = mainObs;
     this.mainDefault = mainDefault;
     this.getMinute = getMinute;
     this.getTimerMinute = getTimerMinute;
+    this.getMatch = getMatch;
+    this.reel = { running: false, percent: 0, file: null, error: null, clips: 0 };
     const saved = readJson(file, {}) || {};
     this.settings = mergeSettings(DEFAULT_SETTINGS, saved.settings);
     this.queue = Array.isArray(saved.queue) ? saved.queue.filter(c => c && c.id && c.path) : [];
@@ -198,6 +202,7 @@ export class Replays extends EventEmitter {
       saveBlocked: this.saveBlockedReason(),
       playBlocked: this.playBlockedReason(),
       notice: this.notice,
+      reel: this.reel,
     };
   }
 
@@ -613,6 +618,66 @@ export class Replays extends EventEmitter {
     }
   }
 
+  // ------------------------------------------------------------------ highlights reel
+  /**
+   * Stitch queued clips into one MP4 (server/highlights.js). Runs in the background at low priority.
+   * opts: { only: 'all'|'goals', whole: bool, fade: bool, force: bool }
+   */
+  async makeHighlights(opts = {}) {
+    if (this.reel.running) throw new Error('A highlights reel is already being made');
+    const clips = this.queue.filter(c => (opts.only === 'goals' ? c.tag === 'Goal' : true) && fs.existsSync(c.path));
+    if (!clips.length) throw new Error(opts.only === 'goals' ? 'No goal clips in the queue' : 'The queue has no clips (or their files are missing)');
+    if (!opts.force && this.mainObs.status.connected) {
+      try {
+        const st = await this.mainObs.call('GetStreamStatus');
+        if (st.outputActive) return { ok: false, needsConfirm: true, error: 'OBS is streaming. Making the reel uses some CPU (at low priority).' };
+      } catch {}
+    }
+    const m = (() => { try { return this.getMatch() || {}; } catch { return {}; } })();
+    const day = new Date().toISOString().slice(0, 10);
+    const title = Replays.fileBase(m.home && m.away ? `${m.home} v ${m.away} - highlights ${day}` : `Highlights ${day}`) || `Highlights ${day}`;
+    const dir = path.join(path.dirname(clips[0].path), 'Highlights');
+    fs.mkdirSync(dir, { recursive: true });
+    let out = path.join(dir, `${title}.mp4`);
+    for (let n = 2; fs.existsSync(out); n++) out = path.join(dir, `${title} (${n}).mp4`);
+
+    this.reel = { running: true, percent: 0, file: null, error: null, clips: clips.length, startedAt: Date.now() };
+    this.changed();
+    let lastPush = 0;
+    buildReel({
+      files: clips.map(c => c.path),
+      tailSec: opts.whole ? null : this.settings.lengthSec,
+      fade: opts.fade !== false,
+      out,
+      onChild: child => { this.reelChild = child; },
+      onProgress: pct => {
+        this.reel.percent = pct;
+        if (Date.now() - lastPush > 400 || pct === 100) { lastPush = Date.now(); this.changed(); }
+      },
+    }).then(r => {
+      this.reel = { running: false, percent: 100, file: r.out, error: null, clips: r.clips, seconds: r.seconds, skipped: r.skipped };
+      this.say('info', `Highlights reel saved: ${path.basename(r.out)}`);
+    }).catch(err => {
+      this.reel = { running: false, percent: 0, file: null, error: err.message, clips: 0 };
+      if (err.message !== 'Cancelled') this.say('error', `Highlights reel failed: ${err.message}`);
+    }).finally(() => { this.reelChild = null; this.changed(); });
+    return { ok: true, started: true, clips: clips.length };
+  }
+
+  cancelHighlights() {
+    try { this.reelChild?.kill(); } catch {}
+    return { ok: true };
+  }
+
+  /** Open Explorer with the file selected (the server runs on the streaming PC). */
+  reveal(file) {
+    const target = file || this.reel.file;
+    if (!target || !fs.existsSync(target)) throw new Error('File not found');
+    if (process.platform !== 'win32') throw new Error(`Saved at ${target}`);
+    spawn('explorer.exe', [`/select,"${target}"`], { windowsVerbatimArguments: true, detached: true, stdio: 'ignore' }).unref();
+    return { ok: true };
+  }
+
   // ------------------------------------------------------------------ queue + settings
   rename(id, label) { this.editClip(id, c => { c.label = String(label || '').trim().slice(0, 80); this.syncFileName(c); }); }
   tag(id, tag) { this.editClip(id, c => { c.tag = TAGS.includes(tag) ? tag : ''; }); }
@@ -694,6 +759,9 @@ export class Replays extends EventEmitter {
       case 'clearQueue': return this.clearQueue();
       case 'settings': return this.updateSettings(args);
       case 'recheckBuffer': return this.checkBuffer();
+      case 'highlights': return this.makeHighlights(args);
+      case 'cancelHighlights': return this.cancelHighlights();
+      case 'reveal': return this.reveal(args.file);
       default: throw new Error(`Unknown replay command "${op}"`);
     }
   }

@@ -85,3 +85,12 @@
 .r-team-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
 .r-team-btn { min-height: 72px; font-size: 18px; font-weight: 800; justify-content: flex-start; gap: 10px; }
 .r-team-chip { width: 16px; height: 40px; border-radius: 4px; background: var(--tp); flex: 0 0 16px; border: 1px solid #fff3; }
+
+/* highlights reel */
+.r-reel { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--ui-line); }
+.r-reel-btn { width: 100%; min-height: 44px; font-weight: 800; }
+.r-reel-head { font-weight: 700; }
+.r-progress { height: 10px; border-radius: 5px; background: var(--ui-bg); border: 1px solid var(--ui-line); overflow: hidden; }
+.r-progress i { display: block; height: 100%; background: linear-gradient(90deg, #2f81f7, #3fdc6a); transition: width .4s ease; }
+.r-reel-done { font-size: 13px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.r-seg input:disabled + span { opacity: .4; cursor: not-allowed; }
