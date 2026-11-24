@@ -26,7 +26,9 @@ body { padding-bottom: 40px; }
 .period-badge { font-weight: 800; font-size: 16px; background: #f2cc60; color: #111; border-radius: 6px; padding: 4px 8px; }
 #btn-clock.running { background: #5a1e1e; border-color: var(--ui-bad); }
 #btn-clock.stopped { background: #1d6f3a; border-color: var(--ui-ok); }
-.periods { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.periods { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
+.periods .seg { grid-column: span 3; }           /* 1H HT 2H FT */
+.periods .seg:nth-child(n+5) { grid-column: span 4; } /* ET1 ET2 PEN fill the second row */
 .seg { appearance: none; border: 1px solid var(--ui-line); background: var(--ui-bg); color: var(--ui-text); font: 700 14px system-ui, sans-serif; min-height: 38px; border-radius: 6px; cursor: pointer; }
 .seg.active { background: #f2cc60; color: #111; border-color: #f2cc60; }
 .nudges { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 0; }
