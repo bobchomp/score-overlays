@@ -336,6 +336,26 @@ test('replay flow', async t => {
     assert.equal(main.st.program, 'Main');
   });
 
+  await t.test('clips go in a folder per match: "<date> <home> v <away>", unnamed clips too', async () => {
+    const was = replays.getMatch;
+    replays.getMatch = () => ({ home: 'Ross County', away: 'Airdrie' });
+    try {
+      const r = await replays.handle('mark', { tag: 'Save' });
+      await until(() => fs.existsSync(r.clip.path), 4000, 'clip saved');
+      const named = r.clip.path;
+      assert.match(path.basename(path.dirname(named)), /^\d{4}-\d\d-\d\d Ross County v Airdrie$/);
+      const obsFile = path.join(path.dirname(r.clip.dir), 'Replay 2026-11-24 20-01-02.mkv');
+      fs.writeFileSync(obsFile, 'x');
+      const raw = replays.addClip(obsFile); // no label: keeps OBS's file name, still moved
+      assert.equal(raw.path, path.join(r.clip.dir, 'Replay 2026-11-24 20-01-02.mkv'));
+      assert.ok(fs.existsSync(raw.path) && !fs.existsSync(obsFile));
+      replays.remove(raw.id);
+      replays.getMatch = () => ({ home: 'Hillcrest', away: 'Riverside' });
+      const r2 = await replays.handle('mark', { tag: 'Save' });
+      assert.match(path.basename(path.dirname(r2.clip.path)), / Hillcrest v Riverside$/, 'next match, next folder');
+    } finally { replays.getMatch = was; }
+  });
+
   await t.test('save timeout falls back to GetLastReplayBufferReplay', async () => {
     rep.st.emitSaved = false;
     replays.settings.saveTimeoutMs = 300;
@@ -343,7 +363,8 @@ test('replay flow', async t => {
     assert.equal(r.ok, true);
     assert.ok(rep.calls('GetLastReplayBufferReplay').length >= 1);
     assert.ok(fs.existsSync(r.clip.path), 'clip file exists (renamed to its label)');
-    assert.equal(path.dirname(r.clip.path), path.dirname(rep.st.lastReplay));
+    assert.equal(path.dirname(path.dirname(r.clip.path)), path.dirname(rep.st.lastReplay), 'moved into a match folder inside the OBS replay folder');
+    assert.match(path.basename(path.dirname(r.clip.path)), /^\d{4}-\d\d-\d\d /);
   });
 
   await t.test('save timeout with no new file reports an error', async () => {

@@ -48,7 +48,7 @@ test('reel: whole clips', async () => {
   assert.ok(Math.abs((await probe(out)).duration - 6) < 0.15);
 });
 
-test('replay module: makes the reel from the queue into a Highlights folder, asks first while streaming', async t => {
+test('replay module: makes the reel from the queue into the match folder, asks first while streaming', async t => {
   const src = makeClip('cam.mkv', { dur: 4 });
   const main = startMockObs({ port: 49455, streaming: true });
   const rep = startMockObs({ port: 49456, replayFile: src });
@@ -77,7 +77,7 @@ test('replay module: makes the reel from the queue into a Highlights folder, ask
   await until(() => !replays.reel.running);
   assert.equal(replays.reel.error, null);
   assert.match(path.basename(replays.reel.file), /^Ross County v Hillcrest Athletic - highlights \d{4}-\d\d-\d\d\.mp4$/);
-  assert.equal(path.basename(path.dirname(replays.reel.file)), 'Highlights');
+  assert.match(path.basename(path.dirname(replays.reel.file)), /^\d{4}-\d\d-\d\d Ross County v Hillcrest Athletic$/, 'reel goes in the match folder with the clips');
   assert.ok(Math.abs((await probe(replays.reel.file)).duration - 4) < 0.2, 'two goal clips x 2s');
   assert.equal(replays.publicStatus().reel.percent, 100);
 

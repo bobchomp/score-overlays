@@ -277,12 +277,29 @@ export class Replays extends EventEmitter {
       tag: TAGS.includes(tag) ? tag : '',
       minute: this.safeMinute(),
       createdAt: Date.now(),
+      dir: this.matchFolder(file),
     };
     this.queue.push(clip);
     this.syncFileName(clip);
     this.persist();
     this.changed();
     return clip;
+  }
+
+  // ------------------------------------------------------------------ one folder per match
+  /**
+   * Where this match's clips go: a folder next to OBS's replay folder named
+   * "2026-11-24 Ross County v Airdrie" (local date of the clip, then the teams).
+   */
+  matchFolder(file) {
+    const m = (() => { try { return this.getMatch() || {}; } catch { return {}; } })();
+    const d = new Date();
+    const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const name = Replays.fileBase(m.home && m.away ? `${day} ${m.home} v ${m.away}` : `${day} Replays`);
+    const dir = path.dirname(String(file));
+    // Already in a match folder (e.g. a clip re-added from one): leave it there.
+    if (/^\d{4}-\d{2}-\d{2} /.test(path.basename(dir))) return dir;
+    return path.join(dir, name);
   }
 
   // ------------------------------------------------------------------ file names follow clip names
@@ -304,10 +321,14 @@ export class Replays extends EventEmitter {
    * Unnamed clips keep OBS's name. If the file is busy (e.g. playing in OBS) it's retried later.
    */
   syncFileName(clip) {
-    if (!clip?.label || clip.fileLabel === clip.label) return;
-    const base = Replays.fileBase(clip.label);
+    if (!clip) return;
+    const moving = clip.dir && path.dirname(clip.path) !== clip.dir;
+    const renaming = clip.label && clip.fileLabel !== clip.label;
+    if (!moving && !renaming) return;
+    const base = (clip.label && Replays.fileBase(clip.label)) || path.basename(clip.path, path.extname(clip.path));
     if (!base) return;
-    const dir = path.dirname(clip.path);
+    const dir = clip.dir || path.dirname(clip.path);
+    try { fs.mkdirSync(dir, { recursive: true }); } catch {}
     const ext = path.extname(clip.path) || '.mkv';
     let target = path.join(dir, base + ext);
     for (let n = 2; fs.existsSync(target) && target !== clip.path; n++) target = path.join(dir, `${base} (${n})${ext}`);
@@ -318,7 +339,7 @@ export class Replays extends EventEmitter {
       clip.fileLabel = clip.label;
       delete clip.renamePending;
     } catch (err) {
-      if (err.code === 'ENOENT') { clip.fileLabel = clip.label; delete clip.renamePending; return; } // file gone: nothing to rename
+      if (err.code === 'ENOENT' && !fs.existsSync(clip.path)) { clip.fileLabel = clip.label; clip.dir = path.dirname(clip.path); delete clip.renamePending; return; } // file gone: nothing to rename
       clip.renamePending = true; // busy (e.g. open in OBS): try again shortly
       this.scheduleRenameRetry();
     }
@@ -691,7 +712,7 @@ export class Replays extends EventEmitter {
     const m = (() => { try { return this.getMatch() || {}; } catch { return {}; } })();
     const day = new Date().toISOString().slice(0, 10);
     const title = Replays.fileBase(m.home && m.away ? `${m.home} v ${m.away} - highlights ${day}` : `Highlights ${day}`) || `Highlights ${day}`;
-    const dir = path.join(path.dirname(clips[0].path), 'Highlights');
+    const dir = clips[0].dir || path.dirname(clips[0].path); // the match folder, next to the clips
     fs.mkdirSync(dir, { recursive: true });
     let out = path.join(dir, `${title}.mp4`);
     for (let n = 2; fs.existsSync(out); n++) out = path.join(dir, `${title} (${n}).mp4`);
