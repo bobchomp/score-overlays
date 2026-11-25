@@ -307,7 +307,8 @@ function cardCard(ev, step = null) {
   const badge = `<div class="lt-badge" style="${teamVars(team)}">${logo(team.logo) || `<span class="lt-num">${esc(team.short)}</span>`}</div>`;
   const p = findPlayer(team, ev.playerId);
   const label = ev.secondYellow ? theme.labels.secondYellow : ev.card === 'red' ? theme.labels.redCard : theme.labels.yellowCard;
-  const icon = ev.secondYellow ? '<div class="card-icon second"><i class="yellow"></i><i class="red"></i></div>'
+  // Second yellow: another yellow lands on the first, then flips over to red.
+  const icon = ev.secondYellow ? '<div class="card-icon second"><i class="yellow"></i><span class="drop"><span class="flip"><i class="yellow"></i><i class="red back"></i></span></span></div>'
     : `<div class="card-icon"><i class="${ev.card}"></i></div>`;
   return `<div class="lt">${badge}<div class="lt-body"><div class="lt-tag">${esc(label)} · ${esc(ev.minute)}'</div>
     <div class="lt-main"><div class="lt-title">${playerLine(p)}</div><div class="lt-sub">${esc(team.name)}</div></div>
