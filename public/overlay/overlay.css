@@ -321,3 +321,13 @@ body.has-full #scorebug { opacity: 0; transform: translateY(-24px); }
 
 .lu-manager { margin-top: 28px; }
 .lu-manager .lu-player { padding-left: 0; }
+
+/* Queued subs: the card swaps in place (names lift out, the next ones rise in); the panel itself never closes */
+.lt-step { align-self: flex-end; margin: 0 0 10px 0; padding: 4px 12px; font-family: var(--font-heading); font-weight: 700; font-size: 22px; letter-spacing: .06em; color: var(--c-accent-text); background: var(--c-accent); }
+#lower-third .lt.swap-out .lt-body > *, #lower-third .lt.swap-out .lt-badge > *, #lower-third .lt.swap-out .lt-step {
+  transition: opacity .24s ease, transform .24s ease !important; opacity: 0 !important; transform: translateY(-14px) !important; }
+#lower-third .lt.swap-in { transition: none !important; }
+#lower-third .lt.swap-in .lt-body > *, #lower-third .lt.swap-in .lt-badge > *, #lower-third .lt.swap-in .lt-step {
+  transition: none !important; opacity: 0 !important; transform: translateY(14px) !important; }
+#lower-third .lt.swapped .lt-body > *, #lower-third .lt.swapped .lt-badge > *, #lower-third .lt.swapped .lt-step {
+  transition: opacity .3s ease, transform .3s ease !important; }

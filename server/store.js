@@ -32,6 +32,7 @@ export function defaultState() {
       board: { visible: false, kind: 'KO' },
       shootout: { visible: false },
       lineup: { visible: false, team: 'home' },
+      subQueue: [], // sub event ids waiting to be shown back to back ("Show subs")
     },
     settings: { autoShow: { goal: true, card: true, sub: true }, sting: true, stingAway: false },
   };

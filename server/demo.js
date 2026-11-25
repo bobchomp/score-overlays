@@ -53,7 +53,12 @@ export class Demo extends EventEmitter {
       [4000, 'Clock jump to 11:40', d('clock.set', { ms: min(11, 40) })],
       [3000, `Goal ${home.short}`, d('goal.add', { team: 'home', playerId: pick(home, 'FWD') })],
       [12000, 'Yellow card', d('card.add', { team: 'away', playerId: pick(away, 'DEF', 1), card: 'yellow' })],
-      [10000, 'Substitution', () => { d('clock.set', { ms: min(31, 10) })(); d('sub.add', { team: 'away', offId: pick(away, 'MID', 2), onId: bench(away, 4) })(); }],
+      [16000, 'Double substitution (queued subs swap in place)', () => {
+        d('clock.set', { ms: min(31, 10) })();
+        d('sub.add', { team: 'away', offId: pick(away, 'MID', 2), onId: bench(away, 4) })();
+        d('sub.add', { team: 'away', offId: pick(away, 'FWD', 1), onId: bench(away, 5) })();
+        d('subQueue.show')();
+      }],
       [10000, 'Free-text lower third', d('lowerThird.text', { title: 'Attendance', subtitle: "Today's crowd: 412", autoHide: true })],
       [10000, 'Added time +2', () => { d('lowerThird.hide')(); d('clock.set', { ms: min(44, 50) })(); d('clock.addedTime', { minutes: 2 })(); }],
       [5000, `Penalty goal ${away.short} (45+2)`, () => { d('clock.set', { ms: min(46, 15) })(); d('goal.add', { team: 'away', playerId: pick(away, 'FWD'), penalty: true })(); }],
@@ -62,7 +67,7 @@ export class Demo extends EventEmitter {
       [3000, 'Clock jump to 63:00', d('clock.set', { ms: min(18) })],
       [2000, `Own goal for ${home.short}`, d('goal.add', { team: 'home', playerId: pick(away, 'DEF', 2), ownGoal: true })],
       [12000, 'Second yellow → red', () => { d('clock.set', { ms: min(27, 30) })(); d('card.add', { team: 'away', playerId: pick(away, 'DEF', 1), card: 'yellow' })(); }],
-      [10000, `Substitution ${home.short}`, d('sub.add', { team: 'home', offId: pick(home, 'FWD', 1), onId: bench(home, 5) })],
+      [10000, `Substitution ${home.short}`, () => { d('sub.add', { team: 'home', offId: pick(home, 'FWD', 1), onId: bench(home, 5) })(); d('subQueue.show')(); }],
       [10000, `Goal ${home.short}`, () => { d('clock.set', { ms: min(41, 5) })(); d('goal.add', { team: 'home', playerId: pick(home, 'MID', 2) })(); }],
       [12000, 'Added time +4', () => { d('clock.set', { ms: min(45, 20) })(); d('clock.addedTime', { minutes: 4 })(); }],
       [6000, 'Full time', () => { d('clock.period', { period: 'FT' })(); d('board.show', { kind: 'FT' })(); }],

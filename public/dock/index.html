@@ -150,6 +150,14 @@
           <button class="btn log" data-act="sub" data-side="home"><span class="sub-ico">⇅</span><span class="lbl-home">HOME</span> sub</button>
           <button class="btn log" data-act="sub" data-side="away"><span class="sub-ico">⇅</span><span class="lbl-away">AWAY</span> sub</button>
         </div>
+        <!-- Subs waiting for their graphic: shown back to back, swapping in place -->
+        <div class="subq" id="subq" hidden>
+          <div class="subq-head"><span>Subs to show <span class="muted" id="subq-count"></span></span>
+            <button class="btn small danger-ghost" data-act="subq-clear">Clear</button></div>
+          <ol class="subq-list" id="subq-list"></ol>
+          <button class="btn primary subq-show" id="subq-show" data-act="subq-show">▶ Show subs</button>
+        </div>
+        <div class="subq-onair" id="subq-onair" hidden></div>
       </section>
       <section class="card text-card">
         <h2>Lower third (text)</h2>
@@ -238,7 +246,7 @@
         <label class="check"><input type="checkbox" id="opt-sting"> Play big GOAL! sting for home goals</label>
         <label class="check"><input type="checkbox" id="opt-sting-away"> Play big GOAL! sting for away goals</label>
         <label class="check"><input type="checkbox" id="opt-show-card"> Auto-show card graphic</label>
-        <label class="check"><input type="checkbox" id="opt-show-sub"> Auto-show sub graphic</label>
+        <label class="check"><input type="checkbox" id="opt-show-sub"> Queue sub graphics (play with Show subs)</label>
         <label class="check"><input type="checkbox" id="opt-preview"> Show overlay preview</label>
         <div class="row wrap">
           <a class="btn small" id="export-json" href="#" download>Export JSON</a>

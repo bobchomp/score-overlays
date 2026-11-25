@@ -199,3 +199,42 @@ test('store reports goal edits so the replay of a disallowed goal can be renamed
   assert.deepEqual(seen.slice(1), [['goal.add', 0, 1], ['goal.removeLast', 1, 0], ['undo', 0, 1]]);
   clearTimeout(s.timer);
 });
+
+test('subs queue: subs wait, Show plays them as one lower third that steps through, then closes', () => {
+  const { s, ok } = fresh();
+  ok(s.dispatch('clock.period', { period: '2H', start: true }));
+  const a = ok(s.dispatch('sub.add', { team: 'home', offId: 'p9', onId: 'p12' })).result.event;
+  const b = ok(s.dispatch('sub.add', { team: 'away', offId: 'p1', onId: 'p12' })).result.event;
+  const c = ok(s.dispatch('sub.add', { team: 'home', offId: 'p1', onId: 'p13' })).result.event;
+  assert.equal(s.state.graphics.lowerThird.visible, false, 'nothing shown yet');
+  assert.deepEqual(s.state.graphics.subQueue, [a.id, b.id, c.id]);
+  ok(s.dispatch('subQueue.move', { id: c.id, dir: 'up' }));
+  assert.deepEqual(s.state.graphics.subQueue, [a.id, c.id, b.id]);
+  ok(s.dispatch('subQueue.remove', { id: a.id }));
+  ok(s.dispatch('subQueue.add', { id: a.id }));
+  assert.deepEqual(s.state.graphics.subQueue, [c.id, b.id, a.id]);
+  ok(s.dispatch('event.delete', { id: b.id })); // deleted subs drop out
+  const r = ok(s.dispatch('subQueue.show'));
+  assert.equal(r.result.count, 2);
+  const lt = s.state.graphics.lowerThird;
+  assert.equal(lt.kind, 'subs');
+  assert.deepEqual(lt.eventIds, [c.id, a.id]);
+  const secs = Number(theme.timings?.lowerThirdSec) || 8;
+  assert.equal(lt.stepMs, secs * 1000);
+  assert.equal(lt.hideAt - lt.shownAt, 2 * secs * 1000, 'each sub gets the normal lower third time');
+  assert.deepEqual(s.state.graphics.subQueue, [], 'queue emptied');
+  assert.equal(s.dispatch('subQueue.show').ok, false, 'nothing left to show');
+  clearTimeout(s.timer);
+});
+
+test('subs queue: turning off "Queue sub graphics" logs the sub without queueing it; a new match clears the queue', () => {
+  const { s, ok } = fresh();
+  ok(s.dispatch('sub.add', { team: 'home', offId: 'p9', onId: 'p12' }));
+  ok(s.dispatch('match.reset'));
+  assert.deepEqual(s.state.graphics.subQueue, []);
+  ok(s.dispatch('settings.set', { autoShow: { sub: false } }));
+  ok(s.dispatch('sub.add', { team: 'home', offId: 'p9', onId: 'p12' }));
+  assert.deepEqual(s.state.graphics.subQueue, []);
+  assert.equal(s.state.events.length, 1);
+  clearTimeout(s.timer);
+});

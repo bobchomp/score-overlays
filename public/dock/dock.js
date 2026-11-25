@@ -304,7 +304,8 @@ async function subFlow(side) {
   const offName = findPlayer(t, offId)?.name || '';
   const onId = await pickPlayer({ title: `Sub ${t.short}: player ON (for ${offName})`, side, sections: onSections });
   if (!onId) return;
-  await act('sub.add', { team: side, offId, onId });
+  const r = await act('sub.add', { team: side, offId, onId });
+  if (r?.ok && r.result?.queued) toast(`Sub queued: press Show subs when you're ready`);
 }
 
 async function editEvent(ev) {
@@ -438,6 +439,11 @@ document.addEventListener('click', async e => {
     case 'hide-all': return act('graphics.hideAll');
     case 'card': return cardFlow(d.side, d.card);
     case 'sub': return subFlow(d.side);
+    case 'subq-show': return act('subQueue.show');
+    case 'subq-clear': return act('subQueue.clear');
+    case 'subq-up': return act('subQueue.move', { id: d.id, dir: 'up' });
+    case 'subq-down': return act('subQueue.move', { id: d.id, dir: 'down' });
+    case 'subq-remove': return act('subQueue.remove', { id: d.id });
     case 'lt-show': {
       const team = $('lt-team').value || null;
       const r = await act('lowerThird.text', { title: $('lt-title').value, subtitle: $('lt-sub').value, team });
@@ -670,6 +676,19 @@ function render() {
   $('opt-sting').checked = st.settings.sting;
   $('opt-sting-away').checked = st.settings.stingAway;
 
+  // subs waiting to be shown
+  const subEvents = new Map(st.events.filter(e => e.type === 'sub').map(e => [e.id, e]));
+  const q = (g.subQueue || []).map(id => subEvents.get(id)).filter(Boolean);
+  $('subq').hidden = !q.length;
+  $('subq-count').textContent = q.length ? `(${q.length})` : '';
+  $('subq-show').textContent = q.length > 1 ? `▶ Show ${q.length} subs` : '▶ Show sub';
+  const pname = (side, id) => { const p = findPlayer(st.teams[side], id); return p ? esc(`${p.number ?? ''} ${p.name}`.trim()) : '—'; };
+  $('subq-list').innerHTML = q.map((ev, i) => `<li>
+    <span class="subq-who"><b>${esc(st.teams[ev.team].short)}</b> <span class="on">▲ ${pname(ev.team, ev.onId)}</span> <span class="off">▼ ${pname(ev.team, ev.offId)}</span> <span class="muted">${esc(ev.minute)}'</span></span>
+    <button class="btn small" data-act="subq-up" data-id="${esc(ev.id)}" ${i === 0 ? 'disabled' : ''} title="Earlier">↑</button>
+    <button class="btn small" data-act="subq-down" data-id="${esc(ev.id)}" ${i === q.length - 1 ? 'disabled' : ''} title="Later">↓</button>
+    <button class="btn small danger-ghost" data-act="subq-remove" data-id="${esc(ev.id)}" title="Don't show this one">✕</button></li>`).join('');
+
   // events
   const evKey = `${st.rev}`;
   if (evKey !== lastEventsKey) {
@@ -691,5 +710,14 @@ function updateClock() {
   const el = $('clock');
   el.textContent = formatClock(displayMs(st.clock, st.match, sock.now()));
   el.classList.toggle('paused', !st.clock.running && PLAYING_PERIODS.includes(st.clock.period));
+  // "Showing sub 2 of 3" while a queue of subs is on air
+  const lt = st.graphics.lowerThird;
+  const onair = lt.visible && lt.kind === 'subs' && (lt.eventIds || []).length > 1;
+  $('subq-onair').hidden = !onair;
+  if (onair) {
+    const n = lt.eventIds.length;
+    const i = Math.min(n - 1, Math.floor((sock.now() - lt.shownAt) / (lt.stepMs || 8000)));
+    $('subq-onair').textContent = `On air: sub ${i + 1} of ${n}`;
+  }
 }
 setInterval(updateClock, 200);

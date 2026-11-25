@@ -85,7 +85,7 @@ match setup, exports, demo, lock, **Reset game**, and replay settings.
 | Clock | **▶ KICK OFF** starts 1H. **HT**, then **▶ START 2ND HALF** (jumps to 45:00). Period buttons for FT, ET1, ET2, PEN. Nudge ±1s/10s/1m or **Set time…** to correct it. |
 | Added time | Type minutes in *Added time* and press Enter (or **+ / −**); **Clear** removes the "+3". **Hide** takes it off the scorebug but keeps the number; **Show** puts it back. It clears (and goes back to shown) when the period changes. |
 | Cards | Per team, then pick the player. A second yellow becomes a red. Each red raises a small red card above that team on the scorebug. |
-| Subs | Player **off**, then player **on**. |
+| Subs | Player **off**, then player **on**. The sub is logged straight away and its graphic waits under **Subs to show** (reorder with ↑ ↓, drop with ✕). **▶ Show subs** plays them all in one lower third: the names swap in place with a 1/3, 2/3… counter, each for the normal lower-third time, and it closes after the last. Untick *Queue sub graphics* in Settings to log subs without a graphic. |
 | Boards & lineups | Toggles in *Graphics* (green light = on air). Boards hide the scorebug while shown. |
 | Hide the clock | **Scorebug clock** toggle. The clock keeps running underneath. |
 | Text lower third | Title + subtitle (or a preset, or *From player…*, which also offers the team's manager), then **Show**. |

@@ -23,7 +23,7 @@ A short checklist for running a match. Setup and reference are in [README.md](RE
 |---|---|
 | Kick-off | **▶ KICK OFF (1H)**. Hide the kick-off board (or press **Esc** to hide all). |
 | Goal | **+ GOAL** puts the goal on the scorebug straight away, then asks who scored. Don't know yet? Close the popup and add them later with **Edit**. A replay of the goal is saved to the queue automatically. Goal chalked off by VAR? **− remove** it and its replay is renamed "... - Disallowed". |
-| Card / sub | **Cards & subs** → team → player. A second yellow becomes a red by itself. |
+| Card / sub | **Cards & subs** → team → player. A second yellow becomes a red by itself. Subs wait under **Subs to show**: enter them all, then **▶ Show subs** plays them back to back. |
 | Something worth a replay | **REPLAY 100%** / **REPLAY 50%** to show it now, or **Mark as: Chance / Save / Foul…** to save it for later (you'll be asked which team). |
 | Replay going wrong | **■ ABORT / BACK TO LIVE** (red bar at the top), or press **B**. |
 | Added time | Type the minutes in **Added time** and press Enter. **Hide** / **Show** take it off and back on the scorebug. |
