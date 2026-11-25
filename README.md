@@ -39,7 +39,6 @@ The server window lists the addresses to use:
 ```
  Overlay (OBS Browser Source):  http://localhost:3000/overlay
  Control dock (OBS Custom Dock): http://localhost:3000/dock
- Match setup:                   http://localhost:3000/setup
  From your phone:               http://192.168.1.20:3000/dock
 ```
 
@@ -105,10 +104,11 @@ put back when you press **Stop demo**.
 
 ## 4. Teams, theme and badges
 
-All editable in **Match setup** (`/setup`):
-- **Teams tab:** name, short name, manager (shown on the lineup graphic), colours, badge upload, squad (number, name, position). You can paste a list, one
+The dock has three tabs: **Live**, **Match setup** (teams, lineups, competition) and **Settings**, which has its own
+**General**, **Teams** and **Theme** tabs. (The same pages also work on their own at `/setup`.)
+- **Settings → Teams:** name, short name, manager (shown on the lineup graphic), colours, badge upload, squad (number, name, position). You can paste a list, one
   player per line: `9 Dan Kerr FWD`. Saved as `config/teams/<id>.json`.
-- **Theme tab:** club badge, all graphic colours, fonts, every on-screen word ("GOAL!", "HALF TIME", "REPLAY"…) and
+- **Settings → Theme:** club badge, all graphic colours, fonts, every on-screen word ("GOAL!", "HALF TIME", "REPLAY"…) and
   timings. Saved to `data/theme.json`; delete that file to return to the default `config/theme.json`.
 - Badges are stored in `public/assets/logos/`. Fonts live in `public/assets/fonts/<Font Name>/<weight>.woff2`: drop in a
   folder and restart to add one.

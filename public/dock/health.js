@@ -50,7 +50,7 @@ export function initHealth({ sock, toast, setTab }) {
 
   $('health-run').addEventListener('click', () => run(true));
   $('health-chip').addEventListener('click', () => {
-    setTab('settings');
+    setTab('settings', 'general');
     $('health-card').scrollIntoView({ block: 'start', behavior: 'smooth' });
     run();
   });

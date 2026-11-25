@@ -265,7 +265,6 @@ server.listen(env.port, '0.0.0.0', () => {
   console.log(' Score Overlays running');
   console.log(`  Overlay (OBS Browser Source):  http://localhost:${env.port}/overlay`);
   console.log(`  Control dock (OBS Custom Dock): http://localhost:${env.port}/dock`);
-  console.log(`  Match setup:                   http://localhost:${env.port}/setup`);
   for (const ip of lan) console.log(`  From your phone:               http://${ip}:${env.port}/dock`);
   if (env.generatedPin) {
     console.log('');

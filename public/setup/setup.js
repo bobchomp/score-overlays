@@ -109,7 +109,7 @@ const byNumber = (a, b) => (a.number ?? 999) - (b.number ?? 999);
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
   document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
   document.querySelectorAll('.tab-panel').forEach(p => { p.hidden = p.id !== `tab-${t.dataset.tab}`; });
-  try { localStorage.setItem('setup-tab', t.dataset.tab); } catch {}
+  if (!document.body.classList.contains('embed')) { try { localStorage.setItem('setup-tab', t.dataset.tab); } catch {} }
 }));
 
 // ================================================================== MATCH TAB
@@ -426,7 +426,19 @@ await loadData();
 renderTeamList();
 renderTheme();
 if (snap) { form = formFromState(snap.state); renderMatch(); }
-try {
-  const tab = localStorage.getItem('setup-tab');
-  if (tab) document.querySelector(`.tab[data-tab="${tab}"]`)?.click();
-} catch {}
+// Inside the control dock (?embed=match|teams|theme): show just that page, no header.
+const EMBED = new URLSearchParams(location.search).get('embed');
+if (EMBED) {
+  document.body.classList.add('embed');
+  document.querySelector(`.tab[data-tab="${EMBED}"]`)?.click();
+  // The dock asks for a refresh when the tab is shown again, so teams saved on the Teams tab appear in Match setup.
+  addEventListener('message', async e => {
+    if (e.origin !== location.origin || e.data?.type !== 'refresh') return;
+    try { await loadData(); renderTeamList(); if (form) renderMatch(); } catch {}
+  });
+} else {
+  try {
+    const tab = localStorage.getItem('setup-tab');
+    if (tab) document.querySelector(`.tab[data-tab="${tab}"]`)?.click();
+  } catch {}
+}

@@ -36,16 +36,36 @@ const sock = new MatchSocket({
 if (!getPin()) $('pin-screen').hidden = false;
 try { replaysUi = initReplays({ sock, toast, promptSheet, openSheet, closeSheet, getSnap: () => snap }); } catch (err) { console.warn('replays tab failed to start:', err); }
 
-// ------------------------------------------------------------------ tabs: Live (match + replays) / Settings
-function setTab(tab) {
-  if (tab !== 'settings') tab = 'live';
+// ------------------------------------------------------------------ tabs: Live / Match setup / Settings (General | Teams | Theme)
+// Match setup, Teams and Theme are the setup screen's pages, loaded in a frame the first time they're opened.
+let subTab = 'general';
+try { subTab = localStorage.getItem('dock-subtab') || 'general'; } catch {}
+function showFrame(id, show) {
+  const box = $(id);
+  box.hidden = !show;
+  if (!show) return;
+  const f = box.querySelector('iframe');
+  if (!f.src) f.src = f.dataset.src;
+  else { try { f.contentWindow.postMessage({ type: 'refresh' }, location.origin); } catch {} } // pick up teams saved elsewhere
+}
+function setTab(tab, sub) {
+  if (!['live', 'setup', 'settings'].includes(tab)) tab = 'live';
+  if (sub) subTab = sub;
+  if (!['general', 'teams', 'theme'].includes(subTab)) subTab = 'general';
   document.querySelectorAll('[data-dock-tab]').forEach(b => b.classList.toggle('active', b.dataset.dockTab === tab));
+  document.querySelectorAll('[data-sub-tab]').forEach(b => b.classList.toggle('active', b.dataset.subTab === subTab));
+  const settings = tab === 'settings';
   $('app').hidden = tab !== 'live';
-  $('settings-app').hidden = tab !== 'settings';
-  try { localStorage.setItem('dock-tab', tab); } catch {}
+  showFrame('setup-app', tab === 'setup');
+  $('settings-tabs').hidden = !settings;
+  $('settings-app').hidden = !(settings && subTab === 'general');
+  showFrame('teams-app', settings && subTab === 'teams');
+  showFrame('theme-app', settings && subTab === 'theme');
+  try { localStorage.setItem('dock-tab', tab); localStorage.setItem('dock-subtab', subTab); } catch {}
   fitPreview();
 }
 document.querySelectorAll('[data-dock-tab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.dockTab)));
+document.querySelectorAll('[data-sub-tab]').forEach(b => b.addEventListener('click', () => setTab('settings', b.dataset.subTab)));
 try { setTab(localStorage.getItem('dock-tab') || 'live'); } catch { setTab('live'); }
 try { initHealth({ sock, toast, setTab }); } catch (err) { console.warn('health check failed to start:', err); }
 $('pin-form').addEventListener('submit', e => {
@@ -133,7 +153,7 @@ function pickPlayer({ title, side, sections, top = '', bottom = '', actions = ''
       <span class="n">${esc(p.number ?? '')}</span><span>${esc(p.name)}</span>${opts.mark || ''}<span class="pos">${esc(p.position)}</span></button>`;
     const body = sections.map(s => s.players.length
       ? `<h4>${esc(s.label)}</h4>${s.players.map(p => btn(p, s.opts?.(p) || {})).join('')}` : '').join('');
-    openSheet(title, `${top}<div class="plist">${body || `<p class="muted">No players in the ${esc(t.short || side)} squad. Add them on the setup screen.</p>`}</div>${bottom}`,
+    openSheet(title, `${top}<div class="plist">${body || `<p class="muted">No players in the ${esc(t.short || side)} squad. Add them in Settings → Teams.</p>`}</div>${bottom}`,
       () => { if (!answered) resolve(undefined); }, actions);
     $('sheet-body').querySelectorAll('[data-pid]').forEach(b => {
       b.onclick = () => { answered = true; closeSheet(); resolve(b.dataset.pid); };
@@ -559,7 +579,7 @@ function render() {
 
   // header
   $('top-title').textContent = st.teams.home.short && st.teams.away.short
-    ? `${st.teams.home.short} v ${st.teams.away.short}${st.match.competition ? ' · ' + st.match.competition : ''}` : 'Match Control · open setup to pick teams';
+    ? `${st.teams.home.short} v ${st.teams.away.short}${st.match.competition ? ' · ' + st.match.competition : ''}` : 'Match Control · open Match setup to pick teams';
   const undoBtn = $('btn-undo');
   undoBtn.disabled = !undo.depth;
   undoBtn.innerHTML = `⟲ <span>${undo.label ? `Undo: ${esc(undo.label)}` : 'Undo'}</span>`;

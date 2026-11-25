@@ -8,12 +8,12 @@ A short checklist for running a match. Setup and reference are in [README.md](RE
 1. **Start everything**
    - Main OBS, then the Replay OBS (if you're using replays), and click **Start Replay Buffer** in it.
    - Double-click **`start.bat`**. Leave the black server window open all match.
-2. **Pick the teams.** In the dock: **Settings → Match setup**. On the **Match** tab:
+2. **Pick the teams.** In the dock, open the **Match setup** tab:
    - Choose home and away, the competition, and kit colours if there's a clash.
    - Tick **XI / SUB** for each player and pick the captain.
    - For a two-legged tie, tick it and enter the first-leg score.
    - Click **Start NEW match**.
-3. **Run the check.** **Settings → Pre-match check** must say *All good: ready for kick-off*. If anything is amber or red,
+3. **Run the check.** **Settings → General → Pre-match check** must say *All good: ready for kick-off*. If anything is amber or red,
    each line says how to fix it (some have a button that fixes it for you).
 4. **Optional:** show the **Kick-off board**, then **Lineup** (home, then away) from **Graphics** on the **Live** tab.
 

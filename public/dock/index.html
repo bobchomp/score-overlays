@@ -29,6 +29,7 @@
     <button class="btn undo" id="btn-undo" data-act="undo" title="Undo (Ctrl+Z)" disabled>⟲ Undo</button>
     <nav class="dock-tabs" role="tablist">
       <button class="dock-tab active" data-dock-tab="live" role="tab">Live</button>
+      <button class="dock-tab" data-dock-tab="setup" role="tab">Match setup</button>
       <button class="dock-tab" data-dock-tab="settings" role="tab">Settings</button>
     </nav>
     <!-- Always visible while a replay is on air -->
@@ -208,7 +209,17 @@
     </div>
   </main>
 
-  <!-- ================= SETTINGS TAB: set once / rarely ================= -->
+  <!-- ================= MATCH SETUP TAB: the setup screen's Match page ================= -->
+  <div id="setup-app" class="embed-app" hidden><iframe title="Match setup" data-src="/setup/?embed=match"></iframe></div>
+
+  <!-- ================= SETTINGS TAB: set once / rarely (General | Teams | Theme) ================= -->
+  <nav class="sub-tabs" id="settings-tabs" role="tablist" hidden>
+    <button class="sub-tab active" data-sub-tab="general" role="tab">General</button>
+    <button class="sub-tab" data-sub-tab="teams" role="tab">Teams</button>
+    <button class="sub-tab" data-sub-tab="theme" role="tab">Theme</button>
+  </nav>
+  <div id="teams-app" class="embed-app" hidden><iframe title="Teams" data-src="/setup/?embed=teams"></iframe></div>
+  <div id="theme-app" class="embed-app" hidden><iframe title="Theme" data-src="/setup/?embed=theme"></iframe></div>
   <main id="settings-app" hidden>
     <div class="scol">
       <section class="card health-card" id="health-card">
@@ -229,7 +240,6 @@
         <label class="check"><input type="checkbox" id="opt-show-sub"> Auto-show sub graphic</label>
         <label class="check"><input type="checkbox" id="opt-preview"> Show overlay preview</label>
         <div class="row wrap">
-          <a class="btn small" href="/setup" target="_blank" rel="noopener">Match setup ↗</a>
           <a class="btn small" id="export-json" href="#" download>Export JSON</a>
           <a class="btn small" id="export-csv" href="#" download>Export CSV</a>
         </div>
