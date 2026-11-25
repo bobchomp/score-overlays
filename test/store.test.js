@@ -207,23 +207,23 @@ test('subs queue: subs wait, Show plays them as one lower third that steps throu
   const b = ok(s.dispatch('sub.add', { team: 'away', offId: 'p1', onId: 'p12' })).result.event;
   const c = ok(s.dispatch('sub.add', { team: 'home', offId: 'p1', onId: 'p13' })).result.event;
   assert.equal(s.state.graphics.lowerThird.visible, false, 'nothing shown yet');
-  assert.deepEqual(s.state.graphics.subQueue, [a.id, b.id, c.id]);
-  ok(s.dispatch('subQueue.move', { id: c.id, dir: 'up' }));
-  assert.deepEqual(s.state.graphics.subQueue, [a.id, c.id, b.id]);
-  ok(s.dispatch('subQueue.remove', { id: a.id }));
-  ok(s.dispatch('subQueue.add', { id: a.id }));
-  assert.deepEqual(s.state.graphics.subQueue, [c.id, b.id, a.id]);
+  assert.deepEqual(s.state.graphics.eventQueue, [a.id, b.id, c.id]);
+  ok(s.dispatch('eventQueue.move', { id: c.id, dir: 'up' }));
+  assert.deepEqual(s.state.graphics.eventQueue, [a.id, c.id, b.id]);
+  ok(s.dispatch('eventQueue.remove', { id: a.id }));
+  ok(s.dispatch('eventQueue.add', { id: a.id }));
+  assert.deepEqual(s.state.graphics.eventQueue, [c.id, b.id, a.id]);
   ok(s.dispatch('event.delete', { id: b.id })); // deleted subs drop out
-  const r = ok(s.dispatch('subQueue.show'));
+  const r = ok(s.dispatch('eventQueue.show'));
   assert.equal(r.result.count, 2);
   const lt = s.state.graphics.lowerThird;
-  assert.equal(lt.kind, 'subs');
+  assert.equal(lt.kind, 'queue');
   assert.deepEqual(lt.eventIds, [c.id, a.id]);
   const secs = Number(theme.timings?.lowerThirdSec) || 8;
   assert.equal(lt.stepMs, secs * 1000);
   assert.equal(lt.hideAt - lt.shownAt, 2 * secs * 1000, 'each sub gets the normal lower third time');
-  assert.deepEqual(s.state.graphics.subQueue, [], 'queue emptied');
-  assert.equal(s.dispatch('subQueue.show').ok, false, 'nothing left to show');
+  assert.deepEqual(s.state.graphics.eventQueue, [], 'queue emptied');
+  assert.equal(s.dispatch('eventQueue.show').ok, false, 'nothing left to show');
   clearTimeout(s.timer);
 });
 
@@ -231,10 +231,29 @@ test('subs queue: turning off "Queue sub graphics" logs the sub without queueing
   const { s, ok } = fresh();
   ok(s.dispatch('sub.add', { team: 'home', offId: 'p9', onId: 'p12' }));
   ok(s.dispatch('match.reset'));
-  assert.deepEqual(s.state.graphics.subQueue, []);
+  assert.deepEqual(s.state.graphics.eventQueue, []);
   ok(s.dispatch('settings.set', { autoShow: { sub: false } }));
   ok(s.dispatch('sub.add', { team: 'home', offId: 'p9', onId: 'p12' }));
-  assert.deepEqual(s.state.graphics.subQueue, []);
+  assert.deepEqual(s.state.graphics.eventQueue, []);
   assert.equal(s.state.events.length, 1);
+  clearTimeout(s.timer);
+});
+
+test('cards join the same queue as subs and play in one lower third in queue order', () => {
+  const { s, ok } = fresh();
+  ok(s.dispatch('clock.period', { period: '1H', start: true }));
+  const y = ok(s.dispatch('card.add', { team: 'away', playerId: 'p4', card: 'yellow' }));
+  assert.equal(y.result.queued, true);
+  assert.equal(s.state.graphics.lowerThird.visible, false, 'card waits');
+  const sb = ok(s.dispatch('sub.add', { team: 'home', offId: 'p9', onId: 'p12' })).result.event;
+  const r2 = ok(s.dispatch('card.add', { team: 'away', playerId: 'p4', card: 'yellow' })).result.event; // second yellow
+  assert.deepEqual(s.state.graphics.eventQueue, [y.result.event.id, sb.id, r2.id]);
+  ok(s.dispatch('eventQueue.show'));
+  const lt = s.state.graphics.lowerThird;
+  assert.equal(lt.kind, 'queue');
+  assert.deepEqual(lt.eventIds, [y.result.event.id, sb.id, r2.id]);
+  ok(s.dispatch('settings.set', { autoShow: { card: false } }));
+  ok(s.dispatch('card.add', { team: 'home', playerId: 'p9', card: 'yellow' }));
+  assert.deepEqual(s.state.graphics.eventQueue, [], 'card graphics off: logged, not queued');
   clearTimeout(s.timer);
 });

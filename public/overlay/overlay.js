@@ -271,7 +271,7 @@ function playerLine(p) {
 function renderLowerThird() {
   const { state, theme } = snap;
   const lt = state.graphics.lowerThird;
-  if (lt.kind === 'subs') return renderSubsLowerThird();
+  if (lt.kind === 'queue') return renderQueueLowerThird();
   if (lt.kind === 'text') {
     const t = lt.team ? state.teams[lt.team] : null;
     const badge = t ? `<div class="lt-badge" style="${teamVars(t)}">${logo(t.logo) || `<span class="lt-num">${esc(t.short)}</span>`}</div>`
@@ -295,20 +295,27 @@ function renderLowerThird() {
       <div class="lt-main"><div class="lt-title">${title}</div><div class="lt-sub">${sub}</div></div></div>
       <div class="lt-icon">${ICON_BALL}</div></div>`;
   }
-  if (ev.type === 'card') {
-    const p = findPlayer(team, ev.playerId);
-    const label = ev.secondYellow ? theme.labels.secondYellow : ev.card === 'red' ? theme.labels.redCard : theme.labels.yellowCard;
-    const icon = ev.secondYellow ? '<div class="card-icon second"><i class="yellow"></i><i class="red"></i></div>'
-      : `<div class="card-icon"><i class="${ev.card}"></i></div>`;
-    return `<div class="lt">${badge}<div class="lt-body"><div class="lt-tag">${esc(label)} · ${esc(ev.minute)}'</div>
-      <div class="lt-main"><div class="lt-title">${playerLine(p)}</div><div class="lt-sub">${esc(team.name)}</div></div></div>
-      <div class="lt-icon">${icon}</div></div>`;
-  }
+  if (ev.type === 'card') return cardCard(ev);
   if (ev.type === 'sub') return subCard(ev);
   return '';
 }
 
-/** One substitution card. In a queue (kind "subs") the card swaps in place and shows e.g. "2/3". */
+/** One card (booking) lower third. In a queue it swaps in place and shows e.g. "2/3". */
+function cardCard(ev, step = null) {
+  const { state, theme } = snap;
+  const team = state.teams[ev.team];
+  const badge = `<div class="lt-badge" style="${teamVars(team)}">${logo(team.logo) || `<span class="lt-num">${esc(team.short)}</span>`}</div>`;
+  const p = findPlayer(team, ev.playerId);
+  const label = ev.secondYellow ? theme.labels.secondYellow : ev.card === 'red' ? theme.labels.redCard : theme.labels.yellowCard;
+  const icon = ev.secondYellow ? '<div class="card-icon second"><i class="yellow"></i><i class="red"></i></div>'
+    : `<div class="card-icon"><i class="${ev.card}"></i></div>`;
+  return `<div class="lt">${badge}<div class="lt-body"><div class="lt-tag">${esc(label)} · ${esc(ev.minute)}'</div>
+    <div class="lt-main"><div class="lt-title">${playerLine(p)}</div><div class="lt-sub">${esc(team.name)}</div></div>
+    ${step ? `<div class="lt-step">${step}</div>` : ''}</div><div class="lt-icon">${icon}</div></div>`;
+}
+const queueCard = (ev, step) => (ev.type === 'card' ? cardCard(ev, step) : subCard(ev, step));
+
+/** One substitution card. In a queue the card swaps in place and shows e.g. "2/3". */
 function subCard(ev, step = null) {
   const { state, theme } = snap;
   const team = state.teams[ev.team];
@@ -320,39 +327,39 @@ function subCard(ev, step = null) {
       <div class="lt-sub-rows">
         <div class="sub-row on"><span class="arrow">${ICON_ARROW_UP}</span>${playerLine(on)}</div>
         <div class="sub-row off"><span class="arrow">${ICON_ARROW_DOWN}</span>${playerLine(off)}</div>
-      </div></div>${step ? `<div class="lt-step">${step}</div>` : ''}</div>`;
+      </div>${step ? `<div class="lt-step">${step}</div>` : ''}</div></div>`;
   }
 }
 
-// ---------------------------------------------------------------- queued subs: swap in place
-function subsQueue(lt, now) {
+// ---------------------------------------------------------------- queued cards & subs: swap in place
+function eventQueueStep(lt, now) {
   const evs = (lt.eventIds || []).map(id => snap.state.events.find(e => e.id === id)).filter(Boolean);
   const i = Math.max(0, Math.min(evs.length - 1, Math.floor((now - lt.shownAt) / (lt.stepMs || 8000))));
   return { evs, i };
 }
-let subsShown = null; // `${lt.id}|${index}` currently on screen
-function renderSubsLowerThird() {
+let queueShown = null; // `${lt.id}|${index}` currently on screen
+function renderQueueLowerThird() {
   const lt = snap.state.graphics.lowerThird;
-  const { evs, i } = subsQueue(lt, sock.now());
+  const { evs, i } = eventQueueStep(lt, sock.now());
   if (!evs.length) return '';
-  subsShown = `${lt.id}|${i}`;
-  return subCard(evs[i], evs.length > 1 ? `${i + 1}/${evs.length}` : null);
+  queueShown = `${lt.id}|${i}`;
+  return queueCard(evs[i], evs.length > 1 ? `${i + 1}/${evs.length}` : null);
 }
-/** Called often: when the queue moves on, the card flips to the next sub without closing. */
-function updateSubsStep() {
+/** Called often: when the queue moves on, the card swaps to the next one without closing. */
+function updateQueueStep() {
   const lt = snap?.state.graphics.lowerThird;
-  if (!lt || lt.kind !== 'subs' || !gfx.lowerThird.shown) return;
-  const { evs, i } = subsQueue(lt, sock.now());
+  if (!lt || lt.kind !== 'queue' || !gfx.lowerThird.shown) return;
+  const { evs, i } = eventQueueStep(lt, sock.now());
   const key = `${lt.id}|${i}`;
-  if (!evs.length || key === subsShown) return;
+  if (!evs.length || key === queueShown) return;
   const box = $('lower-third');
   const card = box.querySelector('.lt');
-  subsShown = key;
-  const html = subCard(evs[i], evs.length > 1 ? `${i + 1}/${evs.length}` : null);
+  queueShown = key;
+  const html = queueCard(evs[i], evs.length > 1 ? `${i + 1}/${evs.length}` : null);
   if (!card) { box.innerHTML = html; return; }
   card.classList.add('swap-out');
   setTimeout(() => {
-    if (subsShown !== key) return;
+    if (queueShown !== key) return;
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
     const next = tmp.firstElementChild;
@@ -362,7 +369,7 @@ function updateSubsStep() {
     next.classList.remove('swap-in');
   }, 260);
 }
-setInterval(updateSubsStep, 200);
+setInterval(updateQueueStep, 200);
 
 // ---------------------------------------------------------------- scoreboard
 function renderBoard() {

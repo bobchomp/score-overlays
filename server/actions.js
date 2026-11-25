@@ -48,10 +48,10 @@ function lowerThirdFor(state, ctx, fields) {
   state.graphics.shootout.visible = false;
 }
 
-/** Queued sub ids that still exist (a sub deleted or undone drops out of the queue). */
-function liveSubQueue(state) {
-  const subs = new Set(state.events.filter(e => e.type === 'sub').map(e => e.id));
-  return (state.graphics.subQueue || []).filter(id => subs.has(id));
+/** Queued card/sub ids that still exist (one deleted or undone drops out of the queue). */
+function liveEventQueue(state) {
+  const ok = new Set(state.events.filter(e => e.type === 'sub' || e.type === 'card').map(e => e.id));
+  return (state.graphics.eventQueue || []).filter(id => ok.has(id));
 }
 
 function showEvent(state, ctx, ev, { sting = false } = {}) {
@@ -145,7 +145,7 @@ export const actions = {
       state.graphics.board.visible = false;
       state.graphics.lineup.visible = false;
       state.graphics.shootout.visible = false;
-      state.graphics.subQueue = [];
+      state.graphics.eventQueue = [];
     },
   },
 
@@ -224,8 +224,10 @@ export const actions = {
         minute: p.minute ? String(p.minute) : eventMinute(state.clock, state.match, ctx.now), ts: ctx.now,
       };
       state.events.push(ev);
-      if (p.show ?? state.settings.autoShow.card) showEvent(state, ctx, ev);
-      return { event: ev };
+      // Like subs, the card graphic waits in the queue until "Show" plays everything queued.
+      const queued = p.show ?? state.settings.autoShow.card;
+      if (queued) state.graphics.eventQueue.push(ev.id);
+      return { event: ev, queued };
     },
   },
 
@@ -245,7 +247,7 @@ export const actions = {
       state.events.push(ev);
       // The graphic waits in the subs queue; "Show subs" plays everything queued back to back.
       const queued = p.show ?? state.settings.autoShow.sub;
-      if (queued) state.graphics.subQueue.push(ev.id);
+      if (queued) state.graphics.eventQueue.push(ev.id);
       return { event: ev, queued };
     },
   },
@@ -378,41 +380,41 @@ export const actions = {
       });
     },
   },
-  // ---------------- subs queue ----------------
-  'subQueue.show': {
+  // ---------------- cards & subs queue ----------------
+  'eventQueue.show': {
     run(state, p, ctx) {
-      const ids = liveSubQueue(state);
-      state.graphics.subQueue = [];
-      if (!ids.length) throw new Error('No subs waiting to be shown');
-      // One lower third that swaps from sub to sub in place; it closes after the last one.
+      const ids = liveEventQueue(state);
+      state.graphics.eventQueue = [];
+      if (!ids.length) throw new Error('No cards or subs waiting to be shown');
+      // One lower third that swaps from one card/sub to the next in place; it closes after the last one.
       const secs = Number(ctx.theme.timings?.lowerThirdSec) || 0;
       const stepMs = (secs > 0 ? secs : 8) * 1000;
       const first = state.events.find(e => e.id === ids[0]);
-      lowerThirdFor(state, ctx, { kind: 'subs', eventIds: ids, team: first.team, stepMs, autoHide: false });
-      if (secs > 0) state.graphics.lowerThird.hideAt = ctx.now + stepMs * ids.length; // 0 = stays on the last sub until hidden
+      lowerThirdFor(state, ctx, { kind: 'queue', eventIds: ids, team: first.team, stepMs, autoHide: false });
+      if (secs > 0) state.graphics.lowerThird.hideAt = ctx.now + stepMs * ids.length; // 0 = stays on the last one until hidden
       return { count: ids.length };
     },
   },
-  'subQueue.remove': {
-    run(state, p) { state.graphics.subQueue = state.graphics.subQueue.filter(id => id !== p.id); },
+  'eventQueue.remove': {
+    run(state, p) { state.graphics.eventQueue = state.graphics.eventQueue.filter(id => id !== p.id); },
   },
-  'subQueue.move': {
+  'eventQueue.move': {
     run(state, p) {
-      const q = state.graphics.subQueue;
+      const q = state.graphics.eventQueue;
       const i = q.indexOf(p.id);
       const j = i + (p.dir === 'up' ? -1 : 1);
       if (i < 0 || j < 0 || j >= q.length) return;
       [q[i], q[j]] = [q[j], q[i]];
     },
   },
-  'subQueue.add': {
+  'eventQueue.add': {
     run(state, p) {
-      const ev = state.events.find(e => e.id === p.id && e.type === 'sub');
-      if (!ev) throw new Error('Sub not found');
-      if (!state.graphics.subQueue.includes(ev.id)) state.graphics.subQueue.push(ev.id);
+      const ev = state.events.find(e => e.id === p.id && (e.type === 'sub' || e.type === 'card'));
+      if (!ev) throw new Error('Card or sub not found');
+      if (!state.graphics.eventQueue.includes(ev.id)) state.graphics.eventQueue.push(ev.id);
     },
   },
-  'subQueue.clear': { run(state) { state.graphics.subQueue = []; } },
+  'eventQueue.clear': { run(state) { state.graphics.eventQueue = []; } },
 
   'lowerThird.hide': {
     run(state, p) {

@@ -214,3 +214,6 @@ body { padding-bottom: 40px; }
 .subq-onair { margin-top: 8px; padding: 6px 10px; border-radius: 8px; background: #123d22; border: 1px solid var(--ui-ok); color: #bff0cc; font-weight: 700; font-size: 13.5px; text-align: center; }
 .subq-list li.subq-empty { background: none; padding: 2px 0; color: var(--ui-muted); font-size: 13px; }
 .subq-head { min-height: 30px; }
+.subq-who .ci { display: inline-block; width: 9px; height: 13px; border-radius: 2px; vertical-align: -1px; }
+.subq-who .ci.yellow { background: #ffd200; } .subq-who .ci.red { background: #e3121b; }
+.subq-who .ci.second { background: linear-gradient(135deg, #ffd200 50%, #e3121b 50%); }

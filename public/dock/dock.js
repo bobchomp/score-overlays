@@ -281,7 +281,8 @@ async function cardFlow(side, card) {
   });
   if (!pid) return;
   const r = await act('card.add', { team: side, playerId: pid, card });
-  if (r.ok && r.result.event.secondYellow) toast('Second yellow → red card');
+  if (r.ok && r.result.event.secondYellow) toast(`Second yellow → red card${r.result.queued ? ' (queued: press Show)' : ''}`);
+  else if (r.ok && r.result.queued) toast(`Card queued: press Show when you're ready`);
 }
 
 async function subFlow(side) {
@@ -439,11 +440,11 @@ document.addEventListener('click', async e => {
     case 'hide-all': return act('graphics.hideAll');
     case 'card': return cardFlow(d.side, d.card);
     case 'sub': return subFlow(d.side);
-    case 'subq-show': return act('subQueue.show');
-    case 'subq-clear': return act('subQueue.clear');
-    case 'subq-up': return act('subQueue.move', { id: d.id, dir: 'up' });
-    case 'subq-down': return act('subQueue.move', { id: d.id, dir: 'down' });
-    case 'subq-remove': return act('subQueue.remove', { id: d.id });
+    case 'subq-show': return act('eventQueue.show');
+    case 'subq-clear': return act('eventQueue.clear');
+    case 'subq-up': return act('eventQueue.move', { id: d.id, dir: 'up' });
+    case 'subq-down': return act('eventQueue.move', { id: d.id, dir: 'down' });
+    case 'subq-remove': return act('eventQueue.remove', { id: d.id });
     case 'lt-show': {
       const team = $('lt-team').value || null;
       const r = await act('lowerThird.text', { title: $('lt-title').value, subtitle: $('lt-sub').value, team });
@@ -676,23 +677,28 @@ function render() {
   $('opt-sting').checked = st.settings.sting;
   $('opt-sting-away').checked = st.settings.stingAway;
 
-  // subs waiting to be shown
-  const subEvents = new Map(st.events.filter(e => e.type === 'sub').map(e => [e.id, e]));
-  const q = (g.subQueue || []).map(id => subEvents.get(id)).filter(Boolean);
-  // Always visible so it's easy to find; empty until a sub is entered.
-  const queueing = st.settings.autoShow.sub;
+  // cards & subs waiting to be shown
+  const queueable = new Map(st.events.filter(e => e.type === 'sub' || e.type === 'card').map(e => [e.id, e]));
+  const q = (g.eventQueue || []).map(id => queueable.get(id)).filter(Boolean);
+  // Always visible so it's easy to find; empty until a card or sub is entered.
+  const qSubs = st.settings.autoShow.sub, qCards = st.settings.autoShow.card;
   $('subq').classList.toggle('empty', !q.length);
   $('subq-count').textContent = q.length ? `(${q.length})` : '';
-  $('subq-show').textContent = q.length > 1 ? `▶ Show ${q.length} subs` : '▶ Show sub';
+  $('subq-show').textContent = q.length > 1 ? `▶ Show all ${q.length}` : '▶ Show';
   $('subq-show').disabled = !q.length;
   $('subq-clear').hidden = !q.length;
   const pname = (side, id) => { const p = findPlayer(st.teams[side], id); return p ? esc(`${p.number ?? ''} ${p.name}`.trim()) : '—'; };
+  const what = ev => ev.type === 'card'
+    ? `<i class="ci ${ev.secondYellow ? 'second' : ev.card}"></i> ${pname(ev.team, ev.playerId)}`
+    : `<span class="on">▲ ${pname(ev.team, ev.onId)}</span> <span class="off">▼ ${pname(ev.team, ev.offId)}</span>`;
   $('subq-list').innerHTML = q.map((ev, i) => `<li>
-    <span class="subq-who"><b>${esc(st.teams[ev.team].short)}</b> <span class="on">▲ ${pname(ev.team, ev.onId)}</span> <span class="off">▼ ${pname(ev.team, ev.offId)}</span> <span class="muted">${esc(ev.minute)}'</span></span>
+    <span class="subq-who"><b>${esc(st.teams[ev.team].short)}</b> ${what(ev)} <span class="muted">${esc(ev.minute)}'</span></span>
     <button class="btn small" data-act="subq-up" data-id="${esc(ev.id)}" ${i === 0 ? 'disabled' : ''} title="Earlier">↑</button>
     <button class="btn small" data-act="subq-down" data-id="${esc(ev.id)}" ${i === q.length - 1 ? 'disabled' : ''} title="Later">↓</button>
     <button class="btn small danger-ghost" data-act="subq-remove" data-id="${esc(ev.id)}" title="Don't show this one">✕</button></li>`).join('')
-    || `<li class="subq-empty">${queueing ? 'No subs waiting. Subs you enter wait here until you press Show.' : 'Sub graphics are off (Settings → Queue sub graphics).'}</li>`;
+    || `<li class="subq-empty">${qSubs || qCards
+      ? `Nothing waiting. ${qCards && qSubs ? 'Cards and subs' : qCards ? 'Cards' : 'Subs'} you enter wait here until you press Show.`
+      : 'Card and sub graphics are off (Settings → Queue card / sub graphics).'}</li>`;
 
   // events
   const evKey = `${st.rev}`;
@@ -715,14 +721,14 @@ function updateClock() {
   const el = $('clock');
   el.textContent = formatClock(displayMs(st.clock, st.match, sock.now()));
   el.classList.toggle('paused', !st.clock.running && PLAYING_PERIODS.includes(st.clock.period));
-  // "Showing sub 2 of 3" while a queue of subs is on air
+  // "On air: 2 of 3" while a queue of cards/subs is on air
   const lt = st.graphics.lowerThird;
-  const onair = lt.visible && lt.kind === 'subs' && (lt.eventIds || []).length > 1;
+  const onair = lt.visible && lt.kind === 'queue' && (lt.eventIds || []).length > 1;
   $('subq-onair').hidden = !onair;
   if (onair) {
     const n = lt.eventIds.length;
     const i = Math.min(n - 1, Math.floor((sock.now() - lt.shownAt) / (lt.stepMs || 8000)));
-    $('subq-onair').textContent = `On air: sub ${i + 1} of ${n}`;
+    $('subq-onair').textContent = `On air: ${i + 1} of ${n}`;
   }
 }
 setInterval(updateClock, 200);
