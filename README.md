@@ -73,6 +73,8 @@ Then open **Settings → Pre-match check** in the dock: it checks all of the abo
 **Live tab** (during the match): score and clock · graphics, cards & subs, text lower third · replays and the replay
 queue · match events. On a narrow window it stacks, with score, clock and replay buttons first.
 
+**Top bar:** **Preview ↗** opens the overlay preview in a new tab. `http://localhost:3000/` now opens the dock.
+
 **Settings tab:** pre-match check, overlay preview, options (auto-show graphics, GOAL! sting for home/away goals),
 match setup, exports, demo, lock, **Reset game**, and replay settings.
 

@@ -91,6 +91,8 @@ app.use('/api', createApi({
 
 // Uploaded images can be SVG: never let them run scripts.
 app.use('/assets/logos', (req, res, next) => { res.set('Content-Security-Policy', "script-src 'none'"); next(); });
+// The control dock is the home page.
+app.get('/', (req, res) => res.redirect('/dock'));
 app.use(express.static(PUBLIC_DIR, {
   extensions: ['html'],
   setHeaders(res, file) {
@@ -98,7 +100,6 @@ app.use(express.static(PUBLIC_DIR, {
     if (/\.(html|js|css)$/.test(file)) res.set('Cache-Control', 'no-cache');
   },
 }));
-app.get('/', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 
 const server = http.createServer(app);
 

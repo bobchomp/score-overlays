@@ -199,3 +199,6 @@ body { padding-bottom: 40px; }
 .tog.small-tog { min-height: 36px; padding: 6px 12px 6px 28px; font-size: 13px; }
 .tog.small-tog::before { left: 10px; }
 .tog.small-tog.armed::before { background: #2f6b45; }
+
+.btn.preview-btn { min-height: 38px; padding: 6px 12px; font-size: 14px; white-space: nowrap; text-decoration: none; margin-left: auto; }
+.btn.preview-btn + .btn.undo { margin-left: 0; }
