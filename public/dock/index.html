@@ -151,9 +151,9 @@
           <button class="btn log" data-act="sub" data-side="away"><span class="sub-ico">⇅</span><span class="lbl-away">AWAY</span> sub</button>
         </div>
         <!-- Subs waiting for their graphic: shown back to back, swapping in place -->
-        <div class="subq" id="subq" hidden>
+        <div class="subq" id="subq">
           <div class="subq-head"><span>Subs to show <span class="muted" id="subq-count"></span></span>
-            <button class="btn small danger-ghost" data-act="subq-clear">Clear</button></div>
+            <button class="btn small danger-ghost" id="subq-clear" data-act="subq-clear">Clear</button></div>
           <ol class="subq-list" id="subq-list"></ol>
           <button class="btn primary subq-show" id="subq-show" data-act="subq-show">▶ Show subs</button>
         </div>

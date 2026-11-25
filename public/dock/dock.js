@@ -679,15 +679,20 @@ function render() {
   // subs waiting to be shown
   const subEvents = new Map(st.events.filter(e => e.type === 'sub').map(e => [e.id, e]));
   const q = (g.subQueue || []).map(id => subEvents.get(id)).filter(Boolean);
-  $('subq').hidden = !q.length;
+  // Always visible so it's easy to find; empty until a sub is entered.
+  const queueing = st.settings.autoShow.sub;
+  $('subq').classList.toggle('empty', !q.length);
   $('subq-count').textContent = q.length ? `(${q.length})` : '';
   $('subq-show').textContent = q.length > 1 ? `▶ Show ${q.length} subs` : '▶ Show sub';
+  $('subq-show').disabled = !q.length;
+  $('subq-clear').hidden = !q.length;
   const pname = (side, id) => { const p = findPlayer(st.teams[side], id); return p ? esc(`${p.number ?? ''} ${p.name}`.trim()) : '—'; };
   $('subq-list').innerHTML = q.map((ev, i) => `<li>
     <span class="subq-who"><b>${esc(st.teams[ev.team].short)}</b> <span class="on">▲ ${pname(ev.team, ev.onId)}</span> <span class="off">▼ ${pname(ev.team, ev.offId)}</span> <span class="muted">${esc(ev.minute)}'</span></span>
     <button class="btn small" data-act="subq-up" data-id="${esc(ev.id)}" ${i === 0 ? 'disabled' : ''} title="Earlier">↑</button>
     <button class="btn small" data-act="subq-down" data-id="${esc(ev.id)}" ${i === q.length - 1 ? 'disabled' : ''} title="Later">↓</button>
-    <button class="btn small danger-ghost" data-act="subq-remove" data-id="${esc(ev.id)}" title="Don't show this one">✕</button></li>`).join('');
+    <button class="btn small danger-ghost" data-act="subq-remove" data-id="${esc(ev.id)}" title="Don't show this one">✕</button></li>`).join('')
+    || `<li class="subq-empty">${queueing ? 'No subs waiting. Subs you enter wait here until you press Show.' : 'Sub graphics are off (Settings → Queue sub graphics).'}</li>`;
 
   // events
   const evKey = `${st.rev}`;
