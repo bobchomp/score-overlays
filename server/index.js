@@ -92,7 +92,7 @@ app.use('/api', createApi({
 // Uploaded images can be SVG: never let them run scripts.
 app.use('/assets/logos', (req, res, next) => { res.set('Content-Security-Policy', "script-src 'none'"); next(); });
 // The control dock is the home page. The setup pages only run inside it (?embed=...), so the old
-// /setup address opens the dock on its Match setup tab.
+// /setup address opens the dock on its Lineups tab.
 app.get('/', (req, res) => res.redirect('/dock'));
 app.get(['/setup', '/setup/', '/setup/index.html'], (req, res, next) => (req.query.embed ? next() : res.redirect('/dock/?tab=setup')));
 app.use(express.static(PUBLIC_DIR, {

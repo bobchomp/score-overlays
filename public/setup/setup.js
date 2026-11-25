@@ -1,5 +1,6 @@
 import { MatchSocket, syncThemeCss, esc } from '/shared/socket.js';
 import { POSITION_ORDER } from '/shared/match.js';
+import { FORMATIONS, fitSlots, slotPositions } from '/shared/formations.js';
 import { getPin, setPin } from '/shared/pin.js';
 
 const $ = id => document.getElementById(id);
@@ -106,7 +107,7 @@ function colorField(label, value, onChange) {
 const byNumber = (a, b) => (a.number ?? 999) - (b.number ?? 999);
 
 // ------------------------------------------------------------------ which page
-// This page only runs inside the control dock (Match setup tab, Settings → Teams / Theme): ?embed=match|teams|theme.
+// This page only runs inside the control dock (Lineups tab, Settings → Teams / Theme): ?embed=match|teams|theme.
 const EMBED = ['match', 'teams', 'theme'].includes(new URLSearchParams(location.search).get('embed'))
   ? new URLSearchParams(location.search).get('embed') : 'match';
 document.querySelectorAll('.tab-panel').forEach(p => { p.hidden = p.id !== `tab-${EMBED}`; });
@@ -150,11 +151,38 @@ for (const s of ['home', 'away']) {
   $(`m-leg-${s}`).addEventListener('input', e => { form.firstLeg[s] = Math.max(0, Number(e.target.value) || 0); formDirty = true; });
 }
 
+const pitchPick = { home: null, away: null }; // slot tapped first when swapping two players
+
+function formationHtml(s, f, team) {
+  const lu = f.lineup;
+  const opts = `<option value="" ${!lu.formation ? 'selected' : ''}>None (list)</option>`
+    + FORMATIONS.map(x => `<option ${x === lu.formation ? 'selected' : ''}>${x}</option>`).join('');
+  if (!lu.formation) {
+    return `<div class="formation"><label class="field">Formation (lineup graphic)<select class="input form-sel">${opts}</select></label>
+      <p class="hint">No formation: the lineup graphic lists the XI by position.</p></div>`;
+  }
+  const pos = slotPositions(lu.formation);
+  const byId = new Map(team.squad.map(p => [p.id, p]));
+  const marks = lu.slots.map((id, i) => {
+    const p = id ? byId.get(id) : null;
+    const last = p ? p.name.trim().split(/\s+/).pop() : '';
+    return `<button class="pm ${i === 0 ? 'gk' : ''} ${p ? '' : 'empty'} ${pitchPick[s] === i ? 'picked' : ''}" data-slot="${i}"
+      style="left:${pos[i].x}%;top:${pos[i].y}%" title="${esc(p ? p.name : 'Empty: add players to the XI')}">
+      <span class="pm-dot">${p ? esc(p.number ?? '') : '+'}</span><span class="pm-name">${esc(last)}</span></button>`;
+  }).join('');
+  return `<div class="formation"><label class="field">Formation (lineup graphic)<select class="input form-sel">${opts}</select></label>
+    <div class="mini-pitch">${marks}</div>
+    <p class="hint">${pitchPick[s] != null ? 'Now tap the player (or empty spot) to swap with.' : 'Tap two players to swap their places. The XI fills in from the positions above (GK, DEF, MID, FWD).'}</p></div>`;
+}
+
 function renderSide(s) {
   const el = document.querySelector(`.side[data-side="${s}"]`);
   const f = form[s];
   const team = data.teams.find(t => t.id === f.teamId);
   const nXI = f.lineup.starting.length;
+  // Older matches have no formation yet: start from the team's last one (or 4-4-2).
+  if (team && f.lineup.formation === undefined) f.lineup.formation = team.formation || '4-4-2';
+  if (team && f.lineup.formation) f.lineup.slots = fitSlots(f.lineup.formation, f.lineup.slots, f.lineup.starting, team.squad);
   el.innerHTML = `<h2>${s === 'home' ? 'Home' : 'Away'} team <span class="lu-count ${nXI && nXI !== 11 ? 'bad' : ''}">XI: ${nXI}/11 · Subs: ${f.lineup.subs.length}</span></h2>
     <select class="input team-sel"><option value="">Pick a team…</option>
       ${data.teams.map(t => `<option value="${esc(t.id)}" ${t.id === f.teamId ? 'selected' : ''}>${esc(t.name)} (${esc(t.short)})</option>`).join('')}</select>
@@ -163,6 +191,7 @@ function renderSide(s) {
         <button class="btn small" data-q="first11">Auto-pick XI (first 11 by number)</button>
         <button class="btn small" data-q="restsubs">Everyone else → subs</button>
         <button class="btn small ghost" data-q="clear">Clear</button></div>
+      ${formationHtml(s, f, team)}
       <table class="lu-table"><thead><tr><th></th><th>Player</th><th>Pos</th><th>Role</th><th title="Captain">C</th></tr></thead><tbody>
       ${[...team.squad].sort((a, b) => POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) || byNumber(a, b)).map(p => {
         const xi = f.lineup.starting.includes(p.id);
@@ -174,7 +203,8 @@ function renderSide(s) {
 
   el.querySelector('.team-sel').onchange = e => {
     const t = data.teams.find(x => x.id === e.target.value);
-    form[s] = { teamId: e.target.value, colors: t ? { ...t.colors } : f.colors, lineup: { starting: [], subs: [], captain: null } };
+    form[s] = { teamId: e.target.value, colors: t ? { ...t.colors } : f.colors, lineup: { starting: [], subs: [], captain: null, formation: t?.formation || '4-4-2', slots: [] } };
+    pitchPick[s] = null;
     formDirty = true; renderSide(s); renderLeg();
   };
   const colors = el.querySelector('.colors');
@@ -186,9 +216,21 @@ function renderSide(s) {
     const sorted = [...team.squad].sort(byNumber);
     if (b.dataset.q === 'first11') { f.lineup.starting = sorted.slice(0, 11).map(p => p.id); f.lineup.subs = f.lineup.subs.filter(id => !f.lineup.starting.includes(id)); }
     if (b.dataset.q === 'restsubs') f.lineup.subs = sorted.filter(p => !f.lineup.starting.includes(p.id)).map(p => p.id);
-    if (b.dataset.q === 'clear') f.lineup = { starting: [], subs: [], captain: null };
+    if (b.dataset.q === 'clear') f.lineup = { starting: [], subs: [], captain: null, formation: f.lineup.formation, slots: [] };
     if (!f.lineup.starting.includes(f.lineup.captain)) f.lineup.captain = null;
     formDirty = true; renderSide(s);
+  });
+  const fsel = el.querySelector('.form-sel');
+  if (fsel) fsel.onchange = () => { f.lineup.formation = fsel.value || null; pitchPick[s] = null; formDirty = true; renderSide(s); };
+  el.querySelectorAll('.pm[data-slot]').forEach(b => b.onclick = () => {
+    const i = Number(b.dataset.slot);
+    const first = pitchPick[s];
+    if (first == null) pitchPick[s] = i;
+    else {
+      if (first !== i) { const sl = f.lineup.slots; [sl[first], sl[i]] = [sl[i], sl[first]]; formDirty = true; }
+      pitchPick[s] = null;
+    }
+    renderSide(s);
   });
   el.querySelectorAll('tr[data-pid]').forEach(tr => {
     const pid = tr.dataset.pid;
@@ -217,6 +259,14 @@ async function applyMatch(newMatch) {
   try {
     await action('match.setup', { ...form, newMatch });
     formDirty = false;
+    // Remember each team's formation for its next match.
+    for (const s of ['home', 'away']) {
+      const t = data.teams.find(x => x.id === form[s].teamId);
+      const fm = form[s].lineup.formation || '';
+      if (t && (t.formation || '') !== fm) {
+        try { await api('POST', '/api/teams', { ...t, formation: fm }); t.formation = fm; } catch {}
+      }
+    }
     toast(newMatch ? 'New match ready' : 'Match updated');
   } catch (err) { toast(err.message, true); }
 }
@@ -425,7 +475,7 @@ await loadData();
 renderTeamList();
 renderTheme();
 if (snap) { form = formFromState(snap.state); renderMatch(); }
-// The dock asks for a refresh when the tab is shown again, so teams saved on the Teams tab appear in Match setup.
+// The dock asks for a refresh when the tab is shown again, so teams saved on the Teams tab appear on the Lineups tab.
 addEventListener('message', async e => {
   if (e.origin !== location.origin || e.data?.type !== 'refresh') return;
   try { await loadData(); renderTeamList(); if (form) renderMatch(); } catch {}

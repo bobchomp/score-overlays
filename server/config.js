@@ -1,5 +1,6 @@
 // Loading and saving of everything in config/ plus a few paths.
 import fs from 'node:fs';
+import { FORMATIONS } from '../public/shared/formations.js';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -178,6 +179,7 @@ export function normaliseTeam(raw, id) {
     colors: { primary: '#333333', secondary: '#ffffff', text: '#ffffff', ...(t.colors || {}) },
     logo: t.logo || '',
     manager: String(t.manager || '').trim().slice(0, 40),
+    formation: FORMATIONS.includes(t.formation) ? t.formation : '', // last formation used (the Lineups tab remembers it)
     squad,
   };
 }

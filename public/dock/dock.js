@@ -36,8 +36,8 @@ const sock = new MatchSocket({
 if (!getPin()) $('pin-screen').hidden = false;
 try { replaysUi = initReplays({ sock, toast, promptSheet, openSheet, closeSheet, getSnap: () => snap }); } catch (err) { console.warn('replays tab failed to start:', err); }
 
-// ------------------------------------------------------------------ tabs: Live / Match setup / Settings (General | Teams | Theme)
-// Match setup, Teams and Theme are the setup screen's pages, loaded in a frame the first time they're opened.
+// ------------------------------------------------------------------ tabs: Live / Lineups / Settings (General | Teams | Theme)
+// Lineups, Teams and Theme are the setup screen's pages, loaded in a frame the first time they're opened.
 let subTab = 'general';
 try { subTab = localStorage.getItem('dock-subtab') || 'general'; } catch {}
 function showFrame(id, show) {
@@ -593,7 +593,7 @@ function render() {
 
   // header
   $('top-title').textContent = st.teams.home.short && st.teams.away.short
-    ? `${st.teams.home.short} v ${st.teams.away.short}${st.match.competition ? ' · ' + st.match.competition : ''}` : 'Match Control · open Match setup to pick teams';
+    ? `${st.teams.home.short} v ${st.teams.away.short}${st.match.competition ? ' · ' + st.match.competition : ''}` : 'Match Control · open Lineups to pick teams';
   const undoBtn = $('btn-undo');
   undoBtn.disabled = !undo.depth;
   undoBtn.innerHTML = `⟲ <span>${undo.label ? `Undo: ${esc(undo.label)}` : 'Undo'}</span>`;

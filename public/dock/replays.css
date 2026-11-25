@@ -100,7 +100,7 @@
 .r-vol input { flex: 1; accent-color: #3fdc6a; height: 28px; }
 .r-vol strong { color: var(--ui-text); min-width: 40px; text-align: right; }
 
-/* Settings sub-tabs and the embedded setup pages (Match setup, Teams, Theme) */
+/* Settings sub-tabs and the embedded setup pages (Lineups, Teams, Theme) */
 .sub-tabs { display: flex; gap: 4px; padding: 8px 10px 0; max-width: 1200px; margin: 0 auto; width: 100%; box-sizing: border-box; }
 .sub-tab { flex: 0 0 auto; padding: 6px 16px; border-radius: 999px; border: 1px solid var(--ui-line); background: transparent; color: var(--ui-muted); font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }
 .sub-tab:hover { color: var(--ui-text); }

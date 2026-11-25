@@ -13,7 +13,7 @@ const UNDO_LIMIT = 30;
 function emptySide() {
   return {
     id: null, name: '', short: '', colors: { primary: '#333333', secondary: '#ffffff', text: '#ffffff' }, logo: '', manager: '',
-    squad: [], lineup: { starting: [], subs: [], captain: null },
+    squad: [], lineup: { starting: [], subs: [], captain: null, formation: null, slots: [] },
   };
 }
 

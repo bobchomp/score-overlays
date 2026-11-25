@@ -90,7 +90,7 @@ match setup, exports, demo, lock, **Reset game**, and replay settings.
 | Hide the clock | **Scorebug clock** toggle. The clock keeps running underneath. |
 | Text lower third | Title + subtitle (or a preset, or *From player…*, which also offers the team's manager), then **Show**. |
 | Penalties | Period **PEN** → *Penalty shootout* tile: **✓ Scored / ✗ Missed** per kick; **Penalties lower third** shows the dots. The scorebug and full-time board show the result. |
-| Two-legged tie | **Match setup → Match** → *Two-legged tie* + first-leg score: AGG tab on the scorebug, and an aggregate line on the boards. |
+| Two-legged tie | **Lineups** → *Two-legged tie* + first-leg score: AGG tab on the scorebug, and an aggregate line on the boards. |
 | Re-show a graphic | **Show** next to any event in *Match events*. |
 | Undo | **⟲ Undo** (shows what it will undo), up to 30 steps. |
 | Reset game | **Settings → Reset game…**: score/events/clock only, or everything including teams. Undo brings it back. |
@@ -106,8 +106,13 @@ put back when you press **Stop demo**.
 
 ## 4. Teams, theme and badges
 
-The dock has three tabs: **Live**, **Match setup** (teams, lineups, competition) and **Settings**, which has its own
-**General**, **Teams** and **Theme** tabs. (The old `/setup` address now opens the dock on Match setup.)
+The dock has three tabs: **Live**, **Lineups** (teams, starting XI, formation, competition, start a new match) and
+**Settings**, which has its own **General**, **Teams** and **Theme** tabs. (The old `/setup` address opens the dock on Lineups.)
+- **Lineups → Formation:** pick one (4-4-2, 4-3-3, 4-2-3-1, 3-5-2 and more) and the lineup graphic draws the XI on a
+  pitch, goalkeeper at the bottom, full names under each player. The XI fills the formation from the players'
+  positions (GK, DEF, MID, FWD); tap two players on the small pitch to swap them. During the match the graphic shows
+  who's on now: a sub takes the place of the player they replaced (green arrow) and a sent-off player is greyed out
+  with a red card. *None (list)* keeps the old list layout. Each team remembers its last formation.
 - **Settings → Teams:** name, short name, manager (shown on the lineup graphic), colours, badge upload, squad (number, name, position). You can paste a list, one
   player per line: `9 Dan Kerr FWD`. Saved as `config/teams/<id>.json`.
 - **Settings → Theme:** club badge, all graphic colours, fonts, every on-screen word ("GOAL!", "HALF TIME", "REPLAY"…) and

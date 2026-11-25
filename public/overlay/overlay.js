@@ -3,6 +3,7 @@ import { updateReplayBug } from '/overlay/replay-bug.js';
 import {
   displayMs, formatClock, findPlayer, otherSide, scorers, shootoutSummary, aggregate, POSITION_ORDER, POSITION_NAMES, PLAYING_PERIODS,
 } from '/shared/match.js';
+import { slotPositions, lines as formationLines, currentSlots } from '/shared/formations.js';
 
 const params = new URLSearchParams(location.search);
 if (params.has('preview')) document.body.classList.add('preview');
@@ -514,20 +515,55 @@ function renderLineup() {
   const t = state.teams[side];
   const cap = t.lineup.captain;
   let i = 0;
-  const row = p => `<div class="lu-player" style="--i:${i++}"><span class="num">${esc(p.number ?? '')}</span><span>${esc(p.name)}${p.id === cap ? '<span class="cap">C</span>' : ''}</span></div>`;
+  const cameOn = new Set(state.events.filter(e => e.type === 'sub' && e.team === side).map(e => e.onId));
+  const row = p => `<div class="lu-player" style="--i:${i++}"><span class="num">${esc(p.number ?? '')}</span><span>${esc(p.name)}${p.id === cap ? '<span class="cap">C</span>' : ''}${cameOn.has(p.id) ? `<span class="lu-on">${ICON_ARROW_UP}</span>` : ''}</span></div>`;
   const starting = t.lineup.starting.map(id => findPlayer(t, id)).filter(Boolean);
   const groups = POSITION_ORDER.map(pos => {
     const ps = starting.filter(p => p.position === pos);
     return ps.length ? `<div class="lu-group"><h3>${esc(POSITION_NAMES[pos])}</h3>${ps.map(row).join('')}</div>` : '';
   }).join('');
   const subs = t.lineup.subs.map(id => findPlayer(t, id)).filter(Boolean);
+  const pitch = t.lineup.formation && t.lineup.slots?.some(Boolean) ? renderPitch(t, side) : '';
   return `<div class="lineup" style="${teamVars(t)}">
     <div class="lu-side">${logo(t.logo)}<div class="name">${esc(t.name)}</div><div class="label">${esc(theme.labels.startingXI)}</div>
+      ${t.lineup.formation ? `<div class="lu-formation">${esc(t.lineup.formation)}</div>` : ''}
       ${state.match.competition ? `<div class="comp">${esc(state.match.competition)}</div>` : ''}</div>
-    <div class="lu-xi">${groups || '<div class="lu-empty">No starting XI selected. Pick one in Match setup.</div>'}</div>
+    ${pitch || `<div class="lu-xi">${groups || '<div class="lu-empty">No starting XI selected. Pick one on the Lineups tab.</div>'}</div>`}
     <div class="lu-subs"><h3>${esc(theme.labels.substitutes)}</h3>${subs.map(row).join('') || '<div class="lu-empty">—</div>'}
       ${t.manager ? `<div class="lu-manager" style="--i:${i++}"><h3>${esc(theme.labels.manager || 'MANAGER')}</h3><div class="lu-player">${esc(t.manager)}</div></div>` : ''}</div>
   </div>`;
+}
+
+/** Subs and red cards change who's on the pitch graphic. */
+function lineupEventsKey(state, side) {
+  return state.events.filter(e => e.team === side && (e.type === 'sub' || (e.type === 'card' && e.card === 'red'))).map(e => e.id).join(',');
+}
+
+/** The XI on a pitch (goalkeeper at the bottom). Subs take the slot of the player they replaced. */
+function renderPitch(t, side) {
+  const { state } = snap;
+  const pos = slotPositions(t.lineup.formation);
+  const ls = [1, ...formationLines(t.lineup.formation)];
+  const lineOf = []; ls.forEach((n, li) => { for (let k = 0; k < n; k++) lineOf.push(li); });
+  const now = currentSlots(t.lineup.slots, state.events, side);
+  const marks = now.map((c, i) => {
+    if (!c || !pos[i]) return '';
+    const p = findPlayer(t, c.id);
+    if (!p) return '';
+    return `<div class="pp ${i === 0 ? 'gk' : ''} ${c.sentOff ? 'off' : ''}" style="left:${pos[i].x}%;top:${pos[i].y}%;--i:${lineOf[i]}">
+      <div class="pp-dot"><span>${esc(p.number ?? '')}</span>
+        ${p.id === t.lineup.captain ? '<b class="pp-cap">C</b>' : ''}
+        ${c.subbedOn ? `<b class="pp-sub">${ICON_ARROW_UP}</b>` : ''}${c.sentOff ? '<b class="pp-red"></b>' : ''}</div>
+      <div class="pp-name">${esc(p.name)}</div></div>`;
+  }).join('');
+  return `<div class="lu-xi lu-xi-pitch"><div class="lu-pitch">
+    <svg class="lu-lines" viewBox="0 0 680 800" preserveAspectRatio="none" aria-hidden="true">
+      <rect x="6" y="6" width="668" height="788" rx="4"/>
+      <line x1="6" y1="400" x2="674" y2="400"/><circle cx="340" cy="400" r="74"/><circle cx="340" cy="400" r="4" class="dot"/>
+      <rect x="150" y="6" width="380" height="132"/><rect x="250" y="6" width="180" height="46"/>
+      <rect x="150" y="662" width="380" height="132"/><rect x="250" y="748" width="180" height="46"/>
+      <path d="M272 138 A74 74 0 0 0 408 138"/><path d="M272 662 A74 74 0 0 1 408 662"/>
+    </svg>${marks}</div></div>`;
 }
 
 // ---------------------------------------------------------------- main loop
@@ -558,7 +594,7 @@ function render() {
   updateBoardLive();
   gfx.shootout.set(g.shootout.visible && !full, `${themeRev}|${teamsKey(state)}`, renderShootout);
   updateShootoutLive();
-  gfx.lineup.set(g.lineup.visible, `${g.lineup.team}|${themeRev}|${teamsKey(state)}|${JSON.stringify(state.teams[g.lineup.team].lineup)}`, renderLineup);
+  gfx.lineup.set(g.lineup.visible, `${g.lineup.team}|${themeRev}|${teamsKey(state)}|${JSON.stringify(state.teams[g.lineup.team].lineup)}|${lineupEventsKey(state, g.lineup.team)}`, renderLineup);
 }
 
 

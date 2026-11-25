@@ -1,6 +1,7 @@
 // Action handlers. Each `run(state, payload, ctx)` mutates a draft copy of the state.
 // `undo` is either a label string or a function returning one; actions without it are not undoable.
 import { loadTeam } from './config.js';
+import { isFormation, fitSlots } from '../public/shared/formations.js';
 import {
   PERIODS, PLAYING_PERIODS, eventMinute, shootoutSummary, elapsedMs, findPlayer, otherSide, yellowCount, isSentOff,
 } from '../public/shared/match.js';
@@ -79,17 +80,20 @@ function buildSide(teamId, opts = {}) {
   const lineup = opts.lineup || {};
   const starting = (lineup.starting || []).filter(id => ids.has(id));
   const subs = (lineup.subs || []).filter(id => ids.has(id) && !starting.includes(id));
+  // Formation (optional): the lineup graphic draws the XI on a pitch; without one it lists them.
+  const formation = isFormation(lineup.formation) ? lineup.formation : null;
+  const slots = formation ? fitSlots(formation, lineup.slots, starting, team.squad) : [];
   return {
     ...team,
     colors: { ...team.colors, ...(opts.colors || {}) },
-    lineup: { starting, subs, captain: ids.has(lineup.captain) ? lineup.captain : null },
+    lineup: { starting, subs, captain: ids.has(lineup.captain) ? lineup.captain : null, formation, slots },
   };
 }
 
 export const actions = {
   // ---------------- match setup ----------------
   'match.setup': {
-    undo: 'Match setup',
+    undo: 'Lineups',
     run(state, p) {
       for (const s of SIDES) {
         if (p[s]?.teamId) state.teams[s] = buildSide(p[s].teamId, p[s]);
@@ -129,6 +133,8 @@ export const actions = {
             starting: lu.starting.filter(id => ids.has(id)),
             subs: lu.subs.filter(id => ids.has(id)),
             captain: ids.has(lu.captain) ? lu.captain : null,
+            formation: lu.formation || null,
+            slots: (lu.slots || []).map(id => (id && ids.has(id) ? id : null)),
           },
         };
       }
