@@ -95,7 +95,7 @@ match setup, exports, demo, lock, **Reset game**, and replay settings.
 | Undo | **⟲ Undo** (shows what it will undo), up to 30 steps. |
 | Reset game | **Settings → Reset game…**: score/events/clock only, or everything including teams. Undo brings it back. |
 
-Lower thirds for goals, cards and subs hide after 8 seconds (set in **Match setup → Theme → Timings**).
+Lower thirds for goals, cards and subs hide after 6 seconds (set in **Settings → Theme → Timings**).
 
 **Shortcuts** (click inside the dock first): `G` home goal · `H` away goal · `Space` start/pause · `Esc` hide all
 graphics · `Ctrl+Z` undo · `R` replay · `T` slow-mo replay · `M` mark · `B` abort replay (replay keys can be

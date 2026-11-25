@@ -727,7 +727,7 @@ function updateClock() {
   $('subq-onair').hidden = !onair;
   if (onair) {
     const n = lt.eventIds.length;
-    const i = Math.min(n - 1, Math.floor((sock.now() - lt.shownAt) / (lt.stepMs || 8000)));
+    const i = Math.min(n - 1, Math.floor((sock.now() - lt.shownAt) / (lt.stepMs || 6000)));
     $('subq-onair').textContent = `On air: ${i + 1} of ${n}`;
   }
 }

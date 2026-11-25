@@ -388,7 +388,7 @@ export const actions = {
       if (!ids.length) throw new Error('No cards or subs waiting to be shown');
       // One lower third that swaps from one card/sub to the next in place; it closes after the last one.
       const secs = Number(ctx.theme.timings?.lowerThirdSec) || 0;
-      const stepMs = (secs > 0 ? secs : 8) * 1000;
+      const stepMs = (secs > 0 ? secs : 6) * 1000;
       const first = state.events.find(e => e.id === ids[0]);
       lowerThirdFor(state, ctx, { kind: 'queue', eventIds: ids, team: first.team, stepMs, autoHide: false });
       if (secs > 0) state.graphics.lowerThird.hideAt = ctx.now + stepMs * ids.length; // 0 = stays on the last one until hidden

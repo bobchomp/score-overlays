@@ -39,7 +39,7 @@
     "win": "WIN"
   },
   "timings": {
-    "lowerThirdSec": 8,
+    "lowerThirdSec": 6,
     "stingMs": 2600
   }
 }

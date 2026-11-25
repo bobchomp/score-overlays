@@ -78,7 +78,7 @@ export const DEFAULT_THEME = {
     extraTime: 'ET', penalties: 'PENS', shootout: 'PENALTIES', suddenDeath: 'SUDDEN DEATH', win: 'WIN',
     aggregate: 'AGG', replay: 'REPLAY', slowMo: 'SLOW MO',
   },
-  timings: { lowerThirdSec: 8, stingMs: 2600 },
+  timings: { lowerThirdSec: 6, stingMs: 2600 },
 };
 
 function mergeDeep(base, over) {
@@ -97,6 +97,13 @@ const DEFAULT_THEME_FILE = path.join(CONFIG_DIR, 'theme.json');
 
 export function loadTheme() {
   const saved = fs.existsSync(USER_THEME) ? readJson(USER_THEME, null) : null;
+  // One-off: the lower-third default went from 8 s to 6 s. A saved theme still on the old default moves to 6 s
+  // (once; choosing 8 again later sticks).
+  if (saved && !saved.migratedLt6) {
+    if (saved.timings?.lowerThirdSec === 8) saved.timings.lowerThirdSec = 6;
+    saved.migratedLt6 = true;
+    try { writeJsonAtomic(USER_THEME, saved); } catch {}
+  }
   return mergeDeep(DEFAULT_THEME, saved || readJson(DEFAULT_THEME_FILE, {}));
 }
 

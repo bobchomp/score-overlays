@@ -335,7 +335,7 @@ function subCard(ev, step = null) {
 // ---------------------------------------------------------------- queued cards & subs: swap in place
 function eventQueueStep(lt, now) {
   const evs = (lt.eventIds || []).map(id => snap.state.events.find(e => e.id === id)).filter(Boolean);
-  const i = Math.max(0, Math.min(evs.length - 1, Math.floor((now - lt.shownAt) / (lt.stepMs || 8000))));
+  const i = Math.max(0, Math.min(evs.length - 1, Math.floor((now - lt.shownAt) / (lt.stepMs || 6000))));
   return { evs, i };
 }
 let queueShown = null; // `${lt.id}|${index}` currently on screen
