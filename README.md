@@ -87,7 +87,7 @@ match setup, exports, demo, lock, **Reset game**, and replay settings.
 | Subs | Player **off**, then player **on**. |
 | Boards & lineups | Toggles in *Graphics* (green light = on air). Boards hide the scorebug while shown. |
 | Hide the clock | **Scorebug clock** toggle. The clock keeps running underneath. |
-| Text lower third | Title + subtitle (or a preset, or *From player…*), then **Show**. |
+| Text lower third | Title + subtitle (or a preset, or *From player…*, which also offers the team's manager), then **Show**. |
 | Penalties | Period **PEN** → *Penalty shootout* tile: **✓ Scored / ✗ Missed** per kick; **Penalties lower third** shows the dots. The scorebug and full-time board show the result. |
 | Two-legged tie | **Match setup → Match** → *Two-legged tie* + first-leg score: AGG tab on the scorebug, and an aggregate line on the boards. |
 | Re-show a graphic | **Show** next to any event in *Match events*. |
@@ -106,7 +106,7 @@ put back when you press **Stop demo**.
 ## 4. Teams, theme and badges
 
 All editable in **Match setup** (`/setup`):
-- **Teams tab:** name, short name, colours, badge upload, squad (number, name, position). You can paste a list, one
+- **Teams tab:** name, short name, manager (shown on the lineup graphic), colours, badge upload, squad (number, name, position). You can paste a list, one
   player per line: `9 Dan Kerr FWD`. Saved as `config/teams/<id>.json`.
 - **Theme tab:** club badge, all graphic colours, fonts, every on-screen word ("GOAL!", "HALF TIME", "REPLAY"…) and
   timings. Saved to `data/theme.json`; delete that file to return to the default `config/theme.json`.

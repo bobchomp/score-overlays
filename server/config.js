@@ -73,7 +73,7 @@ export const DEFAULT_THEME = {
   fonts: { heading: 'Barlow Condensed', body: 'Barlow' },
   labels: {
     goal: 'GOAL!', ownGoal: 'OWN GOAL', kickOff: 'KICK OFF', halfTime: 'HALF TIME', fullTime: 'FULL TIME',
-    startingXI: 'STARTING XI', substitutes: 'SUBSTITUTES', substitution: 'SUBSTITUTION',
+    startingXI: 'STARTING XI', substitutes: 'SUBSTITUTES', manager: 'MANAGER', substitution: 'SUBSTITUTION',
     yellowCard: 'YELLOW CARD', redCard: 'RED CARD', secondYellow: 'SECOND YELLOW', versus: 'VS',
     extraTime: 'ET', penalties: 'PENS', shootout: 'PENALTIES', suddenDeath: 'SUDDEN DEATH', win: 'WIN',
     aggregate: 'AGG', replay: 'REPLAY', slowMo: 'SLOW MO',
@@ -170,6 +170,7 @@ export function normaliseTeam(raw, id) {
     short: String(t.short || t.name || id).toUpperCase().slice(0, 4),
     colors: { primary: '#333333', secondary: '#ffffff', text: '#ffffff', ...(t.colors || {}) },
     logo: t.logo || '',
+    manager: String(t.manager || '').trim().slice(0, 40),
     squad,
   };
 }

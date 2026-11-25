@@ -241,7 +241,7 @@ function renderTeamList() {
   });
 }
 $('t-new').onclick = () => {
-  editing = { id: '', name: '', short: '', colors: { primary: '#1d4ed8', secondary: '#ffffff', text: '#ffffff' }, logo: '', squad: [] };
+  editing = { id: '', name: '', short: '', colors: { primary: '#1d4ed8', secondary: '#ffffff', text: '#ffffff' }, logo: '', manager: '', squad: [] };
   editingIsNew = true;
   renderTeamList(); renderTeamEditor();
 };
@@ -255,6 +255,9 @@ function renderTeamEditor() {
       <label class="field">Full name<input class="input" id="te-name" value="${esc(t.name)}" maxlength="40"></label>
       <label class="field">Short name (3 letters)<input class="input" id="te-short" value="${esc(t.short)}" maxlength="4" style="text-transform:uppercase"></label>
       <label class="field">Badge / logo<div class="logo-pick" id="te-logo"></div></label>
+    </div>
+    <div class="grid3">
+      <label class="field">Manager<input class="input" id="te-manager" value="${esc(t.manager || '')}" maxlength="40" placeholder="e.g. Don Cowie"></label>
     </div>
     <div class="colors" id="te-colors"></div>
     <div class="sec-title">Squad (${t.squad.length})</div>
@@ -271,6 +274,7 @@ function renderTeamEditor() {
     </div>`;
   $('te-name').oninput = e => { t.name = e.target.value; };
   $('te-short').oninput = e => { t.short = e.target.value.toUpperCase(); };
+  $('te-manager').oninput = e => { t.manager = e.target.value; };
   logoPicker($('te-logo'), t.logo, v => { t.logo = v; }, () => t.name || 'team');
   for (const [k, label] of [['primary', 'Primary'], ['secondary', 'Secondary'], ['text', 'Text on primary']]) {
     $('te-colors').append(colorField(label, t.colors[k], v => { t.colors[k] = v; }));
@@ -358,7 +362,7 @@ const COLOR_LABELS = {
 };
 const LABEL_NAMES = {
   goal: 'Goal sting text', ownGoal: 'Own goal', kickOff: 'Kick-off board', halfTime: 'Half-time board', fullTime: 'Full-time board',
-  startingXI: 'Lineup title', substitutes: 'Lineup subs title', substitution: 'Substitution tag', yellowCard: 'Yellow card tag',
+  startingXI: 'Lineup title', substitutes: 'Lineup subs title', manager: 'Lineup manager title', substitution: 'Substitution tag', yellowCard: 'Yellow card tag',
   redCard: 'Red card tag', secondYellow: 'Second yellow tag', versus: 'Kick-off "VS"', extraTime: 'Extra time period', penalties: 'Penalties period (scorebug)',
   shootout: 'Shootout title', suddenDeath: 'Shootout sudden death', win: 'Shootout winner (e.g. HIL WIN)',
   aggregate: 'Aggregate tab (e.g. AGG)', replay: 'Replay bug', slowMo: 'Replay bug slow-motion tag',

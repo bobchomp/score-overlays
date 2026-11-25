@@ -318,3 +318,6 @@ body.has-full #scorebug { opacity: 0; transform: translateY(-24px); }
 /* Dip to black between Play-all clips (sits underneath all other graphics) */
 #replay-dip { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity var(--dip-ms, 300ms) ease; }
 #replay-dip.on { opacity: 1; }
+
+.lu-manager { margin-top: 28px; }
+.lu-manager .lu-player { padding-left: 0; }

@@ -306,9 +306,19 @@ async function playerForText() {
     $('sheet-body').querySelectorAll('[data-s]').forEach(b => { b.onclick = () => { answered = true; closeSheet(); resolve(b.dataset.s); }; });
   });
   if (!side) return;
-  const pid = await pickPlayer({ title: 'Pick player', side, sections: sideSections(side) });
-  if (!pid) return;
   const t = snap.state.teams[side];
+  let manager = false;
+  const pid = await pickPlayer({
+    title: 'Pick player', side, sections: sideSections(side),
+    top: t.manager ? `<div class="row"><button class="btn grow" id="pick-manager">Manager: ${esc(t.manager)}</button></div>` : '',
+    onReady() { if ($('pick-manager')) $('pick-manager').onclick = () => { manager = true; closeSheet(); }; },
+  });
+  if (manager) {
+    $('lt-sub').value = `${t.manager} · ${t.name} manager`;
+    $('lt-team').value = side;
+    return;
+  }
+  if (!pid) return;
   const p = findPlayer(t, pid);
   $('lt-sub').value = `${p.number != null ? `#${p.number} ` : ''}${p.name} · ${t.name}`;
   $('lt-team').value = side;

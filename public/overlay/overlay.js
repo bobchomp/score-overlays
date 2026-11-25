@@ -468,13 +468,14 @@ function renderLineup() {
     <div class="lu-side">${logo(t.logo)}<div class="name">${esc(t.name)}</div><div class="label">${esc(theme.labels.startingXI)}</div>
       ${state.match.competition ? `<div class="comp">${esc(state.match.competition)}</div>` : ''}</div>
     <div class="lu-xi">${groups || '<div class="lu-empty">No starting XI selected. Pick one on the setup screen.</div>'}</div>
-    <div class="lu-subs"><h3>${esc(theme.labels.substitutes)}</h3>${subs.map(row).join('') || '<div class="lu-empty">—</div>'}</div>
+    <div class="lu-subs"><h3>${esc(theme.labels.substitutes)}</h3>${subs.map(row).join('') || '<div class="lu-empty">—</div>'}
+      ${t.manager ? `<div class="lu-manager" style="--i:${i++}"><h3>${esc(theme.labels.manager || 'MANAGER')}</h3><div class="lu-player">${esc(t.manager)}</div></div>` : ''}</div>
   </div>`;
 }
 
 // ---------------------------------------------------------------- main loop
 function teamsKey(state) {
-  const t = s => [s.short, s.name, s.logo, s.colors.primary, s.colors.secondary, s.colors.text].join('|');
+  const t = s => [s.short, s.name, s.logo, s.manager, s.colors.primary, s.colors.secondary, s.colors.text].join('|');
   return `${t(state.teams.home)}#${t(state.teams.away)}`;
 }
 
