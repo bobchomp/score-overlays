@@ -107,7 +107,7 @@ put back when you press **Stop demo**.
 ## 4. Teams, theme and badges
 
 The dock has three tabs: **Live**, **Match setup** (teams, lineups, competition) and **Settings**, which has its own
-**General**, **Teams** and **Theme** tabs. (The same pages also work on their own at `/setup`.)
+**General**, **Teams** and **Theme** tabs. (The old `/setup` address now opens the dock on Match setup.)
 - **Settings → Teams:** name, short name, manager (shown on the lineup graphic), colours, badge upload, squad (number, name, position). You can paste a list, one
   player per line: `9 Dan Kerr FWD`. Saved as `config/teams/<id>.json`.
 - **Settings → Theme:** club badge, all graphic colours, fonts, every on-screen word ("GOAL!", "HALF TIME", "REPLAY"…) and

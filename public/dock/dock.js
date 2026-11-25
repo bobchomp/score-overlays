@@ -66,7 +66,14 @@ function setTab(tab, sub) {
 }
 document.querySelectorAll('[data-dock-tab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.dockTab)));
 document.querySelectorAll('[data-sub-tab]').forEach(b => b.addEventListener('click', () => setTab('settings', b.dataset.subTab)));
-try { setTab(localStorage.getItem('dock-tab') || 'live'); } catch { setTab('live'); }
+// ?tab=setup|teams|theme|settings|live opens that tab (the old /setup address lands here).
+const urlTab = new URLSearchParams(location.search).get('tab');
+if (urlTab) {
+  history.replaceState(null, '', location.pathname);
+  if (urlTab === 'teams' || urlTab === 'theme') setTab('settings', urlTab); else setTab(urlTab);
+} else {
+  try { setTab(localStorage.getItem('dock-tab') || 'live'); } catch { setTab('live'); }
+}
 try { initHealth({ sock, toast, setTab }); } catch (err) { console.warn('health check failed to start:', err); }
 $('pin-form').addEventListener('submit', e => {
   e.preventDefault();
