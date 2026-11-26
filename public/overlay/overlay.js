@@ -542,7 +542,7 @@ function lineupEventsKey(state, side) {
 /** The XI on a pitch (goalkeeper at the bottom). Subs take the slot of the player they replaced. */
 function renderPitch(t, side) {
   const { state } = snap;
-  const pos = slotPositions(t.lineup.formation);
+  const pos = slotPositions(t.lineup.formation, { turned: side === 'away' }); // away: keeper at the top
   const ls = [1, ...formationLines(t.lineup.formation)];
   const lineOf = []; ls.forEach((n, li) => { for (let k = 0; k < n; k++) lineOf.push(li); });
   const now = currentSlots(t.lineup.slots, state.events, side);
@@ -556,7 +556,7 @@ function renderPitch(t, side) {
         ${c.subbedOn ? `<b class="pp-sub">${ICON_ARROW_UP}</b>` : ''}${c.sentOff ? '<b class="pp-red"></b>' : ''}</div>
       <div class="pp-name">${esc(p.name)}</div></div>`;
   }).join('');
-  return `<div class="lu-xi lu-xi-pitch"><div class="lu-pitch">
+  return `<div class="lu-xi lu-xi-pitch"><div class="lu-pitch ${side === 'away' ? 'turned' : ''}">
     <svg class="lu-lines" viewBox="0 0 680 800" preserveAspectRatio="none" aria-hidden="true">
       <rect x="6" y="6" width="668" height="788" rx="4"/>
       <line x1="6" y1="400" x2="674" y2="400"/><circle cx="340" cy="400" r="74"/><circle cx="340" cy="400" r="4" class="dot"/>

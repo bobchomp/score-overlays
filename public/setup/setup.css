@@ -82,3 +82,4 @@ summary { cursor: pointer; color: var(--ui-muted); font-weight: 600; }
 .autosave.warn { color: #f2cc60; border-color: #c99a14; background: #3d2e05; }
 .autosave.bad { color: #ffb3ae; border-color: var(--ui-bad); background: #4a1416; }
 .role button:disabled { opacity: .35; cursor: not-allowed; }
+.mini-pitch.turned::before { bottom: auto; top: -2px; border-bottom: 2px solid rgba(255,255,255,.35); border-top: 0; }

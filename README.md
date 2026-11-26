@@ -110,7 +110,8 @@ put back when you press **Stop demo**.
 The dock has three tabs: **Live**, **Lineups** (teams, starting XI, formation, competition, start a new match) and
 **Settings**, which has its own **General**, **Teams** and **Theme** tabs. (The old `/setup` address opens the dock on Lineups.)
 - **Lineups → Formation:** pick one (4-4-2, 4-3-3, 4-2-3-1, 3-5-2 and more) and the lineup graphic draws the XI on a
-  pitch, goalkeeper at the bottom, full names under each player. The XI fills the formation from the players'
+  pitch, full names under each player. The home team plays up the screen (goalkeeper at the bottom); the away team is
+  turned round (goalkeeper at the top, their left on the viewer's right), and the small pitch on Lineups matches. The XI fills the formation from the players'
   positions (GK, DEF, MID, FWD); tap two players on the small pitch to swap them. During the match the graphic shows
   who's on now: a sub takes the place of the player they replaced (green arrow) and a sent-off player is greyed out
   with a red card. *None (list)* keeps the old list layout. Each team remembers its last formation.

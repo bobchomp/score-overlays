@@ -28,8 +28,17 @@ export function slotRoles(formation) {
   return roles;
 }
 
-/** Where each slot sits on a pitch, as percentages: x from the left, y from the top (goalkeeper at the bottom). */
-export function slotPositions(formation) {
+/**
+ * Where each slot sits on a pitch, as percentages: x from the left, y from the top. The home team has its
+ * goalkeeper at the bottom; `turned` (the away team) turns the pitch round, keeper at the top and the
+ * team's left on the viewer's right, as seen from the stand.
+ */
+export function slotPositions(formation, { turned = false } = {}) {
+  const pos = homePositions(formation);
+  return turned ? pos.map(p => ({ x: 100 - p.x, y: 100 - p.y })) : pos;
+}
+
+function homePositions(formation) {
   const ls = lines(formation);
   const out = [{ x: 50, y: 88 }];
   const SPAN = { 1: 0, 2: 34, 3: 56, 4: 74, 5: 84 };

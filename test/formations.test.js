@@ -48,3 +48,11 @@ test('during the match a sub takes the slot and a red card marks the player', ()
   assert.equal(now[slots.indexOf('d3')].sentOff, true);
   assert.equal(now[slots.indexOf('f7')].id, 'f7', "other team's subs ignored");
 });
+
+test('the away team is turned round: keeper at the top, their left on the viewer\'s right', () => {
+  const home = slotPositions('4-3-3');
+  const away = slotPositions('4-3-3', { turned: true });
+  assert.ok(away[0].y < away.slice(1).reduce((m, p) => Math.min(m, p.y), 100), 'keeper highest');
+  assert.ok(home[1].x < 50 && away[1].x > 50, 'left-back on the other side');
+  assert.deepEqual(away.map(p => [p.x + home[away.indexOf(p)].x, p.y + home[away.indexOf(p)].y]).every(([x, y]) => x === 100 && y === 100), true);
+});

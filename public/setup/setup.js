@@ -206,7 +206,7 @@ function formationHtml(s, f, team) {
     return `<div class="formation"><label class="field">Formation (lineup graphic)<select class="input form-sel">${opts}</select></label>
       <p class="hint">No formation: the lineup graphic lists the XI by position.</p></div>`;
   }
-  const pos = slotPositions(lu.formation);
+  const pos = slotPositions(lu.formation, { turned: s === 'away' }); // matches the graphic: away keeper at the top
   const byId = new Map(team.squad.map(p => [p.id, p]));
   const marks = lu.slots.map((id, i) => {
     const p = id ? byId.get(id) : null;
@@ -216,7 +216,7 @@ function formationHtml(s, f, team) {
       <span class="pm-dot">${p ? esc(p.number ?? '') : '+'}</span><span class="pm-name">${esc(last)}</span></button>`;
   }).join('');
   return `<div class="formation"><label class="field">Formation (lineup graphic)<select class="input form-sel">${opts}</select></label>
-    <div class="mini-pitch">${marks}</div>
+    <div class="mini-pitch ${s === 'away' ? 'turned' : ''}">${marks}</div>
     <p class="hint">${pitchPick[s] != null ? 'Now tap the player (or empty spot) to swap with.' : 'Tap two players to swap their places. The XI fills in from the positions above (GK, DEF, MID, FWD).'}</p></div>`;
 }
 
