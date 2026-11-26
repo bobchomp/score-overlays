@@ -162,3 +162,27 @@ test('pre-match check: lineups and kit colours', async () => {
   r = lineupChecks({ teams: { home: { id: null, lineup: {} }, away: team('Ayr', '#c8102e', good) } });
   assert.equal(r[0].id, 'teams');
 });
+
+test('the dock gets a few grouped lines; failing checks are listed inside their line', async () => {
+  const { groupHealth } = await import('../server/health.js');
+  const i = (id, label, status, detail = '', fix = '', action = null) => ({ id, label, status, detail, fix, action });
+  const report = {
+    status: 'bad', counts: { bad: 1, warn: 1 },
+    items: [
+      i('server', 'Graphics server', 'ok', 'Running on port 3080 · version abc · up 5 min'), i('pin', 'Control PIN', 'ok', 'Set in .env'),
+      i('main-obs', 'Main OBS connection', 'ok', 'Connected · live scene: Live'), i('overlay', 'Overlay loaded in OBS', 'warn', 'older version', 'Refresh it', 'refreshOverlay'),
+      i('overlay-size', 'Overlay size', 'ok', '1920×1080'),
+      i('replay-obs', 'Replay OBS', 'bad', 'Not connected', 'Open it'), i('buffer', 'Replay Buffer', 'ok', 'Running'),
+      i('lineup-home', 'Lineup: Ross', 'ok', 'XI 11/11 · 4-4-2 · captain set'), i('lineup-away', 'Lineup: Cove', 'ok', 'XI 11/11 · 3-4-3 · captain set'),
+      i('err-9', 'Something odd', 'warn', 'Check failed: boom'),
+    ],
+  };
+  const g = groupHealth(report);
+  assert.deepEqual(g.items.map(x => x.label), ['Graphics server', 'Main OBS & overlay', 'Replays', 'Lineups', 'Something odd']);
+  assert.equal(g.items[0].detail, 'port 3080 · version abc · PIN set');
+  assert.equal(g.items[1].status, 'warn');
+  assert.deepEqual(g.items[1].problems.map(p => [p.label, p.action]), [['Overlay loaded in OBS', 'refreshOverlay']]);
+  assert.equal(g.items[2].status, 'bad');
+  assert.equal(g.items[3].detail, 'Ross 4-4-2 · Cove 3-4-3');
+  assert.deepEqual(g.counts, { bad: 1, warn: 1 }, 'counts still per check');
+});

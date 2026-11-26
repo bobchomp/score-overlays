@@ -214,3 +214,9 @@ body { padding-bottom: 40px; }
 .subq-who .ci { display: inline-block; width: 9px; height: 13px; border-radius: 2px; vertical-align: -1px; }
 .subq-who .ci.yellow { background: #ffd200; } .subq-who .ci.red { background: #e3121b; }
 .subq-who .ci.second { background: linear-gradient(135deg, #ffd200 50%, #e3121b 50%); }
+
+/* pre-match check: failing checks inside a grouped line */
+.h-problem { margin-top: 6px; padding-left: 10px; border-left: 2px solid var(--ui-line); }
+.h-problem.bad { border-left-color: var(--ui-bad); } .h-problem.warn { border-left-color: #c99a14; }
+.h-plabel { font-weight: 700; font-size: 13.5px; }
+.h-problem .btn { margin-top: 4px; }

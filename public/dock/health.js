@@ -34,12 +34,17 @@ export function initHealth({ sock, toast, setTab }) {
     $('health-summary').className = `health-summary ${status}`;
     $('health-summary').textContent = status === 'ok' ? 'All good: ready for kick-off.'
       : `${counts.bad ? `${counts.bad} problem${counts.bad > 1 ? 's' : ''}` : ''}${counts.bad && counts.warn ? ' and ' : ''}${counts.warn ? `${counts.warn} warning${counts.warn > 1 ? 's' : ''}` : ''} to look at.`;
+    // One line per area; when something's wrong, just the failing checks show inside it.
+    const fixBtn = a => (a && FIX_LABEL[a] ? `<button class="btn small" data-health-fix="${a}">${FIX_LABEL[a]}</button>` : '');
+    const problem = p => `<div class="h-problem ${p.status}"><div class="h-plabel">${ICON[p.status] || ''} ${esc(p.label)}</div>
+      ${p.detail ? `<div class="h-detail">${esc(p.detail)}</div>` : ''}${p.fix ? `<div class="h-fix">${esc(p.fix)}</div>` : ''}${fixBtn(p.action)}</div>`;
     $('health-list').innerHTML = items.map(i => `<li class="${i.status}">
       <span class="h-icon">${ICON[i.status] || ''}</span>
       <div class="h-body"><div class="h-label">${esc(i.label)}</div>
         ${i.detail ? `<div class="h-detail">${esc(i.detail)}</div>` : ''}
-        ${i.fix && i.status !== 'ok' ? `<div class="h-fix">${esc(i.fix)}</div>` : ''}
-        ${i.action && FIX_LABEL[i.action] ? `<button class="btn small" data-health-fix="${i.action}">${FIX_LABEL[i.action]}</button>` : ''}
+        ${(i.problems || []).map(problem).join('')}
+        ${!i.problems && i.fix && i.status !== 'ok' ? `<div class="h-fix">${esc(i.fix)}</div>` : ''}
+        ${!i.problems?.length ? fixBtn(i.action) : ''}
       </div></li>`).join('');
     const chip = $('health-chip');
     const n = counts.bad + counts.warn;

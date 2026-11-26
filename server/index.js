@@ -14,7 +14,7 @@ import { createApi } from './api.js';
 import { score, eventMinute, timerMinute, PLAYING_PERIODS } from '../public/shared/match.js';
 import { Replays, disabledReplays } from './replays.js';
 import { computeBuild, gitCommit } from './build.js';
-import { runHealth, refreshOverlayInObs, addLiveAudioToReplay } from './health.js';
+import { runHealth, groupHealth, refreshOverlayInObs, addLiveAudioToReplay } from './health.js';
 
 const env = loadEnv();
 const BUILD = computeBuild();   // fingerprint of the page files; pages reload when it changes
@@ -48,8 +48,8 @@ function connectedPages() {
     .map(c => ({ role: c.role, page: c.info?.page || null, build: c.info?.build || null, width: c.info?.width || 0, height: c.info?.height || 0 }));
 }
 
-function health() {
-  return runHealth({ env, obs, replays, clients: connectedPages, build: BUILD, commit: COMMIT, startedAt: STARTED_AT, state: store.state });
+async function health() {
+  return groupHealth(await runHealth({ env, obs, replays, clients: connectedPages, build: BUILD, commit: COMMIT, startedAt: STARTED_AT, state: store.state }));
 }
 
 function replayStatus() {

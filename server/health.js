@@ -289,6 +289,58 @@ export async function runHealth({ env, obs, replays, clients, build, commit, sta
   };
 }
 
+// ---------------------------------------------------------------- grouping for the dock
+// The checks above stay separate (and tested one by one); the dock shows them as a few lines.
+const GROUPS = [
+  { id: 'g-server', label: 'Graphics server', ids: ['server', 'pin', 'docks'] },
+  { id: 'g-obs', label: 'Main OBS & overlay', ids: ['main-obs', 'overlay', 'overlay-size', 'obs-source', 'top-live scene', 'top-replay scene'] },
+  { id: 'g-sound', label: 'Live sound during replays', ids: ['live-audio'] },
+  { id: 'g-replays', label: 'Replays', ids: ['replay-obs', 'buffer', 'disk', 'replay-setup', 'replays'] },
+  { id: 'g-lineups', label: 'Lineups', ids: ['teams', 'lineup-home', 'lineup-away', 'kits'] },
+];
+
+/** Short wording for a check that passed, used in its group's one-line summary ('' = leave out). */
+function okText(i) {
+  switch (i.id) {
+    case 'server': return i.detail.replace(/^Running on /, '').replace(/ · up .*$/, '');
+    case 'pin': return 'PIN set';
+    case 'main-obs': return i.detail;
+    case 'overlay': return 'overlay loaded';
+    case 'overlay-size': return i.detail;
+    case 'top-live scene': return 'on top in the live scene';
+    case 'top-replay scene': return 'and the replay scene';
+    case 'replay-obs': return 'Replay OBS connected';
+    case 'buffer': return 'buffer running';
+    case 'disk': return i.detail.replace(/ in .*$/, '');
+    case 'replay-setup': return 'scene & source ready';
+    case 'lineup-home': case 'lineup-away': return `${i.label.replace(/^Lineup: /, '')} ${i.detail.split(' · ')[1] || ''}`.trim();
+    case 'live-audio': return i.detail;
+    default: return '';
+  }
+}
+
+export function groupHealth(report) {
+  const rank = { bad: 3, warn: 2, ok: 1, skip: 0 };
+  const used = new Set();
+  const items = [];
+  for (const g of GROUPS) {
+    const parts = report.items.filter(i => g.ids.includes(i.id));
+    if (!parts.length) continue;
+    parts.forEach(p => used.add(p));
+    const status = parts.reduce((w, i) => (rank[i.status] > rank[w] ? i.status : w), 'skip');
+    const problems = parts.filter(p => p.status === 'bad' || p.status === 'warn');
+    const summary = parts.filter(p => p.status === 'ok').map(okText).filter(Boolean).join(' · ');
+    items.push({
+      id: g.id, label: g.label, status,
+      detail: problems.length ? '' : summary || parts.map(p => p.detail).filter(Boolean).join(' · '),
+      problems: problems.map(p => ({ label: p.label, status: p.status, detail: p.detail, fix: p.fix, action: p.action })),
+    });
+  }
+  // anything not in a group (e.g. a check that failed to run) stays as its own line
+  for (const i of report.items) if (!used.has(i)) items.push({ ...i, problems: [] });
+  return { ...report, items };
+}
+
 /** Teams picked, an XI of 11 in its formation, a captain, and kits that can be told apart. */
 export function lineupChecks(state) {
   const out = [];
