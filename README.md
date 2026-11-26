@@ -146,6 +146,32 @@ answer "The Stream Deck API is turned off".
 
 `GET /api/export.csv?pin=…` and `/api/export.json` give the event log, and `GET /api/health?pin=…` gives the pre-match check.
 
+## 6. Remote access (Cloudflare Tunnel, optional)
+
+Open the dock from anywhere at a fixed address such as `https://scores.yourdomain.com/dock`. It needs a domain
+that's on a (free) Cloudflare account. Nothing is opened on your router.
+
+**Once, in the Cloudflare dashboard** (names of menus may differ slightly):
+1. **Zero Trust → Networks → Tunnels → Create a tunnel → Cloudflared.** Name it e.g. `score-overlays`.
+2. On the install step, **don't run their install command**. Just copy the long token after `--token` in it.
+3. Add a **public hostname** (route): subdomain e.g. `scores`, your domain, service **HTTP** and URL
+   `localhost:3080` (your `PORT`). Save.
+4. **Recommended: lock it to you.** Zero Trust → **Access → Applications → Add an application → Self-hosted**, the
+   same hostname, with a policy *Allow* → *Emails* → your email. Visitors then have to log in with a code sent to
+   your email before they even see the PIN screen.
+
+**On the streaming PC:** add to `.env`
+```
+CLOUDFLARE_TUNNEL_TOKEN=<the token>
+PUBLIC_URL=https://scores.yourdomain.com
+```
+then run `update.bat`. The first time it installs `cloudflared` (Windows may ask to allow it). From then on the
+tunnel starts and stops with the server (`start.bat` and `update.bat`), the server window shows the address, and
+the pre-match check shows **remote access on** under *Graphics server*. If the tunnel drops it reconnects by itself;
+the graphics never depend on it.
+
+The PIN still protects every control. A visitor guessing PINs only locks themselves out, not you.
+
 ## Troubleshooting
 
 Start with **Settings → Pre-match check**: it catches most setup problems and says how to fix them.

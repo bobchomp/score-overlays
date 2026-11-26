@@ -31,6 +31,12 @@ export function loadEnv() {
     port: Number(process.env.PORT) || 3000,
     pin,
     generatedPin,
+    // Remote access (optional): a Cloudflare Tunnel token, and the address it was given in Cloudflare.
+    tunnel: {
+      token: String(process.env.CLOUDFLARE_TUNNEL_TOKEN || '').trim(),
+      publicUrl: String(process.env.PUBLIC_URL || '').trim().replace(/\/+$/, ''),
+      binary: String(process.env.CLOUDFLARED_PATH || '').trim(),
+    },
     streamDeckApi: /^(1|on|true|yes)$/i.test(String(process.env.STREAM_DECK_API || '').trim()),
     obs: {
       host: process.env.OBS_HOST || '127.0.0.1',

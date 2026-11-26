@@ -5,11 +5,12 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import express from 'express';
 import { WebSocketServer } from 'ws';
-import { loadEnv, loadTheme, loadObsConfig, themeCss, PUBLIC_DIR } from './config.js';
+import { loadEnv, loadTheme, loadObsConfig, themeCss, PUBLIC_DIR, DATA_DIR } from './config.js';
 import { Store } from './store.js';
 import { ObsLink } from './obs.js';
 import { Demo } from './demo.js';
-import { createAuth } from './auth.js';
+import { createAuth, clientIp } from './auth.js';
+import { Tunnel, tunnelPidFile } from './tunnel.js';
 import { createApi } from './api.js';
 import { score, eventMinute, timerMinute, PLAYING_PERIODS } from '../public/shared/match.js';
 import { Replays, disabledReplays } from './replays.js';
@@ -49,8 +50,18 @@ function connectedPages() {
 }
 
 async function health() {
-  return groupHealth(await runHealth({ env, obs, replays, clients: connectedPages, build: BUILD, commit: COMMIT, startedAt: STARTED_AT, state: store.state }));
+  return groupHealth(await runHealth({ env, obs, replays, clients: connectedPages, build: BUILD, commit: COMMIT, startedAt: STARTED_AT, state: store.state, tunnel: tunnel.status }));
 }
+
+// Remote access (Cloudflare Tunnel): runs alongside the server when .env has CLOUDFLARE_TUNNEL_TOKEN.
+const tunnel = new Tunnel({ ...env.tunnel, pidFile: tunnelPidFile(DATA_DIR) });
+let lastTunnelState = null;
+tunnel.on('change', s => {
+  if (s.state === lastTunnelState) return;
+  lastTunnelState = s.state;
+  if (s.state === 'connected') console.log(`[remote] Connected${s.url ? `: ${s.url}/dock` : ''}`);
+  else if (s.state === 'error') console.warn(`[remote] ${s.error || 'tunnel problem'} (the graphics are unaffected)`);
+});
 
 function replayStatus() {
   try { return replays.publicStatus(); } catch (err) { return { disabled: err.message, queue: [], bug: { visible: false } }; }
@@ -122,7 +133,7 @@ function broadcastState() {
 wss.on('connection', (ws, req) => {
   ws.isAlive = true;
   ws.authed = false;
-  ws.ip = req.socket.remoteAddress;
+  ws.ip = clientIp(req);
   ws.on('pong', () => { ws.isAlive = true; });
 
   ws.on('message', async raw => {
@@ -279,7 +290,9 @@ server.listen(env.port, '0.0.0.0', () => {
     console.log(`  !! CONTROL_PIN is not set in .env. Temporary PIN for this run: ${env.pin}`);
   }
   console.log(line);
+  if (env.tunnel.token) console.log(`  Remote (Cloudflare tunnel):     ${env.tunnel.publicUrl ? `${env.tunnel.publicUrl}/dock` : 'starting (set PUBLIC_URL in .env to show the address here)'}`);
   obs.start();
+  try { tunnel.start(); } catch (err) { console.warn('[remote] could not start:', err.message); }
   try { replays.start(); } catch (err) { console.error('[replays] could not start:', err.message); }
   if (process.argv.includes('--demo')) {
     try { demo.start(); } catch (err) { console.warn('[demo]', err.message); }
@@ -303,6 +316,7 @@ function shutdown() {
   store.save();
   obs.stop();
   try { replays.stop(); } catch {}
+  try { tunnel.stop(); } catch {}
   process.exit(0);
 }
 process.on('SIGINT', shutdown);

@@ -1,11 +1,12 @@
 # Score Overlays updater - run it with update.bat (double-click).
 # Safely pulls the latest version from GitHub:
 #   1. checks Git and Node.js are installed
-#   2. stops the running score server
+#   2. stops the running score server (and its remote-access tunnel)
 #   3. backs up and resets any edited files that would block the update
 #      (your theme is kept: config/theme.json edits are copied to data/theme.json)
 #   4. pulls the update and shows what changed
 #   5. runs "npm install" only if the dependencies changed
+#   6. installs cloudflared (once) if a remote-access tunnel token is set in .env
 # Written for Windows PowerShell 5.1 (built into Windows 10/11). ASCII only on purpose.
 # -Folder <path> updates a different copy (used by the automated Windows test).
 param([string]$Folder = '')
@@ -54,6 +55,19 @@ try {
   }
 } catch {
   Say 'Could not check for a running server. If its window is still open, close it now.' 'Yellow'
+}
+# The remote-access tunnel the server started (if any) - the server starts it again afterwards.
+$tunnelPid = Join-Path $root 'data\cloudflared.pid'
+if (Test-Path $tunnelPid) {
+  $tp = 0
+  [int]::TryParse(((Get-Content -Raw $tunnelPid) -as [string]).Trim(), [ref]$tp) | Out-Null
+  $tproc = $null
+  if ($tp -gt 0) { $tproc = Get-Process -Id $tp -ErrorAction SilentlyContinue }
+  if ($tproc -and $tproc.ProcessName -eq 'cloudflared') {
+    Stop-Process -Id $tp -Force -ErrorAction SilentlyContinue
+    Say 'Stopped the remote-access tunnel.' 'Yellow'
+  }
+  Remove-Item $tunnelPid -Force -ErrorAction SilentlyContinue
 }
 
 # ---- 3. local edits that would block the pull ------------------------------
@@ -125,6 +139,24 @@ if ($needInstall) {
   Say 'Installing updated dependencies (npm install)...' 'Cyan'
   & npm install --no-audit --no-fund
   if ($LASTEXITCODE -ne 0) { Fail 'npm install failed. Check the internet connection and run update.bat again.' }
+}
+
+# ---- 6. remote access: install cloudflared once a tunnel token is in .env -----
+$envFile = Join-Path $root '.env'
+$wantTunnel = (Test-Path $envFile) -and ((Get-Content $envFile) -match '^\s*CLOUDFLARE_TUNNEL_TOKEN\s*=\s*\S')
+if ($wantTunnel) {
+  $haveCf = (Get-Command cloudflared -ErrorAction SilentlyContinue) -or
+    (Test-Path 'C:\Program Files (x86)\cloudflared\cloudflared.exe') -or (Test-Path 'C:\Program Files\cloudflared\cloudflared.exe')
+  if (-not $haveCf) {
+    Say ''
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+      Say 'Installing cloudflared for remote access (one time)...' 'Cyan'
+      & winget install --id Cloudflare.cloudflared -e --accept-source-agreements --accept-package-agreements
+      if ($LASTEXITCODE -ne 0) { Say 'Could not install cloudflared. Remote access stays off; the graphics are not affected.' 'Yellow' }
+    } else {
+      Say 'Remote access needs cloudflared: download it from https://github.com/cloudflare/cloudflared/releases (Windows .msi). The graphics work without it.' 'Yellow'
+    }
+  }
 }
 
 Say ''

@@ -31,6 +31,18 @@ export function createAuth(pin) {
   return { check };
 }
 
+/**
+ * Who is asking, for the wrong-PIN lockout. Through the Cloudflare tunnel every visitor arrives from this PC
+ * (cloudflared runs here), so use the visitor address Cloudflare passes on; otherwise one person guessing
+ * PINs would lock everyone out. The header is only believed on connections from this PC itself.
+ */
+export function clientIp(req) {
+  const remote = req.socket?.remoteAddress || '';
+  const local = remote === '127.0.0.1' || remote === '::1' || remote === '::ffff:127.0.0.1';
+  const cf = req.headers?.['cf-connecting-ip'];
+  return local && cf ? `cf:${String(cf).trim()}` : remote || 'unknown';
+}
+
 export function pinFromRequest(req) {
   return req.get('x-pin') || req.query.pin || req.body?.pin || '';
 }

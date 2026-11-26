@@ -128,7 +128,7 @@ async function sceneHasOnTop(obs, sceneName, sourceNames) {
   return mine.some(it => it.sceneItemIndex === top) ? 'top' : 'below';
 }
 
-export async function runHealth({ env, obs, replays, clients, build, commit, startedAt, state = null }) {
+export async function runHealth({ env, obs, replays, clients, build, commit, startedAt, state = null, tunnel = null }) {
   const items = [];
   const safe = async (fn, fallbackLabel) => {
     try { await fn(); } catch (err) { items.push(item(`err-${items.length}`, fallbackLabel, WARN, `Check failed: ${err.message}`)); }
@@ -164,6 +164,14 @@ export async function runHealth({ env, obs, replays, clients, build, commit, sta
   }
   const staleDocks = pages.filter(p => (p.page === 'dock' || p.page === 'setup') && p.build && p.build !== build);
   if (staleDocks.length) items.push(item('docks', 'Control pages', WARN, `${staleDocks.length} dock/setup page(s) are an older version.`, 'Reload them (they normally reload on their own after an update).'));
+
+  // ---- remote access (only when a tunnel token is set)
+  if (tunnel?.enabled) {
+    items.push(tunnel.state === 'connected'
+      ? item('tunnel', 'Remote access', OK, `Connected${tunnel.url ? `: ${tunnel.url}/dock` : ''}`)
+      : item('tunnel', 'Remote access', WARN, tunnel.error || 'The Cloudflare tunnel is still connecting.',
+        'Check the internet connection and the CLOUDFLARE_TUNNEL_TOKEN in .env. The graphics work without it.'));
+  }
 
   // ---- teams and lineups
   if (state) items.push(...lineupChecks(state));
@@ -292,7 +300,7 @@ export async function runHealth({ env, obs, replays, clients, build, commit, sta
 // ---------------------------------------------------------------- grouping for the dock
 // The checks above stay separate (and tested one by one); the dock shows them as a few lines.
 const GROUPS = [
-  { id: 'g-server', label: 'Graphics server', ids: ['server', 'pin', 'docks'] },
+  { id: 'g-server', label: 'Graphics server', ids: ['server', 'pin', 'docks', 'tunnel'] },
   { id: 'g-obs', label: 'Main OBS & overlay', ids: ['main-obs', 'overlay', 'overlay-size', 'obs-source', 'top-live scene', 'top-replay scene'] },
   { id: 'g-sound', label: 'Live sound during replays', ids: ['live-audio'] },
   { id: 'g-replays', label: 'Replays', ids: ['replay-obs', 'buffer', 'disk', 'replay-setup', 'replays'] },
@@ -304,6 +312,7 @@ function okText(i) {
   switch (i.id) {
     case 'server': return i.detail.replace(/^Running on /, '').replace(/ · up .*$/, '');
     case 'pin': return 'PIN set';
+    case 'tunnel': return 'remote access on';
     case 'main-obs': return i.detail;
     case 'overlay': return 'overlay loaded';
     case 'overlay-size': return i.detail;

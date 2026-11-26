@@ -3,7 +3,7 @@ import express from 'express';
 import {
   listTeams, saveTeam, deleteTeam, loadTheme, saveTheme, listFonts, saveLogo, listLogos, loadTeam,
 } from './config.js';
-import { pinFromRequest } from './auth.js';
+import { pinFromRequest, clientIp } from './auth.js';
 import { exportJson, exportCsv } from './export.js';
 
 export function createApi({ store, obs, auth, demo, onThemeChange, snapshot, replays, health, streamDeck = false }) {
@@ -11,7 +11,7 @@ export function createApi({ store, obs, auth, demo, onThemeChange, snapshot, rep
   api.use(express.json({ limit: '1mb' }));
 
   const requirePin = (req, res, next) => {
-    const r = auth.check(pinFromRequest(req), req.ip);
+    const r = auth.check(pinFromRequest(req), clientIp(req));
     if (!r.ok) return res.status(401).json({ ok: false, error: r.error });
     next();
   };
@@ -29,7 +29,7 @@ export function createApi({ store, obs, auth, demo, onThemeChange, snapshot, rep
   api.get('/logos', (req, res) => res.json(listLogos()));
 
   api.post('/auth', (req, res) => {
-    const r = auth.check(req.body?.pin, req.ip);
+    const r = auth.check(req.body?.pin, clientIp(req));
     res.status(r.ok ? 200 : 401).json(r);
   });
 
