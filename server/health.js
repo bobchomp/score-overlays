@@ -167,7 +167,11 @@ export async function runHealth({ env, obs, replays, clients, build, commit, sta
 
   // ---- remote access (only when a tunnel token is set)
   if (tunnel?.enabled) {
-    items.push(tunnel.state === 'connected'
+    const originBad = tunnel.originErrorAt && Date.now() - tunnel.originErrorAt < 5 * 60000;
+    items.push(tunnel.state === 'connected' && originBad
+      ? item('tunnel', 'Remote access', WARN, `Connected to Cloudflare, but it can't reach this server, so the remote address shows "Bad gateway". (${tunnel.originError})`,
+        `In Cloudflare (Networks → Tunnels → your tunnel → Public hostnames), set the service to HTTP and the URL to 127.0.0.1:${port}.`)
+      : tunnel.state === 'connected'
       ? item('tunnel', 'Remote access', OK, `Connected${tunnel.url ? `: ${tunnel.url}/dock` : ''}`)
       : item('tunnel', 'Remote access', WARN, tunnel.error || 'The Cloudflare tunnel is still connecting.',
         'Check the internet connection and the CLOUDFLARE_TUNNEL_TOKEN in .env. The graphics work without it.'));

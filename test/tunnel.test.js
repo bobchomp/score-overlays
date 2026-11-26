@@ -54,3 +54,23 @@ test('PIN lockout: visitors through the tunnel are told apart; the header is ign
   assert.equal(clientIp(req('127.0.0.1')), '127.0.0.1');
   assert.equal(clientIp(req('192.168.1.20', '203.0.113.5')), '192.168.1.20', 'a phone on the LAN cannot pretend');
 });
+
+test('"Bad gateway": cloudflared connected but cannot reach the server is reported, not shown as fine', async () => {
+  const bad = path.join(dir, 'fake-bad.mjs');
+  fs.writeFileSync(bad, `
+    console.error('2026-01-01T00:00:00Z INF Registered tunnel connection connIndex=0');
+    setTimeout(() => console.error('2026-01-01T00:00:01Z ERR Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp [::1]:3080: connectex: No connection could be made'), 100);
+    setInterval(() => {}, 1000);
+  `);
+  const t = new Tunnel({ token: 't', binary: process.execPath, argsPrefix: [bad], pidFile: path.join(dir, 'd.pid') });
+  t.start();
+  await until(() => t.status.originErrorAt);
+  assert.equal(t.status.state, 'connected');
+  assert.match(t.status.originError, /Unable to reach the origin/);
+  const { runHealth } = await import('../server/health.js');
+  const r = await runHealth({ env: { port: 3080 }, obs: { status: { connected: false } }, replays: null, clients: () => [], startedAt: Date.now(), tunnel: t.status });
+  const item = r.items.find(i => i.id === 'tunnel');
+  assert.equal(item.status, 'warn');
+  assert.match(item.fix, /127\.0\.0\.1:3080/);
+  t.stop();
+});

@@ -66,6 +66,9 @@ export class Tunnel extends EventEmitter {
       } else if (/Unregistered tunnel connection|Connection terminated/i.test(line)) {
         const n = Math.max(0, this.status.connections - 1);
         this.set({ connections: n, state: n ? 'connected' : 'starting' });
+      } else if (/\bERR\b/.test(line) && /origin|dial tcp|connection refused/i.test(line)) {
+        // Cloudflare reached this PC but cloudflared couldn't reach the score server: visitors get "Bad gateway".
+        this.set({ originError: line.replace(/^\S+\s+ERR\s+/, '').slice(0, 200), originErrorAt: Date.now() });
       } else if (/\bERR\b/.test(line)) {
         this.set({ error: line.replace(/^\S+\s+ERR\s+/, '').slice(0, 200) });
       }

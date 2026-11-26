@@ -155,7 +155,7 @@ that's on a (free) Cloudflare account. Nothing is opened on your router.
 1. **Zero Trust → Networks → Tunnels → Create a tunnel → Cloudflared.** Name it e.g. `score-overlays`.
 2. On the install step, **don't run their install command**. Just copy the long token after `--token` in it.
 3. Add a **public hostname** (route): subdomain e.g. `scores`, your domain, service **HTTP** and URL
-   `localhost:3080` (your `PORT`). Save.
+   `127.0.0.1:3080` (your `PORT`; use the numbers, not `localhost`). Save.
 4. **Recommended: lock it to you.** Zero Trust → **Access → Applications → Add an application → Self-hosted**, the
    same hostname, with a policy *Allow* → *Emails* → your email. Visitors then have to log in with a code sent to
    your email before they even see the PIN screen.

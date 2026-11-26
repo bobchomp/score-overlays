@@ -56,7 +56,12 @@ async function health() {
 // Remote access (Cloudflare Tunnel): runs alongside the server when .env has CLOUDFLARE_TUNNEL_TOKEN.
 const tunnel = new Tunnel({ ...env.tunnel, pidFile: tunnelPidFile(DATA_DIR) });
 let lastTunnelState = null;
+let lastOriginWarn = 0;
 tunnel.on('change', s => {
+  if (s.originErrorAt && s.originErrorAt - lastOriginWarn > 60000) {
+    lastOriginWarn = s.originErrorAt;
+    console.warn(`[remote] Cloudflare can't reach this server (visitors see "Bad gateway"). In Cloudflare, set the hostname's service to HTTP and URL 127.0.0.1:${env.port}.`);
+  }
   if (s.state === lastTunnelState) return;
   lastTunnelState = s.state;
   if (s.state === 'connected') console.log(`[remote] Connected${s.url ? `: ${s.url}/dock` : ''}`);
