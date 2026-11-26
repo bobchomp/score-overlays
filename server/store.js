@@ -9,6 +9,7 @@ import { actions } from './actions.js';
 
 export const STATE_FILE = path.join(DATA_DIR, 'state.json');
 const UNDO_LIMIT = 30;
+const MERGE_MS = 10 * 60 * 1000; // lineup edits within 10 minutes of each other undo together
 
 function emptySide() {
   return {
@@ -81,10 +82,18 @@ export class Store extends EventEmitter {
     }
     if (def.undo) {
       const label = typeof def.undo === 'function' ? def.undo(this.state, payload, draft) : def.undo;
-      const snapshot = {};
-      for (const k of UNDO_KEYS) snapshot[k] = this.state[k];
-      this.undoStack.push({ label, type, snapshot: structuredClone(snapshot), at: ctx.now });
-      if (this.undoStack.length > UNDO_LIMIT) this.undoStack.shift();
+      const merge = def.mergeUndo?.(payload || {}) ? type : null;
+      const top = this.undoStack[this.undoStack.length - 1];
+      if (merge && top?.merge === merge && ctx.now - (top.lastAt || top.at) < MERGE_MS) {
+        // Same kind of edit straight after the last one (e.g. autosaved lineup tweaks): keep the snapshot from
+        // before the first edit, so one undo takes the whole run back.
+        top.lastAt = ctx.now;
+      } else {
+        const snapshot = {};
+        for (const k of UNDO_KEYS) snapshot[k] = this.state[k];
+        this.undoStack.push({ label, type, merge, snapshot: structuredClone(snapshot), at: ctx.now, lastAt: ctx.now });
+        if (this.undoStack.length > UNDO_LIMIT) this.undoStack.shift();
+      }
     }
     const before = this.state;
     this.commit(draft);

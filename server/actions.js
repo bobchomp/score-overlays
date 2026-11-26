@@ -93,7 +93,9 @@ function buildSide(teamId, opts = {}) {
 export const actions = {
   // ---------------- match setup ----------------
   'match.setup': {
-    undo: 'Lineups',
+    undo: (state, p) => (p.newMatch ? 'New match' : 'Lineups'),
+    // A run of autosaved lineup edits is one undo step (see Store.dispatch).
+    mergeUndo: p => !p.newMatch,
     run(state, p) {
       for (const s of SIDES) {
         if (p[s]?.teamId) state.teams[s] = buildSide(p[s].teamId, p[s]);

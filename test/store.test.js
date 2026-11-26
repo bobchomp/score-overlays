@@ -281,3 +281,25 @@ test('undo reports which action it undid (so a mistaken goal can drop its replay
   assert.equal(seen.at(-1), 'goal.add');
   clearTimeout(s.timer);
 });
+
+test('a run of lineup edits is one undo step, so it never pushes goals out of the undo history', () => {
+  const { s, ok } = fresh();
+  ok(s.dispatch('clock.period', { period: '1H', start: true }));
+  ok(s.dispatch('goal.add', { team: 'home' }));
+  const depth = s.undoInfo().depth;
+  for (let i = 0; i < 40; i++) ok(s.dispatch('match.setup', { competition: `Cup ${i}` }));
+  assert.equal(s.undoInfo().depth, depth + 1, 'forty edits, one undo step');
+  assert.equal(s.undoInfo().label, 'Lineups');
+  ok(s.dispatch('undo'));
+  assert.equal(s.state.match.competition, '', 'the whole run is undone');
+  assert.equal(s.state.events.length, 1, 'the goal is still there');
+  ok(s.dispatch('undo'));
+  assert.equal(s.state.events.length, 0, 'and the goal is next in line');
+  ok(s.dispatch('match.setup', { competition: 'A' }));
+  ok(s.dispatch('goal.add', { team: 'home' }));
+  ok(s.dispatch('match.setup', { competition: 'B' }));
+  assert.equal(s.undoInfo().label, 'Lineups');
+  ok(s.dispatch('undo'));
+  assert.equal(s.state.match.competition, 'A', 'edits either side of a goal stay separate');
+  clearTimeout(s.timer);
+});

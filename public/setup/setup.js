@@ -248,6 +248,13 @@ function renderSide(s) {
 
   el.querySelector('.team-sel').onchange = e => {
     const t = data.teams.find(x => x.id === e.target.value);
+    // Changes go live straight away, so once the match is under way a team swap must be meant.
+    const st = snap?.state;
+    const underway = st && f.teamId && (st.clock.period !== 'PRE' || st.clock.running || st.events.length);
+    if (underway && !confirm(`The match has started. Change the ${s} team to ${t ? t.name : 'none'}? The scorebug and graphics change straight away.`)) {
+      e.target.value = f.teamId;
+      return;
+    }
     form[s] = { teamId: e.target.value, colors: t ? { ...t.colors } : f.colors, lineup: { starting: [], subs: [], captain: null, formation: t?.formation || '4-4-2', slots: [] } };
     pitchPick[s] = null;
     renderSide(s); renderLeg();
@@ -561,6 +568,14 @@ await loadData();
 renderTeamList();
 renderTheme();
 if (snap) { form = formFromState(snap.state); lineupSaver.reset(); renderMatch(); }
+// Ctrl+Z here undoes the last match change, as it does in the dock (inside a text box it undoes the typing).
+addEventListener('keydown', e => {
+  if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== 'z') return;
+  if (e.target.closest('input, textarea, select')) return;
+  e.preventDefault();
+  try { parent.postMessage({ type: 'undo' }, location.origin); } catch {}
+});
+
 // The dock asks for a refresh when the tab is shown again, so teams saved on the Teams tab appear on the Lineups tab.
 addEventListener('message', async e => {
   if (e.origin !== location.origin || e.data?.type !== 'refresh') return;

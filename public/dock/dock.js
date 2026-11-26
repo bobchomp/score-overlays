@@ -518,6 +518,11 @@ renderPresets();
 
 // ------------------------------------------------------------------ keys
 // The only shortcut is Ctrl+Z (undo). Esc closes an open popup.
+// The Lineups / Teams / Theme pages pass their Ctrl+Z up to here.
+addEventListener('message', e => {
+  if (e.origin !== location.origin || e.data?.type !== 'undo') return;
+  if (!$('btn-undo').disabled) $('btn-undo').click();
+});
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !$('sheet').hidden) { closeSheet(); return; }
   const typing = e.target.closest('input, textarea, select'); // there Ctrl+Z undoes the typing instead

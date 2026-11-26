@@ -97,10 +97,10 @@ match setup, exports, demo, lock, **Reset game**, and replay settings.
 
 Lower thirds for goals, cards and subs hide after 6 seconds (set in **Settings → Theme → Timings**).
 
-**Keyboard:** the only shortcut is **Ctrl+Z** (undo). Everything else is a button, so a stray key press can't pause the clock or start a replay.
+**Keyboard:** the only shortcut is **Ctrl+Z** (undo), and it works on every tab. A run of lineup edits undoes as one step. Everything else is a button, so a stray key press can't pause the clock or start a replay.
 
 **Saving:** the Lineups, Teams and Theme pages save by themselves a moment after you stop changing something (a pill
-in the top corner says *Saving…* / *All changes saved*). Only *Start NEW match* and creating a brand-new team need a button.
+in the top corner says *Saving…* / *All changes saved*). Only *Start NEW match* and creating a brand-new team need a button. Once the match has started, changing a team on Lineups asks first, because it goes live straight away.
 
 **Demo:** **Settings → Run demo match** plays a 3-minute simulated match to check every graphic. Your real match is
 put back when you press **Stop demo**.
