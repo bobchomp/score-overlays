@@ -303,3 +303,11 @@ test('a run of lineup edits is one undo step, so it never pushes goals out of th
   assert.equal(s.state.match.competition, 'A', 'edits either side of a goal stay separate');
   clearTimeout(s.timer);
 });
+
+test('a starting XI is never more than 11 players', () => {
+  const { s, ok } = fresh();
+  const ids = s.state.teams.home.squad.slice(0, 13).map(p => p.id);
+  ok(s.dispatch('match.setup', { home: { teamId: 'riverside', lineup: { starting: ids } } }));
+  assert.equal(s.state.teams.home.lineup.starting.length, 11);
+  clearTimeout(s.timer);
+});

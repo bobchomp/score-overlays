@@ -242,7 +242,7 @@ function renderSide(s) {
         const xi = f.lineup.starting.includes(p.id);
         const sub = f.lineup.subs.includes(p.id);
         return `<tr data-pid="${esc(p.id)}"><td class="n">${esc(p.number ?? '')}</td><td>${esc(p.name)}</td><td class="pos">${esc(p.position)}</td>
-          <td><span class="role"><button data-r="xi" class="${xi ? 'on' : ''}">XI</button><button data-r="sub" class="${sub ? 'on' : ''}">SUB</button></span></td>
+          <td><span class="role"><button data-r="xi" class="${xi ? 'on' : ''}" ${!xi && nXI >= 11 ? 'disabled title="The XI is full: take a player out first"' : ''}>XI</button><button data-r="sub" class="${sub ? 'on' : ''}">SUB</button></span></td>
           <td><input type="radio" class="cap" name="cap-${s}" ${f.lineup.captain === p.id ? 'checked' : ''} ${xi ? '' : 'disabled'}></td></tr>`;
       }).join('')}</tbody></table>` : '<p class="hint">Teams are managed on the Teams tab.</p>'}`;
 
@@ -290,6 +290,7 @@ function renderSide(s) {
       const lu = f.lineup;
       const r = b.dataset.r;
       const wasOn = (r === 'xi' ? lu.starting : lu.subs).includes(pid);
+      if (r === 'xi' && !wasOn && lu.starting.length >= 11) return toast('The XI already has 11 players. Take one out first.', true);
       lu.starting = lu.starting.filter(x => x !== pid);
       lu.subs = lu.subs.filter(x => x !== pid);
       if (!wasOn) (r === 'xi' ? lu.starting : lu.subs).push(pid);

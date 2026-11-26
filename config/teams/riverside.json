@@ -7,6 +7,8 @@
     "text": "#ffffff"
   },
   "logo": "/assets/logos/riverside.svg",
+  "manager": "",
+  "formation": "4-4-2",
   "squad": [
     {
       "id": "p1",

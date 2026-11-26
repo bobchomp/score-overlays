@@ -81,3 +81,4 @@ summary { cursor: pointer; color: var(--ui-muted); font-weight: 600; }
 .autosave.ok { color: #bff0cc; border-color: var(--ui-ok); background: #123d22; }
 .autosave.warn { color: #f2cc60; border-color: #c99a14; background: #3d2e05; }
 .autosave.bad { color: #ffb3ae; border-color: var(--ui-bad); background: #4a1416; }
+.role button:disabled { opacity: .35; cursor: not-allowed; }

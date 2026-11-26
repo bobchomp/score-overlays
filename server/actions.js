@@ -78,7 +78,7 @@ function buildSide(teamId, opts = {}) {
   if (!team) throw new Error(`Team "${teamId}" not found`);
   const ids = new Set(team.squad.map(p => p.id));
   const lineup = opts.lineup || {};
-  const starting = (lineup.starting || []).filter(id => ids.has(id));
+  const starting = (lineup.starting || []).filter(id => ids.has(id)).slice(0, 11); // an XI is 11 players
   const subs = (lineup.subs || []).filter(id => ids.has(id) && !starting.includes(id));
   // Formation (optional): the lineup graphic draws the XI on a pitch; without one it lists them.
   const formation = isFormation(lineup.formation) ? lineup.formation : null;
