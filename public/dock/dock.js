@@ -517,10 +517,14 @@ renderPresets();
 
 
 // ------------------------------------------------------------------ keys
-// No match shortcuts (they were never used and Space could pause the clock by accident).
-// Esc only closes an open popup.
+// The only shortcut is Ctrl+Z (undo). Esc closes an open popup.
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && !$('sheet').hidden) closeSheet();
+  if (e.key === 'Escape' && !$('sheet').hidden) { closeSheet(); return; }
+  const typing = e.target.closest('input, textarea, select'); // there Ctrl+Z undoes the typing instead
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z' && !typing) {
+    e.preventDefault();
+    if (!$('btn-undo').disabled) $('btn-undo').click();
+  }
 });
 
 // ------------------------------------------------------------------ rendering
