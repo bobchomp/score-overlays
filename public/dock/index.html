@@ -27,7 +27,7 @@
     <span class="top-title" id="top-title">Match Control</span>
     <button class="health-chip warn" id="health-chip" hidden title="Pre-match check found something"></button>
     <a class="btn preview-btn" href="/overlay/?preview=1" target="_blank" rel="noopener" title="Open the overlay preview in a new tab">Preview ↗</a>
-    <button class="btn undo" id="btn-undo" data-act="undo" title="Undo (Ctrl+Z)" disabled>⟲ Undo</button>
+    <button class="btn undo" id="btn-undo" data-act="undo" title="Undo the last change" disabled>⟲ Undo</button>
     <nav class="dock-tabs" role="tablist">
       <button class="dock-tab active" data-dock-tab="live" role="tab">Live</button>
       <button class="dock-tab" data-dock-tab="setup" role="tab">Lineups</button>
@@ -137,7 +137,7 @@
             <button class="tog" id="tog-lu-away" data-act="lineup" data-side="away"><small>Lineup</small><span class="lu-name">AWAY</span></button>
           </div>
           <button class="tog" id="tog-clock" data-act="tog-clock">Scorebug clock</button>
-          <button class="tog hide-all" data-act="hide-all">Hide all <kbd>Esc</kbd></button>
+          <button class="tog hide-all" data-act="hide-all">Hide all</button>
         </div>
       </section>
       <section class="card cards-card">
@@ -196,7 +196,6 @@
           <strong id="r-volume-val">50%</strong>
         </label>
         <button class="btn r-btn r-abort" data-replay="abort" id="r-abort">■ ABORT / BACK TO LIVE</button>
-        <p class="hint" id="r-keys"></p>
       </section>
       <section class="card r-notice-card" id="r-notice-card" hidden><div id="r-notice"></div></section>
       <section class="card r-queue-card">
@@ -237,9 +236,6 @@
         <ul class="health-list" id="health-list"></ul>
         <div class="row"><button class="btn primary grow" id="health-run">Run check now</button></div>
       </section>
-      <section class="card" id="preview-card" hidden>
-        <div class="preview-wrap" id="preview-wrap"><iframe id="preview" title="Overlay preview" tabindex="-1"></iframe></div>
-      </section>
       <section class="card options-card">
         <h2>Options</h2>
         <label class="check"><input type="checkbox" id="opt-show-goal"> Auto-show goal graphic</label>
@@ -247,7 +243,6 @@
         <label class="check"><input type="checkbox" id="opt-sting-away"> Play big GOAL! sting for away goals</label>
         <label class="check"><input type="checkbox" id="opt-show-card"> Queue card graphics (play with Show)</label>
         <label class="check"><input type="checkbox" id="opt-show-sub"> Queue sub graphics (play with Show)</label>
-        <label class="check"><input type="checkbox" id="opt-preview"> Show overlay preview</label>
         <div class="row wrap">
           <a class="btn small" id="export-json" href="#" download>Export JSON</a>
           <a class="btn small" id="export-csv" href="#" download>Export CSV</a>
@@ -256,7 +251,6 @@
           <button class="btn small" data-act="demo-start">Run demo match</button>
           <button class="btn small ghost" data-act="lock">Lock (forget PIN)</button>
         </div>
-        <p class="hint">Shortcuts: <kbd>G</kbd> home goal · <kbd>H</kbd> away goal · <kbd>Space</kbd> start/pause · <kbd>Esc</kbd> hide all · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo</p>
       </section>
       <section class="card reset-card">
         <h2>Reset game</h2>

@@ -73,7 +73,7 @@ Open the dock's **Settings** tab and find **Replay settings**:
 - **Main OBS**: leave the URL blank to use `OBS_HOST` / `OBS_PORT` / `OBS_PASSWORD` from `.env`, or enter
   another address and password.
 - **Replay OBS**: `ws://127.0.0.1:4456` and the password from step 1.4.
-- Replay length (default **8 s**), slow-motion speed (default **50 %**) and keyboard shortcuts.
+- Replay length (default **8 s**), and slow-motion speed (default **50 %**).
 
 **Save settings.** The dots at the top of the Replays section (Live tab) turn green: **Main OBS**, **Replay OBS**, and **Buffer: running**.
 Both connections retry every 5 seconds, so restarting either OBS reconnects on its own.
@@ -105,11 +105,8 @@ Safety rules:
   scene/source/transition name that doesn't exist, a deleted file, a save that timed out, and the Replay OBS
   being disconnected.
 
-### Keyboard shortcuts (dock focused, either tab)
-Defaults: **R** replay 100 % · **T** replay slow-mo · **M** mark · **B** abort. Change them under *Settings → Replay settings*: click
-the box and press a key (Backspace clears it). G, H, Space, Esc and Z are reserved for the match controls.
-
 ### Stream Deck / Companion
+Off by default: add `STREAM_DECK_API=on` to `.env` and restart to use these.
 POST with the PIN (`X-Pin` header or `?pin=`):
 `/api/replay/now` · `/api/replay/slow` · `/api/replay/mark` (optional `?tag=Goal`) · `/api/replay/abort` · `/api/replay/play-all`
 

@@ -31,6 +31,7 @@ export function loadEnv() {
     port: Number(process.env.PORT) || 3000,
     pin,
     generatedPin,
+    streamDeckApi: /^(1|on|true|yes)$/i.test(String(process.env.STREAM_DECK_API || '').trim()),
     obs: {
       host: process.env.OBS_HOST || '127.0.0.1',
       port: Number(process.env.OBS_PORT) || 4455,

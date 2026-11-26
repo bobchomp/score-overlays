@@ -9,7 +9,7 @@ or your phone.
 
 - **Graphics:** scorebug (clock, added time, red cards, aggregate), goal sting and scorer, cards, subs, kick-off /
   half-time / full-time boards, lineups, text lower thirds, penalty shootout tracker, REPLAY bug and wipe.
-- **Control dock:** squad pickers (no typing names mid-match), undo, keyboard shortcuts, pre-match check.
+- **Control dock:** squad pickers (no typing names mid-match), undo, pre-match check, everything saves by itself.
 - **Replays** (optional): instant replays from a second OBS, a clip queue, and a highlights reel after the match.
 - **Reliable:** all state is saved on every change. Refresh any page or restart the server and everything comes
   back, clock included. **No internet needed** at match time.
@@ -75,7 +75,7 @@ queue · match events. On a narrow window it stacks, with score, clock and repla
 
 **Top bar:** **Preview ↗** opens the overlay preview in a new tab. `http://localhost:3000/` now opens the dock.
 
-**Settings tab:** pre-match check, overlay preview, options (auto-show graphics, GOAL! sting for home/away goals),
+**Settings tab:** pre-match check (OBS, replays, sound, and now lineups and kit colours), options (auto-show graphics, GOAL! sting for home/away goals),
 match setup, exports, demo, lock, **Reset game**, and replay settings.
 
 | Action | How |
@@ -97,9 +97,10 @@ match setup, exports, demo, lock, **Reset game**, and replay settings.
 
 Lower thirds for goals, cards and subs hide after 6 seconds (set in **Settings → Theme → Timings**).
 
-**Shortcuts** (click inside the dock first): `G` home goal · `H` away goal · `Space` start/pause · `Esc` hide all
-graphics · `Ctrl+Z` undo · `R` replay · `T` slow-mo replay · `M` mark · `B` abort replay (replay keys can be
-changed in Replay settings).
+**No keyboard shortcuts:** everything is a button, so a stray key press can't pause the clock or start a replay.
+
+**Saving:** the Lineups, Teams and Theme pages save by themselves a moment after you stop changing something (a pill
+in the top corner says *Saving…* / *All changes saved*). Only *Start NEW match* and creating a brand-new team need a button.
 
 **Demo:** **Settings → Run demo match** plays a 3-minute simulated match to check every graphic. Your real match is
 put back when you press **Stop demo**.
@@ -122,6 +123,9 @@ The dock has three tabs: **Live**, **Lineups** (teams, starting XI, formation, c
 
 ## 5. Stream Deck / Bitfocus Companion
 
+**Turned off by default.** To use these, add `STREAM_DECK_API=on` to `.env` and restart the server. Until then they
+answer "The Stream Deck API is turned off".
+
 **POST** with the PIN (`X-Pin` header or `?pin=…`), e.g. `http://192.168.1.20:3000/api/goal/home?pin=1234`:
 
 | Endpoint | Does |
@@ -131,6 +135,7 @@ The dock has three tabs: **Live**, **Lineups** (teams, starting XI, formation, c
 | `/api/period/2H` | Period (`PRE 1H HT 2H FT ET1 ET2 PEN`) |
 | `/api/added-time/3` | Added time |
 | `/api/added-time/show`, `/api/added-time/hide` | Show or hide the added-time badge |
+| `/api/queue/show` · `/api/queue/clear` | Play / clear the cards & subs waiting under *To show* |
 | `/api/board/HT` · `/api/lineup/home` | Toggle a board (`KO HT FT`) / lineup |
 | `/api/scorebug/toggle` · `/api/scorebug/clock/toggle` · `/api/hide-all` · `/api/undo` | |
 | `/api/pens/home/scored` · `/api/pens/away/missed` · `/api/pens/toggle` | Penalty shootout |
@@ -148,7 +153,6 @@ Start with **Settings → Pre-match check**: it catches most setup problems and 
 - **"ANOTHER PROGRAM IS USING PORT" in the server window,** or "connection was reset" in the browser: another app is on
   that port. Set e.g. `PORT=3080` in `.env`, restart, and change the overlay/dock URLs in OBS to `:3080`.
 - **"Port … is already in use":** the server is already running in another window.
-- **Shortcuts do nothing:** click inside the dock first so it has keyboard focus.
 - **Start completely fresh:** stop the server and delete `data/state.json`.
 
 ## For developers

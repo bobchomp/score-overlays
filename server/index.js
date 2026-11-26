@@ -49,7 +49,7 @@ function connectedPages() {
 }
 
 function health() {
-  return runHealth({ env, obs, replays, clients: connectedPages, build: BUILD, commit: COMMIT, startedAt: STARTED_AT });
+  return runHealth({ env, obs, replays, clients: connectedPages, build: BUILD, commit: COMMIT, startedAt: STARTED_AT, state: store.state });
 }
 
 function replayStatus() {
@@ -85,7 +85,7 @@ app.get('/theme.css', (req, res) => {
 });
 
 app.use('/api', createApi({
-  store, obs, auth, demo, snapshot, replays, health,
+  store, obs, auth, demo, snapshot, replays, health, streamDeck: env.streamDeckApi,
   onThemeChange() { theme = loadTheme(); themeRev = Date.now(); broadcastState(); },
 }));
 
@@ -211,14 +211,19 @@ wss.on('close', () => clearInterval(heartbeat));
 
 store.on('change', broadcastState);
 
-// A goal taken off (− remove, ✕ in the events list, or Undo) renames its replay "<team> <n> - Disallowed";
-// undoing that removal puts the name back. Match resets are left alone.
+// A goal taken off (− remove or ✕ in the events list) renames its replay "<team> <n> - Disallowed";
+// undoing that removal puts the name back. Undo straight after logging a goal means it was pressed by
+// mistake, so its replay is deleted instead. Match resets are left alone.
 const GOAL_EDITS = new Set(['goal.removeLast', 'event.delete', 'undo']);
-store.on('action', ({ type, before, after }) => {
+store.on('action', ({ type, undone, before, after }) => {
   if (!GOAL_EDITS.has(type)) return;
   const ids = s => new Set(s.events.filter(e => e.type === 'goal').map(e => e.id));
   const was = ids(before), now = ids(after);
-  for (const id of was) if (!now.has(id)) replays.goalDisallowed(id, true);
+  for (const id of was) {
+    if (now.has(id)) continue;
+    if (type === 'undo' && undone === 'goal.add') replays.goalClipDiscard(id);
+    else replays.goalDisallowed(id, true);
+  }
   if (type === 'undo') for (const id of now) if (!was.has(id)) replays.goalDisallowed(id, false);
 });
 obs.on('status', broadcastState);

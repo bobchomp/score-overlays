@@ -36,9 +36,8 @@
         <div class="card side" data-side="away"></div>
       </div>
       <div class="card actions">
-        <button class="btn primary" id="m-apply">Apply to current match</button>
         <button class="btn danger" id="m-new">Start NEW match (clears score, events &amp; clock)</button>
-        <p class="hint">"Apply" keeps the score and events (use it to fix a lineup or change kit colours mid-match).</p>
+        <p class="hint">Changes on this page save by themselves and go straight to the current match (the score and events are kept).</p>
       </div>
     </section>
 
@@ -70,6 +69,7 @@
     </form>
   </div>
   <div id="toast" class="toast" hidden></div>
+  <div id="autosave" class="autosave" hidden></div>
   <input type="file" id="file-input" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif" hidden>
   <script type="module" src="/setup/setup.js"></script>
 </body>

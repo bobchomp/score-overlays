@@ -416,6 +416,17 @@ export class Replays extends EventEmitter {
    * A goal was chopped off (VAR, offside...) or put back with Undo: its clip becomes
    * "<team> <n> - Disallowed", or loses that ending again. Never throws.
    */
+  /** A goal undone straight after it was logged (pressed by mistake): delete its replay. Never throws. */
+  goalClipDiscard(eventId) {
+    try {
+      const c = this.queue.find(x => x.goalEventId === eventId);
+      if (!c) return;
+      this.remove(c.id);
+      // The file too, so the next real goal can take the name "<team> <n>" (if it's busy it just stays).
+      try { fs.rmSync(c.path, { force: true }); } catch {}
+    } catch (err) { console.error('[replays] could not remove the undone goal clip:', err.message); }
+  }
+
   goalDisallowed(eventId, disallowed = true) {
     try {
       const c = this.queue.find(x => x.goalEventId === eventId);
@@ -852,7 +863,7 @@ export function disabledReplays(reason) {
   const e = new EventEmitter();
   const status = { disabled: reason, queue: [], bug: { visible: false, speed: 100 }, saveBlocked: `Replays unavailable: ${reason}`, playBlocked: `Replays unavailable: ${reason}` };
   return Object.assign(e, {
-    start() {}, stop() {}, goalDisallowed() {},
+    start() {}, stop() {}, goalDisallowed() {}, goalClipDiscard() {},
     publicStatus: () => status,
     handle: async () => { throw new Error(`Replays unavailable: ${reason}`); },
   });

@@ -147,3 +147,18 @@ test('live sound: only global audio -> green with the reason', async t => {
   assert.equal(it.status, 'ok');
   assert.match(it.detail, /Heard during replays: Mic\/Aux \(global\)/);
 });
+
+test('pre-match check: lineups and kit colours', async () => {
+  const { lineupChecks } = await import('../server/health.js');
+  const team = (name, primary, lineup) => ({ id: name.toLowerCase(), name, colors: { primary }, lineup });
+  const ids = Array.from({ length: 11 }, (_, i) => `p${i}`);
+  const good = { starting: ids, captain: 'p5', formation: '4-4-2', slots: ids };
+  let r = lineupChecks({ teams: { home: team('Ross', '#0b1f5c', good), away: team('Ayr', '#c8102e', good) } });
+  assert.deepEqual(r.map(i => i.status), ['ok', 'ok']);
+  r = lineupChecks({ teams: { home: team('Ross', '#0b1f5c', { starting: ids.slice(0, 10), formation: null }), away: team('Ayr', '#0c2060', good) } });
+  assert.equal(r[0].status, 'warn');
+  assert.match(r[0].detail, /10 players.*no captain.*no formation/i);
+  assert.equal(r.find(i => i.id === 'kits')?.status, 'warn', 'similar blues flagged');
+  r = lineupChecks({ teams: { home: { id: null, lineup: {} }, away: team('Ayr', '#c8102e', good) } });
+  assert.equal(r[0].id, 'teams');
+});

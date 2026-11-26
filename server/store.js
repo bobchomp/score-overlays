@@ -83,7 +83,7 @@ export class Store extends EventEmitter {
       const label = typeof def.undo === 'function' ? def.undo(this.state, payload, draft) : def.undo;
       const snapshot = {};
       for (const k of UNDO_KEYS) snapshot[k] = this.state[k];
-      this.undoStack.push({ label, snapshot: structuredClone(snapshot), at: ctx.now });
+      this.undoStack.push({ label, type, snapshot: structuredClone(snapshot), at: ctx.now });
       if (this.undoStack.length > UNDO_LIMIT) this.undoStack.shift();
     }
     const before = this.state;
@@ -102,7 +102,7 @@ export class Store extends EventEmitter {
     if (lt.visible && lt.eventId && !draft.events.some(e => e.id === lt.eventId)) lt.visible = false;
     const before = this.state;
     this.commit(draft);
-    this.emit('action', { type: 'undo', before, after: this.state });
+    this.emit('action', { type: 'undo', undone: entry.type, before, after: this.state });
     return { ok: true, result: { undone: entry.label } };
   }
 

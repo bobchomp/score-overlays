@@ -74,3 +74,10 @@ summary { cursor: pointer; color: var(--ui-muted); font-weight: 600; }
 .pm.empty .pm-dot { background: rgba(0,0,0,.35); border-style: dashed; color: rgba(255,255,255,.7); }
 .pm.picked .pm-dot { outline: 3px solid #ffd200; outline-offset: 2px; transform: scale(1.12); }
 .pm-name { font-size: 11px; font-weight: 700; text-shadow: 0 1px 2px #000; white-space: nowrap; max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
+
+/* autosave status */
+.autosave { position: fixed; top: 10px; right: 12px; z-index: 50; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 700;
+  background: var(--ui-card2); border: 1px solid var(--ui-line); color: var(--ui-muted); box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+.autosave.ok { color: #bff0cc; border-color: var(--ui-ok); background: #123d22; }
+.autosave.warn { color: #f2cc60; border-color: #c99a14; background: #3d2e05; }
+.autosave.bad { color: #ffb3ae; border-color: var(--ui-bad); background: #4a1416; }

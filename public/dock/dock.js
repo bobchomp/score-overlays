@@ -62,7 +62,6 @@ function setTab(tab, sub) {
   showFrame('teams-app', settings && subTab === 'teams');
   showFrame('theme-app', settings && subTab === 'theme');
   try { localStorage.setItem('dock-tab', tab); localStorage.setItem('dock-subtab', subTab); } catch {}
-  fitPreview();
 }
 document.querySelectorAll('[data-dock-tab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.dockTab)));
 document.querySelectorAll('[data-sub-tab]').forEach(b => b.addEventListener('click', () => setTab('settings', b.dataset.subTab)));
@@ -516,43 +515,12 @@ function renderPresets() {
 }
 renderPresets();
 
-// ------------------------------------------------------------------ preview
-function setPreview(on) {
-  $('preview-card').hidden = !on;
-  const f = $('preview');
-  if (on && !f.src) f.src = '/overlay/?preview=1';
-  if (!on) f.removeAttribute('src');
-  try { localStorage.setItem('dock-preview', on ? '1' : ''); } catch {}
-  fitPreview();
-}
-function fitPreview() {
-  const w = $('preview-wrap').clientWidth;
-  if (w) $('preview').style.transform = `scale(${w / 1920})`;
-}
-window.addEventListener('resize', fitPreview);
-$('opt-preview').addEventListener('change', e => setPreview(e.target.checked));
-let previewOn = false;
-try { previewOn = localStorage.getItem('dock-preview') === '1'; } catch {}
-$('opt-preview').checked = previewOn;
-setPreview(previewOn);
 
-// ------------------------------------------------------------------ keyboard shortcuts
+// ------------------------------------------------------------------ keys
+// No match shortcuts (they were never used and Space could pause the clock by accident).
+// Esc only closes an open popup.
 document.addEventListener('keydown', e => {
-  const typing = e.target.closest('input, textarea, select');
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !typing) {
-    e.preventDefault(); $('btn-undo').click(); return;
-  }
-  if (e.key === 'Escape') {
-    if (!$('sheet').hidden) { closeSheet(); return; }
-    if (typing) { e.target.blur(); return; }
-    act('graphics.hideAll');
-    return;
-  }
-  if (typing || e.ctrlKey || e.metaKey || e.altKey || !$('sheet').hidden || !$('pin-screen').hidden || !snap) return;
-  const k = e.key.toLowerCase();
-  if (k === 'g') { e.preventDefault(); goalFlow('home'); }
-  else if (k === 'h') { e.preventDefault(); goalFlow('away'); }
-  else if (e.code === 'Space') { e.preventDefault(); act('clock.toggle'); }
+  if (e.key === 'Escape' && !$('sheet').hidden) closeSheet();
 });
 
 // ------------------------------------------------------------------ rendering

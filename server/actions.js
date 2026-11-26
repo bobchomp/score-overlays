@@ -186,6 +186,11 @@ export const actions = {
         minute: p.minute ? String(p.minute) : eventMinute(state.clock, state.match, ctx.now),
         ts: ctx.now,
       };
+      // The team's goal number (used to name its replay "<team> <n>"): one more than the highest goal still
+      // standing, so deleting an earlier goal never reuses a number that's already on a clip, while a
+      // disallowed latest goal (− remove) frees its number for the next one.
+      const own = state.events.filter(e => e.type === 'goal' && e.team === s);
+      ev.number = Math.max(0, ...own.map((e, i) => e.number ?? i + 1)) + 1;
       state.events.push(ev);
       const show = p.show ?? state.settings.autoShow.goal;
       // The big GOAL! sting plays for home goals; away goals only if the operator turned that on.
@@ -198,7 +203,7 @@ export const actions = {
           showEvent(state, ctx, ev, { sting });
         }
       }
-      return { event: ev, teamGoals: state.events.filter(e => e.type === 'goal' && e.team === s).length };
+      return { event: ev, teamGoals: ev.number };
     },
   },
 

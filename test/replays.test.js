@@ -234,6 +234,15 @@ test('replay flow', async t => {
     assert.equal(m.clip.label, 'Hillcrest 1 - Disallowed');
   });
 
+  await t.test('a goal undone straight away (pressed by mistake) loses its clip and file', async () => {
+    const c = await replays.goalClip('Riverside FC 5', 'ev-oops');
+    await until(() => fs.existsSync(c.path), 4000, 'clip saved');
+    replays.goalClipDiscard('ev-oops');
+    assert.equal(replays.queue.some(x => x.id === c.id), false);
+    assert.equal(fs.existsSync(c.path), false);
+    replays.goalClipDiscard('ev-oops'); // already gone: no error
+  });
+
   await t.test('clip files on disk are renamed to the clip name', async () => {
     let r = await replays.handle('mark', { tag: 'Chance' });
     assert.match(path.basename(r.clip.path), /^Chance - 22 minutes( \(\d+\))?\.mkv$/, 'named after the clip (an earlier test made one already)');

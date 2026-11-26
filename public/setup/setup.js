@@ -106,6 +106,52 @@ function colorField(label, value, onChange) {
 
 const byNumber = (a, b) => (a.number ?? 999) - (b.number ?? 999);
 
+// ------------------------------------------------------------------ autosave
+// Each page watches its draft. When it changes and then stays the same for a moment, it's saved.
+// The pill in the corner says what's happening.
+let pillTimer = null;
+function savePill(text, kind = '') {
+  const el = $('autosave');
+  el.textContent = text; el.className = `autosave ${kind}`; el.hidden = false;
+  clearTimeout(pillTimer);
+  if (kind === 'ok') pillTimer = setTimeout(() => { el.hidden = true; }, 2500);
+}
+class Autosaver {
+  constructor({ get, save, check = () => null, delay = 700 }) {
+    Object.assign(this, { get, save, check, delay });
+    this.saved = null; this.seen = null; this.changedAt = 0; this.busy = false; this.blocked = null;
+    setInterval(() => this.tick(), 200);
+  }
+  json() { const v = this.get(); return v == null ? null : JSON.stringify(v); }
+  /** The current draft is what's on the server (just loaded or saved). */
+  reset() { this.saved = this.seen = this.json(); }
+  dirty() { const j = this.json(); return j != null && this.saved != null && j !== this.saved; }
+  tick() {
+    if (this.busy) return;
+    const j = this.json();
+    if (j == null || this.saved == null || j === this.saved) return;
+    if (j !== this.seen) { this.seen = j; this.changedAt = Date.now(); return; }
+    if (Date.now() - this.changedAt < this.delay) return;
+    const why = this.check();
+    if (why) { if (why !== this.blocked) { this.blocked = why; savePill(why, 'warn'); } return; }
+    this.blocked = null;
+    this.flush();
+  }
+  /** Save now if there are changes (e.g. before switching to another team). */
+  async flush() {
+    const j = this.json();
+    if (this.busy || j == null || j === this.saved || this.check()) return;
+    this.busy = true;
+    savePill('Saving…');
+    try {
+      await this.save(JSON.parse(j));
+      this.saved = j;
+      savePill('All changes saved', 'ok');
+    } catch (err) { savePill(`Couldn't save: ${err.message}`, 'bad'); this.changedAt = Date.now() + 3000; }
+    finally { this.busy = false; }
+  }
+}
+
 // ------------------------------------------------------------------ which page
 // This page only runs inside the control dock (Lineups tab, Settings → Teams / Theme): ?embed=match|teams|theme.
 const EMBED = ['match', 'teams', 'theme'].includes(new URLSearchParams(location.search).get('embed'))
@@ -114,7 +160,6 @@ document.querySelectorAll('.tab-panel').forEach(p => { p.hidden = p.id !== `tab-
 
 // ================================================================== MATCH TAB
 let form = null;      // working copy of the match setup
-let formDirty = false;
 
 function formFromState(st) {
   const side = s => ({
@@ -129,11 +174,11 @@ function formFromState(st) {
 function renderMatch() {
   if (!form) return;
   $('m-comp').value = form.competition || '';
-  logoPicker(document.querySelector('[data-target="m-comp-logo"]'), form.competitionLogo, v => { form.competitionLogo = v; formDirty = true; }, () => `${form.competition || 'competition'}-badge`);
+  logoPicker(document.querySelector('[data-target="m-comp-logo"]'), form.competitionLogo, v => { form.competitionLogo = v; }, () => `${form.competition || 'competition'}-badge`);
   for (const s of ['home', 'away']) renderSide(s);
   renderLeg();
 }
-$('m-comp').addEventListener('input', e => { form.competition = e.target.value; formDirty = true; });
+$('m-comp').addEventListener('input', e => { form.competition = e.target.value; });
 
 function renderLeg() {
   const fl = form.firstLeg;
@@ -146,9 +191,9 @@ function renderLeg() {
     $(`m-leg-${s}-name`).textContent = t ? t.name : (s === 'home' ? 'Home team' : 'Away team');
   }
 }
-$('m-2leg').addEventListener('change', e => { form.firstLeg.enabled = e.target.checked; formDirty = true; renderLeg(); });
+$('m-2leg').addEventListener('change', e => { form.firstLeg.enabled = e.target.checked; renderLeg(); });
 for (const s of ['home', 'away']) {
-  $(`m-leg-${s}`).addEventListener('input', e => { form.firstLeg[s] = Math.max(0, Number(e.target.value) || 0); formDirty = true; });
+  $(`m-leg-${s}`).addEventListener('input', e => { form.firstLeg[s] = Math.max(0, Number(e.target.value) || 0); });
 }
 
 const pitchPick = { home: null, away: null }; // slot tapped first when swapping two players
@@ -205,11 +250,11 @@ function renderSide(s) {
     const t = data.teams.find(x => x.id === e.target.value);
     form[s] = { teamId: e.target.value, colors: t ? { ...t.colors } : f.colors, lineup: { starting: [], subs: [], captain: null, formation: t?.formation || '4-4-2', slots: [] } };
     pitchPick[s] = null;
-    formDirty = true; renderSide(s); renderLeg();
+    renderSide(s); renderLeg();
   };
   const colors = el.querySelector('.colors');
   for (const [k, label] of [['primary', 'Primary'], ['secondary', 'Secondary'], ['text', 'Text on primary']]) {
-    colors.append(colorField(label, f.colors[k], v => { f.colors[k] = v; formDirty = true; }));
+    colors.append(colorField(label, f.colors[k], v => { f.colors[k] = v; }));
   }
   if (!team) return;
   el.querySelectorAll('[data-q]').forEach(b => b.onclick = () => {
@@ -218,16 +263,16 @@ function renderSide(s) {
     if (b.dataset.q === 'restsubs') f.lineup.subs = sorted.filter(p => !f.lineup.starting.includes(p.id)).map(p => p.id);
     if (b.dataset.q === 'clear') f.lineup = { starting: [], subs: [], captain: null, formation: f.lineup.formation, slots: [] };
     if (!f.lineup.starting.includes(f.lineup.captain)) f.lineup.captain = null;
-    formDirty = true; renderSide(s);
+    renderSide(s);
   });
   const fsel = el.querySelector('.form-sel');
-  if (fsel) fsel.onchange = () => { f.lineup.formation = fsel.value || null; pitchPick[s] = null; formDirty = true; renderSide(s); };
+  if (fsel) fsel.onchange = () => { f.lineup.formation = fsel.value || null; pitchPick[s] = null; renderSide(s); };
   el.querySelectorAll('.pm[data-slot]').forEach(b => b.onclick = () => {
     const i = Number(b.dataset.slot);
     const first = pitchPick[s];
     if (first == null) pitchPick[s] = i;
     else {
-      if (first !== i) { const sl = f.lineup.slots; [sl[first], sl[i]] = [sl[i], sl[first]]; formDirty = true; }
+      if (first !== i) { const sl = f.lineup.slots; [sl[first], sl[i]] = [sl[i], sl[first]]; }
       pitchPick[s] = null;
     }
     renderSide(s);
@@ -242,36 +287,44 @@ function renderSide(s) {
       lu.subs = lu.subs.filter(x => x !== pid);
       if (!wasOn) (r === 'xi' ? lu.starting : lu.subs).push(pid);
       if (!lu.starting.includes(lu.captain)) lu.captain = null;
-      formDirty = true; renderSide(s);
+      renderSide(s);
     });
-    tr.querySelector('.cap').onchange = () => { f.lineup.captain = pid; formDirty = true; };
+    tr.querySelector('.cap').onchange = () => { f.lineup.captain = pid; };
   });
 }
 
-async function applyMatch(newMatch) {
+// Lineups save by themselves (they never touch the score, events or clock).
+const lineupSaver = new Autosaver({
+  get: () => form,
+  check: () => (form.home.teamId && form.home.teamId === form.away.teamId ? 'Home and away are the same team: pick another to save' : null),
+  save: async f => {
+    await action('match.setup', { ...f, newMatch: false });
+    rememberFormations(f);
+  },
+});
+
+// Remember each team's formation for its next match.
+async function rememberFormations(f) {
+  for (const s of ['home', 'away']) {
+    const t = data.teams.find(x => x.id === f[s].teamId);
+    const fm = f[s].lineup.formation || '';
+    if (t && (t.formation || '') !== fm) {
+      try { await api('POST', '/api/teams', { ...t, formation: fm }); t.formation = fm; } catch {}
+    }
+  }
+}
+
+$('m-new').onclick = async () => {
   if (!form.home.teamId || !form.away.teamId) return toast('Pick both teams first', true);
   if (form.home.teamId === form.away.teamId) return toast('Home and away must be different teams', true);
-  for (const s of ['home', 'away']) {
-    const n = form[s].lineup.starting.length;
-    if (n && n !== 11 && !(await confirmBox(`${s === 'home' ? 'Home' : 'Away'} starting XI has ${n} players, not 11. Continue anyway?`))) return;
-  }
-  if (newMatch && !(await confirmBox('Start a NEW match? The score, events and clock will be cleared (you can still undo from the dock).'))) return;
+  if (!(await confirmBox('Start a NEW match? The score, events and clock will be cleared (you can still undo from the dock).'))) return;
   try {
-    await action('match.setup', { ...form, newMatch });
-    formDirty = false;
-    // Remember each team's formation for its next match.
-    for (const s of ['home', 'away']) {
-      const t = data.teams.find(x => x.id === form[s].teamId);
-      const fm = form[s].lineup.formation || '';
-      if (t && (t.formation || '') !== fm) {
-        try { await api('POST', '/api/teams', { ...t, formation: fm }); t.formation = fm; } catch {}
-      }
-    }
-    toast(newMatch ? 'New match ready' : 'Match updated');
+    await action('match.setup', { ...form, newMatch: true });
+    lineupSaver.reset();
+    rememberFormations(form);
+    toast('New match ready');
   } catch (err) { toast(err.message, true); }
-}
-$('m-apply').onclick = () => applyMatch(false);
-$('m-new').onclick = () => applyMatch(true);
+};
 
 function confirmBox(msg) { return Promise.resolve(window.confirm(msg)); }
 
@@ -283,17 +336,37 @@ function renderTeamList() {
   $('team-list').innerHTML = data.teams.map(t => `<button class="btn ${editing && !editingIsNew && editing.id === t.id ? 'active' : ''}" data-team="${esc(t.id)}">
     ${t.logo ? `<img src="${esc(t.logo)}" alt="">` : ''}${esc(t.name)} <span class="muted">${esc(t.short)} · ${t.squad.length}</span></button>`).join('')
     || '<p class="muted">No teams yet.</p>';
-  $('team-list').querySelectorAll('[data-team]').forEach(b => b.onclick = () => {
+  $('team-list').querySelectorAll('[data-team]').forEach(b => b.onclick = async () => {
+    await teamSaver.flush(); // finish saving the team you were on
     editing = structuredClone(data.teams.find(t => t.id === b.dataset.team));
     editingIsNew = false;
+    teamSaver.reset();
     renderTeamList(); renderTeamEditor();
   });
 }
-$('t-new').onclick = () => {
-  editing = { id: '', name: '', short: '', colors: { primary: '#1d4ed8', secondary: '#ffffff', text: '#ffffff' }, logo: '', manager: '', squad: [] };
+$('t-new').onclick = async () => {
+  await teamSaver.flush();
+  editing = { id: '', name: '', short: '', colors: { primary: '#1d4ed8', secondary: '#ffffff', text: '#ffffff' }, logo: '', manager: '', formation: '', squad: [] };
   editingIsNew = true;
+  teamSaver.reset();
   renderTeamList(); renderTeamEditor();
 };
+
+// An existing team saves by itself; a new one is created once with "Create team" (it needs a name first).
+const teamSaver = new Autosaver({
+  get: () => (editing && !editingIsNew ? editing : null),
+  check: () => (!editing.name.trim() ? 'Enter a team name to save' : null),
+  delay: 800,
+  save: async t => {
+    if (!t.short.trim()) t.short = t.name.replace(/[^a-z]/gi, '').slice(0, 3).toUpperCase();
+    const r = await api('POST', '/api/teams', t);
+    data.teams = await fetch('/api/teams').then(x => x.json());
+    renderTeamList();
+    const nums = r.team.squad.filter(p => p.number != null).map(p => p.number);
+    const dup = nums.find((n, i) => nums.indexOf(n) !== i);
+    if (dup != null) setTimeout(() => savePill(`Saved, but shirt number ${dup} is used twice`, 'warn'), 50);
+  },
+});
 
 function renderTeamEditor() {
   const el = $('team-editor');
@@ -318,7 +391,7 @@ function renderTeamEditor() {
       <div class="row"><button class="btn small" id="te-import">Add pasted players</button></div>
     </details>
     <div class="row wrap" style="margin-top:16px">
-      <button class="btn primary" id="te-save">Save team</button>
+      ${editingIsNew ? '<button class="btn primary" id="te-save">Create team</button>' : ''}
       ${editingIsNew ? '' : '<button class="btn danger-ghost" id="te-del">Delete team</button>'}
     </div>`;
   $('te-name').oninput = e => { t.name = e.target.value; };
@@ -349,9 +422,9 @@ function renderTeamEditor() {
     }
     $('te-paste').value = '';
     renderSquad();
-    toast(`${added} player(s) added. Remember to save.`);
+    toast(`${added} player(s) added`);
   };
-  $('te-save').onclick = saveTeam;
+  if (editingIsNew) $('te-save').onclick = saveTeam;
   if (!editingIsNew) $('te-del').onclick = async () => {
     if (!confirm(`Delete ${t.name}? This removes config/teams/${t.id}.json.`)) return;
     try { await api('DELETE', `/api/teams/${encodeURIComponent(t.id)}`); editing = null; await refreshTeams(); renderTeamEditor(); toast('Team deleted'); }
@@ -391,9 +464,10 @@ async function saveTeam() {
     const r = await api('POST', '/api/teams', t);
     editing = structuredClone(r.team);
     editingIsNew = false;
+    teamSaver.reset();
     await refreshTeams();
     renderTeamEditor();
-    toast('Team saved');
+    toast('Team created: changes now save by themselves');
   } catch (err) { toast(err.message, true); }
 }
 
@@ -417,8 +491,16 @@ const LABEL_NAMES = {
   aggregate: 'Aggregate tab (e.g. AGG)', replay: 'Replay bug', slowMo: 'Replay bug slow-motion tag',
 };
 
+let themeDraft = null;
+const themeSaver = new Autosaver({
+  get: () => themeDraft,
+  delay: 800,
+  save: async th => { const r = await api('PUT', '/api/theme', th); data.theme = r.theme; },
+});
+
 function renderTheme() {
-  const th = structuredClone(data.theme);
+  const th = themeDraft = structuredClone(data.theme);
+  themeSaver.reset();
   const el = $('theme-editor');
   el.innerHTML = `<h2>Theme</h2>
     <div class="grid2">
@@ -440,7 +522,7 @@ function renderTheme() {
       <label class="field">Lower third on screen (seconds, 0 = until hidden)<input class="input" type="number" min="0" max="120" id="th-lt" value="${esc(th.timings.lowerThirdSec)}"></label>
       <label class="field">Goal sting length (ms, 0 = off)<input class="input" type="number" min="0" max="10000" step="100" id="th-sting" value="${esc(th.timings.stingMs)}"></label>
     </div>
-    <div class="row" style="margin-top:16px"><button class="btn primary" id="th-save">Save theme</button><button class="btn ghost" id="th-reset">Discard changes</button></div>`;
+    <p class="hint">Changes save by themselves and the overlay updates straight away.</p>`;
   $('th-club').oninput = e => { th.clubName = e.target.value; };
   logoPicker($('th-logo'), th.clubLogo, v => { th.clubLogo = v; }, () => th.clubName || 'club');
   for (const k of Object.keys(COLOR_LABELS)) $('th-colors').append(colorField(COLOR_LABELS[k], th.colors[k], v => { th.colors[k] = v; }));
@@ -451,11 +533,6 @@ function renderTheme() {
   el.querySelectorAll('[data-label]').forEach(i => i.oninput = () => { th.labels[i.dataset.label] = i.value; });
   $('th-lt').oninput = e => { th.timings.lowerThirdSec = Number(e.target.value) || 0; };
   $('th-sting').oninput = e => { th.timings.stingMs = Number(e.target.value) || 0; };
-  $('th-save').onclick = async () => {
-    try { const r = await api('PUT', '/api/theme', th); data.theme = r.theme; toast('Theme saved: the overlay updates now'); }
-    catch (err) { toast(err.message, true); }
-  };
-  $('th-reset').onclick = renderTheme;
 }
 
 // ================================================================== boot
@@ -465,7 +542,16 @@ new MatchSocket({
   onState(msg) {
     snap = msg;
     syncThemeCss(msg.themeRev);
-    if (!form || !formDirty) { form = formFromState(msg.state); renderMatch(); }
+    // Pick up changes made elsewhere, unless there are unsaved edits here. Only redraw if something
+    // actually differs, so the box you're typing in keeps its focus after an autosave.
+    if (!form || !lineupSaver.dirty()) {
+      const next = formFromState(msg.state);
+      if (!form || JSON.stringify(next) !== JSON.stringify(form)) {
+        form = next;
+        lineupSaver.reset(); // what the server has; anything the page fills in (e.g. a starting formation) then saves
+        renderMatch();
+      } else lineupSaver.reset();
+    }
   },
   onStatus(connected) { $('banner-offline').hidden = connected; },
 });
@@ -474,7 +560,7 @@ await checkPin();
 await loadData();
 renderTeamList();
 renderTheme();
-if (snap) { form = formFromState(snap.state); renderMatch(); }
+if (snap) { form = formFromState(snap.state); lineupSaver.reset(); renderMatch(); }
 // The dock asks for a refresh when the tab is shown again, so teams saved on the Teams tab appear on the Lineups tab.
 addEventListener('message', async e => {
   if (e.origin !== location.origin || e.data?.type !== 'refresh') return;

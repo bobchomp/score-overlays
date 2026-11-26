@@ -6,9 +6,6 @@ body { padding-bottom: 40px; }
 .btn.undo span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #app { display: flex; flex-direction: column; gap: 10px; padding: 10px; max-width: 640px; margin: 0 auto; }
 
-/* preview */
-.preview-wrap { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 6px; background: #000; }
-.preview-wrap iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; pointer-events: none; }
 
 /* score */
 .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -105,7 +102,7 @@ body { padding-bottom: 40px; }
    Narrow (OBS dock / phone): one column; groups are "display: contents" and "order" puts the
    most-used controls first. 760px+: two columns. 1100px+: three columns that fit the screen
    (replays above events on the right). 1400px+: four columns side by side.
-   SETTINGS tab (#settings-app): preview, options, reset | replay settings. */
+   SETTINGS tab (#settings-app): pre-match check, options, reset | replay settings. */
 .col { display: contents; }
 .score-card { order: 1; } .clock-card { order: 2; } .pens-card { order: 3; }
 .r-actions { order: 4; } .r-notice-card { order: 5; }

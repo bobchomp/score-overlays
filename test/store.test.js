@@ -257,3 +257,27 @@ test('cards join the same queue as subs and play in one lower third in queue ord
   assert.deepEqual(s.state.graphics.eventQueue, [], 'card graphics off: logged, not queued');
   clearTimeout(s.timer);
 });
+
+test('goal numbers for replay names: deleting an earlier goal never reuses a number; removing the latest frees it', () => {
+  const { s, ok } = fresh();
+  ok(s.dispatch('clock.period', { period: '1H', start: true }));
+  const g1 = ok(s.dispatch('goal.add', { team: 'home' })).result;
+  const g2 = ok(s.dispatch('goal.add', { team: 'home' })).result;
+  assert.deepEqual([g1.teamGoals, g2.teamGoals], [1, 2]);
+  ok(s.dispatch('event.delete', { id: g1.event.id }));            // earlier goal deleted with ✕
+  assert.equal(ok(s.dispatch('goal.add', { team: 'home' })).result.teamGoals, 3, 'not a second "2"');
+  ok(s.dispatch('goal.removeLast', { team: 'home' }));             // latest disallowed
+  assert.equal(ok(s.dispatch('goal.add', { team: 'home' })).result.teamGoals, 3, 'number reused after − remove');
+  assert.equal(ok(s.dispatch('goal.add', { team: 'away' })).result.teamGoals, 1, 'each team counts separately');
+  clearTimeout(s.timer);
+});
+
+test('undo reports which action it undid (so a mistaken goal can drop its replay)', () => {
+  const { s, ok } = fresh();
+  const seen = [];
+  s.on('action', a => seen.push(a.undone));
+  ok(s.dispatch('goal.add', { team: 'home' }));
+  ok(s.dispatch('undo'));
+  assert.equal(seen.at(-1), 'goal.add');
+  clearTimeout(s.timer);
+});

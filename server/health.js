@@ -128,7 +128,7 @@ async function sceneHasOnTop(obs, sceneName, sourceNames) {
   return mine.some(it => it.sceneItemIndex === top) ? 'top' : 'below';
 }
 
-export async function runHealth({ env, obs, replays, clients, build, commit, startedAt }) {
+export async function runHealth({ env, obs, replays, clients, build, commit, startedAt, state = null }) {
   const items = [];
   const safe = async (fn, fallbackLabel) => {
     try { await fn(); } catch (err) { items.push(item(`err-${items.length}`, fallbackLabel, WARN, `Check failed: ${err.message}`)); }
@@ -164,6 +164,9 @@ export async function runHealth({ env, obs, replays, clients, build, commit, sta
   }
   const staleDocks = pages.filter(p => (p.page === 'dock' || p.page === 'setup') && p.build && p.build !== build);
   if (staleDocks.length) items.push(item('docks', 'Control pages', WARN, `${staleDocks.length} dock/setup page(s) are an older version.`, 'Reload them (they normally reload on their own after an update).'));
+
+  // ---- teams and lineups
+  if (state) items.push(...lineupChecks(state));
 
   // ---- main OBS
   if (!obs.status.connected) {
@@ -284,6 +287,43 @@ export async function runHealth({ env, obs, replays, clients, build, commit, sta
     counts: { bad: items.filter(i => i.status === BAD).length, warn: items.filter(i => i.status === WARN).length },
     items,
   };
+}
+
+/** Teams picked, an XI of 11 in its formation, a captain, and kits that can be told apart. */
+export function lineupChecks(state) {
+  const out = [];
+  const { home, away } = state.teams;
+  if (!home.id || !away.id) {
+    out.push(item('teams', 'Teams', WARN, 'Both teams aren\'t picked yet.', 'Open the Lineups tab and choose the home and away teams.'));
+    return out;
+  }
+  for (const [side, t] of [['home', home], ['away', away]]) {
+    const lu = t.lineup || {};
+    const n = (lu.starting || []).length;
+    const problems = [];
+    if (!n) problems.push('no starting XI picked');
+    else if (n !== 11) problems.push(`the starting XI has ${n} players`);
+    if (n && !lu.captain) problems.push('no captain');
+    if (!lu.formation) problems.push('no formation (the lineup graphic will be a list)');
+    else if (n && (lu.slots || []).filter(Boolean).length < Math.min(n, 11)) problems.push('not everyone is placed in the formation');
+    const name = t.name || side;
+    out.push(problems.length
+      ? item(`lineup-${side}`, `Lineup: ${name}`, WARN, problems.join(' · ').replace(/^./, c => c.toUpperCase()) + '.', 'Fix it on the Lineups tab (changes save by themselves).')
+      : item(`lineup-${side}`, `Lineup: ${name}`, OK, `XI 11/11 · ${lu.formation} · captain set`));
+  }
+  const d = colourDistance(home.colors?.primary, away.colors?.primary);
+  if (d != null && d < 60) {
+    out.push(item('kits', 'Team colours', WARN, `${home.name} and ${away.name} have very similar main colours, so their graphics will look alike.`,
+      'On the Lineups tab, change one team\'s Primary colour for this match (e.g. to their away kit).'));
+  }
+  return out;
+}
+
+function colourDistance(a, b) {
+  const rgb = h => (/^#[0-9a-f]{6}$/i.test(h || '') ? [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)) : null);
+  const x = rgb(a), y = rgb(b);
+  if (!x || !y) return null;
+  return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]);
 }
 
 /** Fix action: press "Refresh cache of current page" on every overlay Browser Source. */
