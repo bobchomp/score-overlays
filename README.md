@@ -105,6 +105,11 @@ in the top corner says *Saving…* / *All changes saved*). Only *Start NEW match
 **Demo:** **Settings → Run demo match** plays a 3-minute simulated match to check every graphic. Your real match is
 put back when you press **Stop demo**.
 
+**iPad / tablet:** in landscape the dock is three columns that fit the screen (each column scrolls on its own). In
+Safari, **Share → Add to Home Screen** gives it an icon and opens it full screen without Safari's bars. Older iPads
+that can't update past iOS 12 work too: the server automatically gives older Safari a version of the code it
+understands. If a page ever can't start in a browser, it says so at the bottom of the screen.
+
 ## 4. Teams, theme and badges
 
 The dock has three tabs: **Live**, **Lineups** (teams, starting XI, formation, competition, start a new match) and

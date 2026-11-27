@@ -1,6 +1,6 @@
 /* Dock: designed for ~350-400px wide OBS docks and phones. */
 body { padding-bottom: 40px; }
-.topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: rgba(13,17,23,.96); border-bottom: 1px solid var(--ui-line); backdrop-filter: blur(6px); }
+.topbar { position: -webkit-sticky; position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: rgba(13,17,23,.96); border-bottom: 1px solid var(--ui-line); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .top-title { flex: 1; font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .btn.undo { min-height: 38px; padding: 6px 12px; font-size: 14px; max-width: 55%; }
 .btn.undo span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -120,8 +120,8 @@ body { padding-bottom: 40px; }
   #settings-app { max-width: 1200px; display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
 }
 
-@media (min-width: 1100px) {
-  body { height: 100vh; display: flex; flex-direction: column; padding-bottom: 0; overflow: hidden; }
+@media (min-width: 1000px) {
+  body { height: 100vh; height: var(--app-h, 100vh); display: flex; flex-direction: column; padding-bottom: 0; overflow: hidden; }
   #app {
     flex: 1; min-height: 0; width: 100%; max-width: 2200px;
     grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: minmax(0, 1.25fr) minmax(0, 1fr);

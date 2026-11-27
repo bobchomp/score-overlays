@@ -86,3 +86,8 @@ select.input { padding-right: 6px; }
 
 .toast { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: #24303d; color: #fff; padding: 10px 16px; border-radius: 8px; z-index: 200; box-shadow: 0 6px 20px rgba(0,0,0,.4); font-weight: 600; max-width: calc(100% - 24px); text-align: center; }
 .toast.error { background: var(--ui-bad); }
+
+/* Touch screens (iPad/phone) and older Safari: no grey tap flash or double-tap zoom on controls, and
+   buttons styled by us rather than the system (older Safari only understands the -webkit- version). */
+button, .btn, .tog, .seg, a { -webkit-tap-highlight-color: transparent; }
+button { -webkit-appearance: none; touch-action: manipulation; }

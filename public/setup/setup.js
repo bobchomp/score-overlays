@@ -3,7 +3,10 @@ import { POSITION_ORDER } from '/shared/match.js';
 import { FORMATIONS, fitSlots, slotPositions } from '/shared/formations.js';
 import { getPin, setPin } from '/shared/pin.js';
 
+window.__appReady = true; // the code started (see /shared/legacy.js)
 const $ = id => document.getElementById(id);
+// Deep copy of plain data (structuredClone isn't in older Safari, e.g. iPads stuck on iOS 12).
+const clone = v => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
 const data = { teams: [], logos: [], fonts: [], theme: null };
 let snap = null;
 
@@ -165,7 +168,7 @@ function formFromState(st) {
   const side = s => ({
     teamId: st.teams[s].id || '',
     colors: { ...st.teams[s].colors },
-    lineup: structuredClone(st.teams[s].lineup || { starting: [], subs: [], captain: null }),
+    lineup: clone(st.teams[s].lineup || { starting: [], subs: [], captain: null }),
   });
   const fl = st.match.firstLeg || { enabled: false, home: 0, away: 0 };
   return { competition: st.match.competition, competitionLogo: st.match.competitionLogo, firstLeg: { ...fl }, home: side('home'), away: side('away') };
@@ -272,6 +275,8 @@ function renderSide(s) {
     if (!f.lineup.starting.includes(f.lineup.captain)) f.lineup.captain = null;
     renderSide(s);
   });
+  // Older Safari has no aspect-ratio: give the mini pitch its height by hand.
+  if (window.CSS && !CSS.supports('aspect-ratio', '1')) el.querySelectorAll('.mini-pitch').forEach(p => { p.style.height = `${p.offsetWidth * 80 / 68}px`; });
   const fsel = el.querySelector('.form-sel');
   if (fsel) fsel.onchange = () => { f.lineup.formation = fsel.value || null; pitchPick[s] = null; renderSide(s); };
   el.querySelectorAll('.pm[data-slot]').forEach(b => b.onclick = () => {
@@ -346,7 +351,7 @@ function renderTeamList() {
     || '<p class="muted">No teams yet.</p>';
   $('team-list').querySelectorAll('[data-team]').forEach(b => b.onclick = async () => {
     await teamSaver.flush(); // finish saving the team you were on
-    editing = structuredClone(data.teams.find(t => t.id === b.dataset.team));
+    editing = clone(data.teams.find(t => t.id === b.dataset.team));
     editingIsNew = false;
     teamSaver.reset();
     renderTeamList(); renderTeamEditor();
@@ -470,7 +475,7 @@ async function saveTeam() {
   }
   try {
     const r = await api('POST', '/api/teams', t);
-    editing = structuredClone(r.team);
+    editing = clone(r.team);
     editingIsNew = false;
     teamSaver.reset();
     await refreshTeams();
@@ -507,7 +512,7 @@ const themeSaver = new Autosaver({
 });
 
 function renderTheme() {
-  const th = themeDraft = structuredClone(data.theme);
+  const th = themeDraft = clone(data.theme);
   themeSaver.reset();
   const el = $('theme-editor');
   el.innerHTML = `<h2>Theme</h2>
@@ -564,11 +569,15 @@ new MatchSocket({
   onStatus(connected) { $('banner-offline').hidden = connected; },
 });
 
-await checkPin();
-await loadData();
-renderTeamList();
-renderTheme();
-if (snap) { form = formFromState(snap.state); lineupSaver.reset(); renderMatch(); }
+// Start-up (in a function: top-level await isn't in older Safari).
+(async () => {
+  await checkPin();
+  await loadData();
+  renderTeamList();
+  renderTheme();
+  if (snap) { form = formFromState(snap.state); lineupSaver.reset(); renderMatch(); }
+})();
+
 // Ctrl+Z here undoes the last match change, as it does in the dock (inside a text box it undoes the typing).
 addEventListener('keydown', e => {
   if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== 'z') return;

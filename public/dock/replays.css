@@ -107,4 +107,4 @@
 .sub-tab.active { background: var(--ui-card2); color: var(--ui-text); border-color: #47525e; }
 .embed-app { display: flex; flex: 1; min-height: calc(100vh - 110px); }
 .embed-app iframe { flex: 1; width: 100%; border: 0; background: var(--ui-bg); }
-@media (min-width: 1100px) { .embed-app { min-height: 0; } }
+@media (min-width: 1000px) { .embed-app { min-height: 0; } }

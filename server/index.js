@@ -11,6 +11,7 @@ import { ObsLink } from './obs.js';
 import { Demo } from './demo.js';
 import { createAuth, clientIp } from './auth.js';
 import { Tunnel, tunnelPidFile } from './tunnel.js';
+import { legacyScripts } from './legacy.js';
 import { createApi } from './api.js';
 import { score, eventMinute, timerMinute, PLAYING_PERIODS } from '../public/shared/match.js';
 import { Replays, disabledReplays } from './replays.js';
@@ -111,6 +112,8 @@ app.use('/assets/logos', (req, res, next) => { res.set('Content-Security-Policy'
 // /setup address opens the dock on its Lineups tab.
 app.get('/', (req, res) => res.redirect('/dock'));
 app.get(['/setup', '/setup/', '/setup/index.html'], (req, res, next) => (req.query.embed ? next() : res.redirect('/dock/?tab=setup')));
+// Older Safari (iPads on iOS 12) gets scripts translated into code it can run.
+app.use(legacyScripts(PUBLIC_DIR));
 app.use(express.static(PUBLIC_DIR, {
   extensions: ['html'],
   setHeaders(res, file) {

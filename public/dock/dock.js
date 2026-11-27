@@ -6,6 +6,12 @@ import { getPin, setPin, clearPin } from '/shared/pin.js';
 import { initReplays } from '/dock/replays.js';
 import { initHealth } from '/dock/health.js';
 
+window.__appReady = true; // the code started (see /shared/legacy.js)
+// The real visible height: on iPad Safari 100vh includes the part hidden behind the toolbar.
+const setAppHeight = () => document.documentElement.style.setProperty('--app-h', `${window.innerHeight}px`);
+setAppHeight();
+window.addEventListener('resize', setAppHeight);
+window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 300));
 const $ = id => document.getElementById(id);
 let snap = null;
 let replaysUi = null; // Replays tab (isolated: errors there never stop match control)
