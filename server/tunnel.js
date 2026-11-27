@@ -38,6 +38,11 @@ export class Tunnel extends EventEmitter {
 
   start() {
     if (!this.token) return;
+    // Which cloudflared (shown in the pre-match check, e.g. after update.bat upgrades it).
+    try {
+      const out = execFileSync(this.findBinary(), [...this.argsPrefix, '--version'], { encoding: 'utf8', windowsHide: true, timeout: 10000 });
+      this.status.version = (/version\s+(\S+)/i.exec(out) || [])[1] || null;
+    } catch { this.status.version = null; }
     this.killOrphan();
     this.launch();
   }

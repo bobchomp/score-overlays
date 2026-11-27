@@ -6,7 +6,7 @@
 #      (your theme is kept: config/theme.json edits are copied to data/theme.json)
 #   4. pulls the update and shows what changed
 #   5. runs "npm install" only if the dependencies changed
-#   6. installs cloudflared (once) if a remote-access tunnel token is set in .env
+#   6. installs or updates cloudflared if a remote-access tunnel token is set in .env
 # Written for Windows PowerShell 5.1 (built into Windows 10/11). ASCII only on purpose.
 # -Folder <path> updates a different copy (used by the automated Windows test).
 param([string]$Folder = '')
@@ -141,7 +141,7 @@ if ($needInstall) {
   if ($LASTEXITCODE -ne 0) { Fail 'npm install failed. Check the internet connection and run update.bat again.' }
 }
 
-# ---- 6. remote access: install cloudflared once a tunnel token is in .env -----
+# ---- 6. remote access: install (or upgrade) cloudflared when a tunnel token is in .env -----
 $envFile = Join-Path $root '.env'
 $wantTunnel = (Test-Path $envFile) -and ((Get-Content $envFile) -match '^\s*CLOUDFLARE_TUNNEL_TOKEN\s*=\s*\S')
 if ($wantTunnel) {
@@ -156,6 +156,18 @@ if ($wantTunnel) {
     } else {
       Say 'Remote access needs cloudflared: download it from https://github.com/cloudflare/cloudflared/releases (Windows .msi). The graphics work without it.' 'Yellow'
     }
+  } elseif (Get-Command winget -ErrorAction SilentlyContinue) {
+    # Keep it current (the tunnel was stopped above, so the file isn't in use). "No update" is not an error.
+    Say ''
+    Say 'Checking cloudflared for updates...' 'Cyan'
+    $up = & winget upgrade --id Cloudflare.cloudflared -e --accept-source-agreements --accept-package-agreements 2>&1 | Out-String
+    if ($up -match 'No installed package') {
+      # Installed some other way (e.g. the .msi from Cloudflare): let winget take it over and bring it up to date.
+      $up = & winget install --id Cloudflare.cloudflared -e --accept-source-agreements --accept-package-agreements 2>&1 | Out-String
+    }
+    if ($LASTEXITCODE -eq 0 -and $up -match 'Successfully installed') { Say 'cloudflared updated.' 'Green' }
+    elseif ($up -match 'No (available )?upgrade|No newer package|already installed') { Say 'cloudflared is up to date.' }
+    elseif ($LASTEXITCODE -ne 0) { Say 'Could not update cloudflared (remote access keeps using the current version):' 'Yellow'; Say $up.Trim() }
   }
 }
 

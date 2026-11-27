@@ -172,7 +172,7 @@ export async function runHealth({ env, obs, replays, clients, build, commit, sta
       ? item('tunnel', 'Remote access', WARN, `Connected to Cloudflare, but it can't reach this server, so the remote address shows "Bad gateway". (${tunnel.originError})`,
         `In Cloudflare (Networks → Tunnels → your tunnel → Public hostnames), set the service to HTTP and the URL to 127.0.0.1:${port}.`)
       : tunnel.state === 'connected'
-      ? item('tunnel', 'Remote access', OK, `Connected${tunnel.url ? `: ${tunnel.url}/dock` : ''}`)
+      ? item('tunnel', 'Remote access', OK, `Connected${tunnel.url ? `: ${tunnel.url}/dock` : ''}${tunnel.version ? ` · cloudflared ${tunnel.version}` : ''}`)
       : item('tunnel', 'Remote access', WARN, tunnel.error || 'The Cloudflare tunnel is still connecting.',
         'Check the internet connection and the CLOUDFLARE_TUNNEL_TOKEN in .env. The graphics work without it.'));
   }
@@ -316,7 +316,7 @@ function okText(i) {
   switch (i.id) {
     case 'server': return i.detail.replace(/^Running on /, '').replace(/ · up .*$/, '');
     case 'pin': return 'PIN set';
-    case 'tunnel': return 'remote access on';
+    case 'tunnel': return i.detail.includes('cloudflared') ? `remote access on (${/cloudflared \S+/.exec(i.detail)[0]})` : 'remote access on';
     case 'main-obs': return i.detail;
     case 'overlay': return 'overlay loaded';
     case 'overlay-size': return i.detail;

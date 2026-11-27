@@ -11,6 +11,7 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tunnel-'));
 const fake = path.join(dir, 'fake-cloudflared.mjs');
 fs.writeFileSync(fake, `
   import fs from 'node:fs';
+  if (process.argv.includes('--version')) { console.log('cloudflared version 2025.11.1 (built 2025-11-10)'); process.exit(0); }
   fs.writeFileSync(${JSON.stringify(path.join(dir, 'seen.json'))}, JSON.stringify({ args: process.argv.slice(2), token: process.env.TUNNEL_TOKEN }));
   console.error('2026-01-01T00:00:00Z INF Registered tunnel connection connIndex=0');
   setInterval(() => {}, 1000);
@@ -32,6 +33,7 @@ test('starts cloudflared with the token in its environment (not the command line
   const seen = JSON.parse(fs.readFileSync(path.join(dir, 'seen.json'), 'utf8'));
   assert.equal(seen.token, 'secret-token');
   assert.deepEqual(seen.args, ['tunnel', '--no-autoupdate', 'run']);
+  assert.equal(t.status.version, '2025.11.1', 'version shown in the pre-match check');
   assert.equal(Number(fs.readFileSync(pidFile, 'utf8')), t.child.pid);
   const child = t.child;
   t.stop();
@@ -58,6 +60,7 @@ test('PIN lockout: visitors through the tunnel are told apart; the header is ign
 test('"Bad gateway": cloudflared connected but cannot reach the server is reported, not shown as fine', async () => {
   const bad = path.join(dir, 'fake-bad.mjs');
   fs.writeFileSync(bad, `
+    if (process.argv.includes('--version')) { console.log('cloudflared version 2025.8.1'); process.exit(0); }
     console.error('2026-01-01T00:00:00Z INF Registered tunnel connection connIndex=0');
     setTimeout(() => console.error('2026-01-01T00:00:01Z ERR Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp [::1]:3080: connectex: No connection could be made'), 100);
     setInterval(() => {}, 1000);

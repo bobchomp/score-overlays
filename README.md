@@ -170,7 +170,8 @@ that's on a (free) Cloudflare account. Nothing is opened on your router.
 CLOUDFLARE_TUNNEL_TOKEN=<the token>
 PUBLIC_URL=https://scores.yourdomain.com
 ```
-then run `update.bat`. The first time it installs `cloudflared` (Windows may ask to allow it). From then on the
+then run `update.bat`. The first time it installs `cloudflared` (Windows may ask to allow it), and after that every
+`update.bat` updates it to the latest version (the pre-match check shows which version is running). From then on the
 tunnel starts and stops with the server (`start.bat` and `update.bat`), the server window shows the address, and
 the pre-match check shows **remote access on** under *Graphics server*. If the tunnel drops it reconnects by itself;
 the graphics never depend on it.
