@@ -59,6 +59,52 @@
     style.id = 'flex-gap-fallback';
     style.appendChild(document.createTextNode(out.join('')));
     document.head.appendChild(style);
+    wrapLooseText(document.body);
+    watchForNewText();
+  }
+
+  // Margins only reach elements, so loose text in a gapped flex row ("<i></i> Main OBS") would still touch its
+  // neighbour. Wrap such text in a <span>, now and whenever the page redraws.
+  function gapped(el) {
+    if (!el || el.nodeType !== 1) return false;
+    var cs = getComputedStyle(el);
+    if (cs.display.indexOf('flex') < 0) return false;
+    var g = cs.columnGap || cs.gridColumnGap;
+    return !!g && g !== 'normal' && g !== '0px';
+  }
+  function wrapIn(el) {
+    if (!gapped(el)) return;
+    var kids = el.childNodes;
+    if (kids.length < 2) return;
+    for (var i = 0; i < kids.length; i++) {
+      var n = kids[i];
+      if (n.nodeType === 3 && /\S/.test(n.nodeValue)) {
+        var span = document.createElement('span');
+        span.className = 'gap-text';
+        el.replaceChild(span, n);
+        span.appendChild(n);
+      }
+    }
+  }
+  function wrapLooseText(root) {
+    if (!root || root.nodeType !== 1) return;
+    wrapIn(root);
+    var all = root.querySelectorAll('*');
+    for (var i = 0; i < all.length; i++) wrapIn(all[i]);
+  }
+  function watchForNewText() {
+    var pending = [], queued = false;
+    new MutationObserver(function (muts) {
+      for (var i = 0; i < muts.length; i++) pending.push(muts[i].target);
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(function () {
+        var roots = pending; pending = []; queued = false;
+        for (var k = 0; k < roots.length; k++) {
+          if (roots[k].nodeType === 1 && document.body.contains(roots[k])) wrapLooseText(roots[k]);
+        }
+      });
+    }).observe(document.body, { childList: true, subtree: true });
   }
 
   function watchStart() {

@@ -59,7 +59,7 @@ select.input { padding-right: 6px; }
 @keyframes pulse { 50% { opacity: .75; } }
 
 /* modal sheet */
-.sheet { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { position: fixed; top: 0; right: 0; bottom: 0; left: 0; background: rgba(0,0,0,.6); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
 .sheet-panel { background: var(--ui-card); width: 100%; max-width: 560px; max-height: 92vh; border-radius: 14px 14px 0 0; display: flex; flex-direction: column; border: 1px solid var(--ui-line); }
 @media (min-height: 700px) and (min-width: 600px) { .sheet { align-items: center; } .sheet-panel { border-radius: 14px; } }
 .sheet-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--ui-line); gap: 8px; }
@@ -77,7 +77,7 @@ select.input { padding-right: 6px; }
 .pbtn.selected { border-color: var(--ui-primary); background: #12304f; }
 
 /* PIN */
-.pin-screen { position: fixed; inset: 0; background: var(--ui-bg); z-index: 100; display: grid; place-items: center; padding: 20px; }
+.pin-screen { position: fixed; top: 0; right: 0; bottom: 0; left: 0; background: var(--ui-bg); z-index: 100; display: grid; place-items: center; padding: 20px; }
 .pin-box { width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 12px; text-align: center; }
 .pin-box h1 { font-size: 24px; }
 .pin-box p { margin: 0; color: var(--ui-muted); }
@@ -91,3 +91,4 @@ select.input { padding-right: 6px; }
    buttons styled by us rather than the system (older Safari only understands the -webkit- version). */
 button, .btn, .tog, .seg, a { -webkit-tap-highlight-color: transparent; }
 button { -webkit-appearance: none; touch-action: manipulation; }
+.sheet-head { flex-shrink: 0; }

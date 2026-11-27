@@ -296,9 +296,9 @@ export function initReplays({ sock, toast, promptSheet, openSheet, closeSheet, g
     // status
     const buf = r.bufferActive == null ? '—' : r.bufferActive ? 'running' : 'STOPPED';
     $('r-status').innerHTML = `
-      <span class="r-conn" title="${esc(r.main.url)} ${esc(r.main.error || '')}">${dot(r.main.connected)} Main OBS</span>
-      <span class="r-conn" title="${esc(r.replayObs.url)} ${esc(r.replayObs.error || '')}">${dot(r.replayObs.connected)} Replay OBS</span>
-      <span class="r-conn">${dot(r.bufferActive === true, r.bufferActive == null)} Buffer: ${buf}</span>
+      <span class="r-conn" title="${esc(r.main.url)} ${esc(r.main.error || '')}">${dot(r.main.connected)}<span>Main OBS</span></span>
+      <span class="r-conn" title="${esc(r.replayObs.url)} ${esc(r.replayObs.error || '')}">${dot(r.replayObs.connected)}<span>Replay OBS</span></span>
+      <span class="r-conn">${dot(r.bufferActive === true, r.bufferActive == null)}<span>Buffer: ${buf}</span></span>
       ${r.saving ? '<span class="r-busy">Saving…</span>' : ''}`;
 
     // why buttons are disabled

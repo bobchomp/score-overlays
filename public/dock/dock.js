@@ -579,7 +579,7 @@ function render() {
     ? `${st.teams.home.short} v ${st.teams.away.short}${st.match.competition ? ' · ' + st.match.competition : ''}` : 'Match Control · open Lineups to pick teams';
   const undoBtn = $('btn-undo');
   undoBtn.disabled = !undo.depth;
-  undoBtn.innerHTML = `⟲ <span>${undo.label ? `Undo: ${esc(undo.label)}` : 'Undo'}</span>`;
+  undoBtn.innerHTML = `<span>⟲</span><span>${undo.label ? `Undo: ${esc(undo.label)}` : 'Undo'}</span>`;
 
   // banners
   $('dot-obs').classList.toggle('on', obs.connected);

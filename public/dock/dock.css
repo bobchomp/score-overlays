@@ -116,6 +116,9 @@ body { padding-bottom: 40px; }
 @media (min-width: 760px) {
   #app { max-width: none; display: grid; grid-template-columns: 1fr 1fr; grid-template-areas: "a b" "r e"; align-items: start; gap: 10px; }
   .col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  /* Cards keep their full height and the column scrolls (older Safari would squash them and overlap their
+     contents). The two list cards may still shrink: their lists scroll inside them. */
+  .col > *:not(.events-card):not(.r-queue-card) { flex-shrink: 0; }
   .col-a { grid-area: a; } .col-b { grid-area: b; } .col-r { grid-area: r; } .col-e { grid-area: e; }
   #settings-app { max-width: 1200px; display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
 }
